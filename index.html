@@ -21,6 +21,9 @@
   --good: #16a34a;
   --bad: #dc2626;
   --neutral: #6b6f8a;
+  --gold: #f59e0b;
+  --silver: #94a3b8;
+  --bronze: #b45309;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -30,72 +33,36 @@ html, body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
-.page {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 32px 24px 80px;
-}
+.page { max-width: 1400px; margin: 0 auto; padding: 28px 24px 80px; }
 
 /* ===== Header ===== */
 .header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
   padding: 24px 28px;
   background: linear-gradient(135deg, var(--alaya-royal-blue), var(--alaya-deep-navy));
-  border-radius: 18px;
-  color: var(--alaya-white);
-  margin-bottom: 24px;
+  border-radius: 18px; color: var(--alaya-white); margin-bottom: 20px;
   box-shadow: 0 12px 32px rgba(13,14,92,0.18);
 }
 .header-left .eyebrow {
-  font-family: 'Lato', sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--alaya-blue-tint);
-  margin-bottom: 8px;
+  font-family: 'Lato', sans-serif; font-weight: 700; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--alaya-blue-tint); margin-bottom: 8px;
 }
 .header-left h1 {
-  font-family: 'Figtree', sans-serif;
-  font-weight: 800;
-  font-size: 32px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 30px;
+  line-height: 1.1; letter-spacing: -0.02em;
 }
-.header-left .subtitle {
-  font-family: 'Lato', sans-serif;
-  font-size: 13px;
-  color: var(--alaya-blue-tint);
-  margin-top: 8px;
-}
+.header-left .subtitle { font-size: 13px; color: var(--alaya-blue-tint); margin-top: 8px; }
 .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-.last-updated {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--alaya-blue-tint);
-}
+.last-updated { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--alaya-blue-tint); }
 .last-updated strong { color: var(--alaya-white); font-weight: 600; }
 
 #slack-btn {
-  font-family: 'Figtree', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.02em;
-  background: var(--alaya-white);
-  color: var(--alaya-royal-blue);
-  border: none;
-  padding: 12px 22px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  font-family: 'Figtree', sans-serif; font-weight: 700; font-size: 14px;
+  background: var(--alaya-white); color: var(--alaya-royal-blue);
+  border: none; padding: 11px 20px; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
 }
 #slack-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
 #slack-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -103,209 +70,198 @@ html, body {
 #slack-btn.error { background: #dc2626; color: white; }
 #slack-btn .icon { width: 16px; height: 16px; }
 
-/* ===== Placeholder banner ===== */
-.placeholder-banner {
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 24px;
-  font-size: 13px;
-  color: #78350f;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* ===== Slicer bar ===== */
+.slicers {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  background: var(--alaya-white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 20px; margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(13,14,92,0.04);
 }
-.placeholder-banner.hidden { display: none; }
+.slicer-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+.slicer-label {
+  font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+  color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;
+}
+.slicer-select {
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; color: var(--ink); cursor: pointer;
+  transition: all 0.15s ease;
+}
+.slicer-select:hover { border-color: var(--alaya-mid-blue); }
+.slicer-select:focus { outline: none; border-color: var(--alaya-royal-blue); box-shadow: 0 0 0 3px rgba(26,28,143,0.1); }
+
+.time-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.time-pill {
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+  padding: 7px 14px; cursor: pointer; color: var(--ink);
+  transition: all 0.15s ease;
+}
+.time-pill:hover { border-color: var(--alaya-mid-blue); }
+.time-pill.active {
+  background: var(--alaya-royal-blue); color: var(--alaya-white);
+  border-color: var(--alaya-royal-blue);
+}
 
 /* ===== Section titles ===== */
 .section-title {
-  font-family: 'Figtree', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-  margin: 32px 0 14px;
-  color: var(--alaya-deep-navy);
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  font-family: 'Figtree', sans-serif; font-weight: 700; font-size: 17px;
+  letter-spacing: -0.01em; margin: 28px 0 12px; color: var(--alaya-deep-navy);
+  display: flex; align-items: baseline; justify-content: space-between;
 }
 .section-title .meta-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 0;
-  text-transform: none;
+  font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px;
+  color: var(--muted); letter-spacing: 0; text-transform: none;
 }
 
 /* ===== KPI grid ===== */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-}
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .kpi-card {
-  background: var(--alaya-white);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px 20px;
-  position: relative;
+  background: var(--alaya-white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px;
 }
 .kpi-card .label {
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--muted);
-  margin-bottom: 8px;
+  font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px;
 }
 .kpi-card .value {
-  font-family: 'Figtree', sans-serif;
-  font-weight: 800;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-  color: var(--alaya-deep-navy);
-  line-height: 1.1;
+  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 24px;
+  letter-spacing: -0.02em; color: var(--alaya-deep-navy); line-height: 1.1;
 }
-.kpi-card .delta {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 6px;
+.kpi-card .sub {
+  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 4px;
 }
-.delta.up { color: var(--good); }
-.delta.down { color: var(--bad); }
-.delta.flat { color: var(--neutral); }
 
-/* ===== Weekly chart ===== */
+/* ===== Chart ===== */
 .chart-card {
-  background: var(--alaya-white);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 22px 24px;
+  background: var(--alaya-white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px;
 }
 .chart-area {
-  position: relative;
-  height: 220px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 14px;
-  padding-bottom: 28px;
+  position: relative; height: 220px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 4px; margin-top: 8px; padding-bottom: 28px;
   border-bottom: 1px solid var(--border);
 }
 .bar-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  height: 100%;
-  justify-content: flex-end;
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  position: relative; height: 100%; justify-content: flex-end; min-width: 0;
 }
 .bar {
-  width: 70%;
+  width: 80%; max-width: 40px;
   background: linear-gradient(180deg, var(--alaya-mid-blue), var(--alaya-royal-blue));
-  border-radius: 6px 6px 0 0;
-  min-height: 2px;
-  position: relative;
+  border-radius: 4px 4px 0 0; min-height: 1px;
   transition: all 0.3s ease;
 }
-.bar:hover { filter: brightness(1.1); }
-.bar-value {
-  font-family: 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--alaya-deep-navy);
-  position: absolute;
-  top: -18px;
-  white-space: nowrap;
-}
+.bar:hover { filter: brightness(1.15); }
 .bar-label {
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
-  position: absolute;
-  bottom: -22px;
-  white-space: nowrap;
+  font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500;
+  color: var(--muted); position: absolute; bottom: -22px;
+  white-space: nowrap; transform: rotate(-45deg); transform-origin: top left;
+}
+.chart-caption {
+  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 36px;
 }
 
 /* ===== Tables ===== */
 .table-wrap {
-  background: var(--alaya-white);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
+  background: var(--alaya-white); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
 }
 table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; }
-thead {
-  background: var(--alaya-blue-tint);
-  color: var(--alaya-deep-navy);
-}
+thead { background: var(--alaya-blue-tint); color: var(--alaya-deep-navy); }
 th {
-  text-align: left;
-  padding: 12px 16px;
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-align: left; padding: 11px 14px;
+  font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  cursor: pointer; user-select: none;
 }
-td { padding: 14px 16px; border-top: 1px solid var(--border); color: var(--alaya-deep-navy); }
+th.sortable:hover { background: rgba(26,28,143,0.06); }
+th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 9px; }
+th.sorted .sort-arrow { opacity: 1; color: var(--alaya-royal-blue); }
+td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--alaya-deep-navy); vertical-align: middle; }
 tbody tr:hover { background: #fafbff; }
 td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
 .empty {
-  padding: 28px 16px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 13px;
-  font-style: italic;
+  padding: 28px 16px; text-align: center; color: var(--muted);
+  font-size: 13px; font-style: italic;
 }
 
-/* ===== Two-column row for top/bottom ===== */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+/* Status pills */
+.status-pill {
+  display: inline-block; padding: 3px 9px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
 }
-@media (max-width: 768px) {
-  .two-col { grid-template-columns: 1fr; }
-  .header-right { align-items: flex-start; width: 100%; }
+.status-pill.active { background: rgba(22,163,74,0.12); color: var(--good); }
+.status-pill.paused { background: rgba(107,111,138,0.12); color: var(--muted); }
+.status-pill.other { background: rgba(220,38,38,0.12); color: var(--bad); }
+
+/* Rank badge */
+.rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 12px;
+  background: var(--alaya-blue-tint); color: var(--alaya-deep-navy);
+}
+.rank-badge.gold { background: #fef3c7; color: #92400e; }
+.rank-badge.silver { background: #e2e8f0; color: #475569; }
+.rank-badge.bronze { background: #fee2c4; color: #9a3412; }
+
+/* Score bar */
+.score-cell { display: flex; align-items: center; gap: 8px; }
+.score-bar { flex: 1; height: 6px; background: var(--alaya-blue-tint); border-radius: 3px; overflow: hidden; min-width: 60px; }
+.score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--alaya-mid-blue), var(--alaya-royal-blue)); }
+.score-num { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 26px; text-align: right; }
+
+/* Thumbnail */
+.thumb {
+  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  background: var(--alaya-blue-tint); flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.thumb-placeholder {
+  width: 44px; height: 44px; border-radius: 8px;
+  background: var(--alaya-blue-tint); display: inline-flex;
+  align-items: center; justify-content: center;
+  color: var(--alaya-royal-blue); font-weight: 700; font-size: 14px;
+  border: 1px solid var(--border);
+}
+.creative-cell { display: flex; align-items: center; gap: 12px; max-width: 360px; }
+.creative-name {
+  font-weight: 600; line-height: 1.3; overflow: hidden;
+  text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 
-/* ===== Footer ===== */
+/* Footer */
 .footer {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
+  margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--border);
+  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); text-align: center;
 }
-.footer a { color: var(--alaya-royal-blue); text-decoration: none; }
 
-/* Toast for Slack feedback */
+/* Toast */
 #toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
+  position: fixed; bottom: 24px; left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: var(--alaya-deep-navy);
-  color: white;
-  padding: 12px 22px;
-  border-radius: 999px;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
+  background: var(--alaya-deep-navy); color: white;
+  padding: 12px 22px; border-radius: 999px;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease;
-  z-index: 100;
+  transition: transform 0.3s ease; z-index: 100;
 }
 #toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Loader */
+.loader {
+  text-align: center; padding: 60px 20px;
+  font-family: 'Inter', sans-serif; color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .slicer-group { min-width: 100%; }
+  .header-right { align-items: flex-start; width: 100%; }
+  .creative-cell { max-width: 220px; }
+}
 </style>
 </head>
 <body>
@@ -316,7 +272,7 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
     <div class="header-left">
       <div class="eyebrow">Alaya Property</div>
       <h1>Ads Performance</h1>
-      <div class="subtitle" id="report-subtitle">Daily snapshot of Meta Ads activity</div>
+      <div class="subtitle" id="report-subtitle">Loading -</div>
     </div>
     <div class="header-right">
       <div class="last-updated">Last updated: <strong id="last-updated">-</strong></div>
@@ -329,144 +285,133 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
     </div>
   </header>
 
-  <!-- ============== PLACEHOLDER BANNER ============== -->
-  <div id="placeholder-banner" class="placeholder-banner hidden">
-    <strong>Template mode -</strong>&nbsp;Live Meta Ads data will populate from 2 June 2026 once the data feed resets. The structure below is what you will see each morning.
-  </div>
-
-  <!-- ============== DAILY ============== -->
-  <h2 class="section-title">
-    Yesterday
-    <span class="meta-label" id="daily-date-label">-</span>
-  </h2>
-  <div class="kpi-grid" id="daily-grid">
-    <div class="kpi-card">
-      <div class="label">Spend</div>
-      <div class="value" id="daily-spend">-</div>
-      <div class="delta flat" id="daily-spend-delta">vs day prior: -</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label" id="daily-results-label">Results</div>
-      <div class="value" id="daily-results">-</div>
-      <div class="delta flat" id="daily-results-delta">vs day prior: -</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Cost per Result</div>
-      <div class="value" id="daily-cpr">-</div>
-      <div class="delta flat" id="daily-cpr-delta">vs day prior: -</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">CTR</div>
-      <div class="value" id="daily-ctr">-</div>
-      <div class="delta flat" id="daily-ctr-extra">CPM: -</div>
-    </div>
-  </div>
-
-  <!-- ============== WEEKLY ============== -->
-  <h2 class="section-title">
-    Last 7 Days
-    <span class="meta-label" id="weekly-range">-</span>
-  </h2>
-  <div class="chart-card">
-    <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap: 14px;">
-      <div class="kpi-card">
-        <div class="label">7-day Spend</div>
-        <div class="value" id="weekly-spend">-</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">7-day Results</div>
-        <div class="value" id="weekly-results">-</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">7-day Avg CPR</div>
-        <div class="value" id="weekly-cpr">-</div>
+  <!-- ============== SLICERS ============== -->
+  <div class="slicers">
+    <div class="slicer-group" style="flex: 2;">
+      <div class="slicer-label">Time Period</div>
+      <div class="time-pills" id="time-pills">
+        <button class="time-pill" data-period="today">Today</button>
+        <button class="time-pill active" data-period="week">This Week</button>
+        <button class="time-pill" data-period="14d">14 Days</button>
+        <button class="time-pill" data-period="30d">30 Days</button>
+        <button class="time-pill" data-period="45d">45 Days</button>
+        <button class="time-pill" data-period="60d">60 Days</button>
+        <button class="time-pill" data-period="lifetime">12 Months</button>
       </div>
     </div>
-    <div class="chart-area" id="weekly-chart"></div>
-    <div style="font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 32px;">Daily spend (AUD) - hover bars for details</div>
-  </div>
-
-  <!-- ============== MTD ============== -->
-  <h2 class="section-title">
-    Month to Date
-    <span class="meta-label" id="mtd-month">-</span>
-  </h2>
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="label">MTD Spend</div>
-      <div class="value" id="mtd-spend">-</div>
-      <div class="delta flat" id="mtd-pacing">-</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">MTD Results</div>
-      <div class="value" id="mtd-results">-</div>
-      <div class="delta flat" id="mtd-days">- days elapsed</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">MTD Avg CPR</div>
-      <div class="value" id="mtd-cpr">-</div>
-      <div class="delta flat">Across all active campaigns</div>
+    <div class="slicer-group">
+      <div class="slicer-label">Campaign</div>
+      <select class="slicer-select" id="campaign-select">
+        <option value="all">All Campaigns</option>
+      </select>
     </div>
   </div>
 
-  <!-- ============== TOP / BOTTOM ADS ============== -->
-  <h2 class="section-title">Top &amp; Bottom Performers (last 7 days)</h2>
-  <div class="two-col">
+  <div id="loader" class="loader">Loading dashboard data -</div>
+
+  <div id="dashboard" style="display: none;">
+    <!-- ============== KPIs ============== -->
+    <h2 class="section-title">
+      Performance Snapshot
+      <span class="meta-label" id="kpi-range">-</span>
+    </h2>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">Spend</div>
+        <div class="value" id="kpi-spend">-</div>
+        <div class="sub" id="kpi-spend-sub">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label" id="kpi-results-label">Results</div>
+        <div class="value" id="kpi-results">-</div>
+        <div class="sub" id="kpi-results-sub">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Cost per Result</div>
+        <div class="value" id="kpi-cpr">-</div>
+        <div class="sub">Lower is better</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Impressions</div>
+        <div class="value" id="kpi-impressions">-</div>
+        <div class="sub" id="kpi-reach-sub">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Clicks</div>
+        <div class="value" id="kpi-clicks">-</div>
+        <div class="sub" id="kpi-cpc-sub">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">CTR</div>
+        <div class="value" id="kpi-ctr">-</div>
+        <div class="sub" id="kpi-cpm-sub">-</div>
+      </div>
+    </div>
+
+    <!-- ============== TREND CHART ============== -->
+    <h2 class="section-title">
+      Daily Spend Trend
+      <span class="meta-label" id="chart-caption">-</span>
+    </h2>
+    <div class="chart-card">
+      <div class="chart-area" id="chart-area"></div>
+      <div class="chart-caption">Hover bars to see daily spend and results.</div>
+    </div>
+
+    <!-- ============== CAMPAIGNS ============== -->
+    <h2 class="section-title" id="campaigns-section-title">
+      Campaign Breakdown
+      <span class="meta-label" id="campaigns-count">-</span>
+    </h2>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width: 50%;">Top Ads</th>
-            <th>Spend</th>
-            <th>Results</th>
-            <th>CPR</th>
+            <th class="sortable" data-sort="name" style="width: 28%;">Campaign <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="ctr">CTR <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="impressions">Impressions <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="clicks">Clicks <span class="sort-arrow">▼</span></th>
           </tr>
         </thead>
-        <tbody id="top-ads-body">
-          <tr><td colspan="4" class="empty">Loading top ads -</td></tr>
+        <tbody id="campaigns-body">
+          <tr><td colspan="8" class="empty">Loading -</td></tr>
         </tbody>
       </table>
     </div>
+
+    <!-- ============== CREATIVES (RANKED) ============== -->
+    <h2 class="section-title" id="creatives-section-title">
+      Creative Rankings
+      <span class="meta-label" id="creatives-count">-</span>
+    </h2>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width: 50%;">Bottom Ads</th>
-            <th>Spend</th>
-            <th>Results</th>
-            <th>CPR</th>
+            <th style="width: 60px;">Rank</th>
+            <th class="sortable" data-sort="score" style="width: 110px;">Score <span class="sort-arrow">▼</span></th>
+            <th style="width: 30%;">Creative</th>
+            <th class="sortable" data-sort="campaign_name">Campaign <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="ctr">CTR <span class="sort-arrow">▼</span></th>
           </tr>
         </thead>
-        <tbody id="bottom-ads-body">
-          <tr><td colspan="4" class="empty">Loading bottom ads -</td></tr>
+        <tbody id="creatives-body">
+          <tr><td colspan="9" class="empty">Loading -</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- ============== CAMPAIGNS ============== -->
-  <h2 class="section-title">Campaigns (last 7 days)</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width: 40%;">Campaign</th>
-          <th>Status</th>
-          <th>Spend</th>
-          <th>Results</th>
-          <th>CPR</th>
-          <th>Daily Budget</th>
-        </tr>
-      </thead>
-      <tbody id="campaigns-body">
-        <tr><td colspan="6" class="empty">Loading campaigns -</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ============== FOOTER ============== -->
   <div class="footer">
-    Alaya Property &middot; Internal ads dashboard &middot; Updated daily by Claude
+    Alaya Property &middot; Internal ads dashboard &middot; Data refreshed daily at 8am AEST
   </div>
 </div>
 
@@ -476,188 +421,446 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
 // ============== CONFIG ==============
 const SLACK_WEBHOOK = "https://hooks.slack.com/services/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";
 
-// ============== UTILITIES ==============
+// ============== STATE ==============
+let DATA = null;
+let currentPeriod = "week";
+let currentCampaignId = "all";
+let currentCampaignSort = { col: "spend", dir: "desc" };
+let currentCreativeSort = { col: "score", dir: "desc" };
+
+// ============== UTILS ==============
 const fmt = {
   aud(n) {
-    if (n === null || n === undefined || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "-";
     return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
   },
   audPrecise(n) {
-    if (n === null || n === undefined || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "-";
     return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 2 }).format(n);
   },
   num(n) {
-    if (n === null || n === undefined || isNaN(n)) return "-";
-    return new Intl.NumberFormat("en-AU").format(n);
+    if (n == null || isNaN(n)) return "-";
+    return new Intl.NumberFormat("en-AU").format(Math.round(n));
   },
-  pct(n, decimals = 1) {
-    if (n === null || n === undefined || isNaN(n)) return "-";
-    return `${n.toFixed(decimals)}%`;
-  },
-  delta(n) {
-    if (n === null || n === undefined || isNaN(n) || n === 0) return { txt: "vs day prior: flat", cls: "flat" };
-    const sign = n > 0 ? "+" : "";
-    return {
-      txt: `vs day prior: ${sign}${n.toFixed(0)}%`,
-      cls: n > 0 ? "up" : "down"
-    };
+  pct(n, dp = 2) {
+    if (n == null || isNaN(n)) return "-";
+    return n.toFixed(dp) + "%";
   }
 };
 
+function dateInPeriod(dateStr, period, today) {
+  // dateStr is YYYY-MM-DD
+  const d = new Date(dateStr + "T00:00:00");
+  const todayD = new Date(today + "T00:00:00");
+  const diffDays = Math.floor((todayD - d) / 86400000);
+
+  switch (period) {
+    case "today":
+      // "Today" = yesterday's data (most recent complete day in Meta's data)
+      return diffDays === 1;
+    case "week":
+      return diffDays >= 1 && diffDays <= 7;
+    case "14d":
+      return diffDays >= 1 && diffDays <= 14;
+    case "30d":
+      return diffDays >= 1 && diffDays <= 30;
+    case "45d":
+      return diffDays >= 1 && diffDays <= 45;
+    case "60d":
+      return diffDays >= 1 && diffDays <= 60;
+    case "lifetime":
+      return diffDays >= 1 && diffDays <= 365;
+    default:
+      return false;
+  }
+}
+
+function periodLabel(period) {
+  return {
+    today: "Yesterday",
+    week: "Last 7 days",
+    "14d": "Last 14 days",
+    "30d": "Last 30 days",
+    "45d": "Last 45 days",
+    "60d": "Last 60 days",
+    lifetime: "Last 12 months",
+  }[period] || period;
+}
+
+function aggregate(rows) {
+  // Aggregate an array of daily rows into totals
+  const out = {
+    spend: 0, impressions: 0, clicks: 0, results: 0, result_type: "Results",
+    cost_per_result: 0, ctr: 0, cpm: 0, cpc: 0, days: 0,
+  };
+  let resultTypeCount = {};
+  for (const r of rows) {
+    out.spend += r.spend || 0;
+    out.impressions += r.impressions || 0;
+    out.clicks += r.clicks || 0;
+    out.results += r.results || 0;
+    out.days += 1;
+    const rt = r.result_type || "Results";
+    resultTypeCount[rt] = (resultTypeCount[rt] || 0) + 1;
+  }
+  // Pick the most common result type
+  const sortedRT = Object.entries(resultTypeCount).sort((a, b) => b[1] - a[1]);
+  if (sortedRT.length) out.result_type = sortedRT[0][0];
+
+  out.cost_per_result = out.results > 0 ? out.spend / out.results : 0;
+  out.ctr = out.impressions > 0 ? (out.clicks / out.impressions) * 100 : 0;
+  out.cpm = out.impressions > 0 ? (out.spend / out.impressions) * 1000 : 0;
+  out.cpc = out.clicks > 0 ? out.spend / out.clicks : 0;
+  return out;
+}
+
+function getTodayInSydney() {
+  // Use the meta.last_updated date, treated as Sydney
+  const d = new Date(DATA.meta.last_updated);
+  // Format as YYYY-MM-DD
+  return d.toISOString().slice(0, 10);
+}
+
 // ============== RENDER ==============
-function renderDashboard(data) {
-  // Placeholder banner
-  if (data.meta.is_placeholder) {
-    document.getElementById("placeholder-banner").classList.remove("hidden");
+function applyFilters() {
+  const today = getTodayInSydney();
+
+  // 1. Get filtered ACCOUNT-level rows for KPIs and chart
+  let accountRows;
+  if (currentCampaignId === "all") {
+    accountRows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today));
+  } else {
+    const cRows = DATA.daily_rows.campaign[currentCampaignId] || [];
+    accountRows = cRows.filter(r => dateInPeriod(r.date, currentPeriod, today));
   }
 
-  // Header meta
-  const updatedDate = new Date(data.meta.last_updated);
-  document.getElementById("last-updated").textContent = updatedDate.toLocaleString("en-AU", {
-    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-  });
-  document.getElementById("report-subtitle").textContent =
-    `Account: ${data.meta.account_name} - Report for ${data.meta.report_for_date}`;
+  const totals = aggregate(accountRows);
 
-  // ----- Daily -----
-  const d = data.daily;
-  document.getElementById("daily-date-label").textContent = d.date;
-  document.getElementById("daily-spend").textContent = fmt.aud(d.spend);
-  document.getElementById("daily-results-label").textContent = d.result_type || "Results";
-  document.getElementById("daily-results").textContent = fmt.num(d.results);
-  document.getElementById("daily-cpr").textContent = fmt.audPrecise(d.cost_per_result);
-  document.getElementById("daily-ctr").textContent = fmt.pct(d.ctr, 2);
-  document.getElementById("daily-ctr-extra").textContent = `CPM: ${fmt.audPrecise(d.cpm)}`;
+  // ----- KPIs -----
+  document.getElementById("kpi-range").textContent = periodLabel(currentPeriod);
+  document.getElementById("kpi-spend").textContent = fmt.aud(totals.spend);
+  document.getElementById("kpi-spend-sub").textContent = totals.days > 0 ? `Avg ${fmt.aud(totals.spend / totals.days)}/day` : "-";
+  document.getElementById("kpi-results-label").textContent = totals.result_type;
+  document.getElementById("kpi-results").textContent = fmt.num(totals.results);
+  document.getElementById("kpi-results-sub").textContent = totals.days > 0 ? `${(totals.results / totals.days).toFixed(1)}/day avg` : "-";
+  document.getElementById("kpi-cpr").textContent = totals.cost_per_result > 0 ? fmt.audPrecise(totals.cost_per_result) : "-";
+  document.getElementById("kpi-impressions").textContent = fmt.num(totals.impressions);
+  document.getElementById("kpi-reach-sub").textContent = `CPM: ${fmt.audPrecise(totals.cpm)}`;
+  document.getElementById("kpi-clicks").textContent = fmt.num(totals.clicks);
+  document.getElementById("kpi-cpc-sub").textContent = totals.clicks > 0 ? `CPC: ${fmt.audPrecise(totals.cpc)}` : "-";
+  document.getElementById("kpi-ctr").textContent = fmt.pct(totals.ctr);
+  document.getElementById("kpi-cpm-sub").textContent = `${fmt.num(totals.impressions)} impressions`;
 
-  if (d.vs_yesterday) {
-    const ds = fmt.delta(d.vs_yesterday.spend_pct);
-    const dr = fmt.delta(d.vs_yesterday.results_pct);
-    const dc = fmt.delta(-1 * d.vs_yesterday.cpr_pct); // lower CPR is good, invert sign
-    document.getElementById("daily-spend-delta").textContent = ds.txt;
-    document.getElementById("daily-spend-delta").className = `delta ${ds.cls}`;
-    document.getElementById("daily-results-delta").textContent = dr.txt;
-    document.getElementById("daily-results-delta").className = `delta ${dr.cls}`;
-    const cprTxt = d.vs_yesterday.cpr_pct === 0 ? "vs day prior: flat" :
-      `vs day prior: ${d.vs_yesterday.cpr_pct > 0 ? "+" : ""}${d.vs_yesterday.cpr_pct.toFixed(0)}%`;
-    document.getElementById("daily-cpr-delta").textContent = cprTxt;
-    document.getElementById("daily-cpr-delta").className = `delta ${dc.cls}`;
+  // ----- Chart (daily spend) -----
+  renderChart(accountRows);
+
+  // ----- Campaign breakdown -----
+  renderCampaigns(today);
+
+  // ----- Creative rankings -----
+  renderCreatives(today);
+}
+
+function renderChart(rows) {
+  const chart = document.getElementById("chart-area");
+  chart.innerHTML = "";
+  // Sort by date ascending
+  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  document.getElementById("chart-caption").textContent = `${sorted.length} days`;
+
+  if (sorted.length === 0) {
+    chart.innerHTML = `<div style="margin: auto; color: var(--muted); font-family: 'Inter';">No data for this period</div>`;
+    return;
   }
 
-  // ----- Weekly -----
-  const w = data.weekly;
-  document.getElementById("weekly-range").textContent = w.range;
-  document.getElementById("weekly-spend").textContent = fmt.aud(w.spend);
-  document.getElementById("weekly-results").textContent = fmt.num(w.results);
-  document.getElementById("weekly-cpr").textContent = fmt.audPrecise(w.cost_per_result);
+  const maxSpend = Math.max(1, ...sorted.map(r => r.spend));
+  // For long periods, show fewer x-axis labels
+  const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 3 : sorted.length <= 90 ? 7 : 30;
 
-  // Build the bar chart
-  const chartEl = document.getElementById("weekly-chart");
-  chartEl.innerHTML = "";
-  const max = Math.max(1, ...w.daily_series.map(p => p.spend));
-  w.daily_series.forEach(point => {
-    const heightPct = max > 0 ? (point.spend / max) * 100 : 0;
+  sorted.forEach((row, idx) => {
+    const heightPct = (row.spend / maxSpend) * 100;
+    const showLabel = idx % labelEvery === 0 || idx === sorted.length - 1;
+    const dt = new Date(row.date + "T00:00:00");
+    const dateLabel = dt.toLocaleDateString("en-AU", { day: "2-digit", month: "short" });
+
     const group = document.createElement("div");
     group.className = "bar-group";
     group.innerHTML = `
-      <div class="bar" style="height: ${heightPct}%;" title="${point.date}: ${fmt.aud(point.spend)} - ${fmt.num(point.results)} results">
-        <div class="bar-value">${point.spend > 0 ? fmt.aud(point.spend) : ""}</div>
-      </div>
-      <div class="bar-label">${point.date}</div>
+      <div class="bar" style="height: ${heightPct}%;" title="${dateLabel}: ${fmt.aud(row.spend)} - ${fmt.num(row.results)} ${row.result_type}"></div>
+      ${showLabel ? `<div class="bar-label">${dateLabel}</div>` : ""}
     `;
-    chartEl.appendChild(group);
+    chart.appendChild(group);
+  });
+}
+
+function renderCampaigns(today) {
+  const tbody = document.getElementById("campaigns-body");
+
+  // Build aggregated rows per campaign for the active period
+  const rows = DATA.campaigns.map(c => {
+    const dailyRows = (DATA.daily_rows.campaign[c.id] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+    const agg = aggregate(dailyRows);
+    return {
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      ...agg,
+    };
+  }).filter(r => r.spend > 0 || r.status === "ACTIVE"); // Hide totally inactive campaigns with no spend
+
+  // Apply campaign slicer
+  let displayRows = rows;
+  if (currentCampaignId !== "all") {
+    displayRows = rows.filter(r => r.id === currentCampaignId);
+  }
+
+  // Sort
+  displayRows.sort((a, b) => sortFn(a, b, currentCampaignSort));
+
+  document.getElementById("campaigns-count").textContent = `${displayRows.length} campaign${displayRows.length === 1 ? "" : "s"}`;
+
+  if (displayRows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">No campaigns with activity in this period</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = displayRows.map(r => `
+    <tr>
+      <td><strong>${escapeHtml(r.name)}</strong></td>
+      <td>${statusPill(r.status)}</td>
+      <td class="num">${fmt.aud(r.spend)}</td>
+      <td class="num">${fmt.num(r.results)}</td>
+      <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
+      <td class="num">${fmt.pct(r.ctr)}</td>
+      <td class="num">${fmt.num(r.impressions)}</td>
+      <td class="num">${fmt.num(r.clicks)}</td>
+    </tr>
+  `).join("");
+
+  updateSortIcons("campaigns-body", currentCampaignSort);
+}
+
+function calculateCreativeScore(row, pool) {
+  // 0-100 score based on:
+  // - 50% inverted CPR (lower is better) vs pool min/max
+  // - 30% CTR (higher is better) vs pool min/max
+  // - 20% volume of results (higher is better) vs pool max
+  if (row.spend < 1) return 0; // ignore creatives with negligible spend
+
+  const validCpr = pool.filter(p => p.cost_per_result > 0).map(p => p.cost_per_result);
+  const ctrs = pool.map(p => p.ctr);
+  const results = pool.map(p => p.results);
+
+  const minCpr = Math.min(...validCpr, row.cost_per_result || Infinity);
+  const maxCpr = Math.max(...validCpr, 0.01);
+  const maxCtr = Math.max(...ctrs, 0.01);
+  const maxResults = Math.max(...results, 1);
+
+  // CPR component: 100 if best, 0 if worst
+  let cprScore = 0;
+  if (row.cost_per_result > 0 && validCpr.length) {
+    cprScore = ((maxCpr - row.cost_per_result) / Math.max(0.01, maxCpr - minCpr)) * 100;
+    cprScore = Math.max(0, Math.min(100, cprScore));
+  }
+  const ctrScore = (row.ctr / maxCtr) * 100;
+  const volScore = (row.results / maxResults) * 100;
+
+  let total;
+  if (row.results > 0 && row.cost_per_result > 0) {
+    total = cprScore * 0.5 + ctrScore * 0.3 + volScore * 0.2;
+  } else {
+    // For ads with no results, score on CTR + spend efficiency only
+    total = ctrScore * 0.6 + volScore * 0.4;
+  }
+
+  return Math.round(total);
+}
+
+function renderCreatives(today) {
+  const tbody = document.getElementById("creatives-body");
+
+  // Build per-ad rows aggregated for this period
+  const adMap = new Map(DATA.ads.map(a => [a.id, a]));
+  const campMap = new Map(DATA.campaigns.map(c => [c.id, c.name]));
+
+  let rows = [];
+  for (const [adId, ad] of adMap.entries()) {
+    // Filter by campaign slicer
+    if (currentCampaignId !== "all" && ad.campaign_id !== currentCampaignId) continue;
+
+    const dailyRows = (DATA.daily_rows.ad[adId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+    const agg = aggregate(dailyRows);
+    if (agg.spend === 0 && agg.impressions === 0) continue;
+
+    rows.push({
+      id: ad.id,
+      name: ad.name,
+      thumbnail: ad.thumbnail,
+      campaign_id: ad.campaign_id,
+      campaign_name: campMap.get(ad.campaign_id) || "Unknown",
+      status: ad.status,
+      ...agg,
+    });
+  }
+
+  // Calculate scores RELATIVE to the displayed pool (so ranks are meaningful within filter)
+  rows.forEach(r => { r.score = calculateCreativeScore(r, rows); });
+
+  // Sort
+  rows.sort((a, b) => sortFn(a, b, currentCreativeSort));
+
+  // Assign ranks based on score (always score-desc, regardless of sort)
+  const ranked = [...rows].sort((a, b) => b.score - a.score);
+  const rankMap = new Map(ranked.map((r, i) => [r.id, i + 1]));
+  rows.forEach(r => { r.rank = rankMap.get(r.id); });
+
+  document.getElementById("creatives-count").textContent = `${rows.length} creative${rows.length === 1 ? "" : "s"} with activity`;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">No creatives with activity in this period</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const rankClass = r.rank === 1 ? "gold" : r.rank === 2 ? "silver" : r.rank === 3 ? "bronze" : "";
+    const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
+    const thumb = r.thumbnail
+      ? `<img class="thumb" src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'thumb-placeholder\\'>${initial}</span>'">`
+      : `<span class="thumb-placeholder">${initial}</span>`;
+    return `
+      <tr>
+        <td><span class="rank-badge ${rankClass}">${r.rank}</span></td>
+        <td>
+          <div class="score-cell">
+            <div class="score-bar"><div class="score-bar-fill" style="width: ${r.score}%;"></div></div>
+            <span class="score-num">${r.score}</span>
+          </div>
+        </td>
+        <td>
+          <div class="creative-cell">
+            ${thumb}
+            <div class="creative-name" title="${escapeAttr(r.name)}">${escapeHtml(r.name)}</div>
+          </div>
+        </td>
+        <td>${escapeHtml(r.campaign_name)}</td>
+        <td>${statusPill(r.status)}</td>
+        <td class="num">${fmt.aud(r.spend)}</td>
+        <td class="num">${fmt.num(r.results)}</td>
+        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
+        <td class="num">${fmt.pct(r.ctr)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  updateSortIcons("creatives-body", currentCreativeSort);
+}
+
+function sortFn(a, b, sortState) {
+  const dir = sortState.dir === "asc" ? 1 : -1;
+  const v1 = a[sortState.col];
+  const v2 = b[sortState.col];
+  if (typeof v1 === "string" && typeof v2 === "string") {
+    return v1.localeCompare(v2) * dir;
+  }
+  return ((v1 || 0) - (v2 || 0)) * dir;
+}
+
+function updateSortIcons(bodyId, sortState) {
+  const table = document.getElementById(bodyId).closest("table");
+  table.querySelectorAll("th.sortable").forEach(th => {
+    th.classList.remove("sorted");
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === sortState.col) {
+      th.classList.add("sorted");
+      if (arrow) arrow.textContent = sortState.dir === "asc" ? "▲" : "▼";
+    } else {
+      if (arrow) arrow.textContent = "▼";
+    }
+  });
+}
+
+function statusPill(status) {
+  const s = (status || "").toUpperCase();
+  if (s === "ACTIVE") return `<span class="status-pill active">Active</span>`;
+  if (s === "PAUSED") return `<span class="status-pill paused">Paused</span>`;
+  return `<span class="status-pill other">${escapeHtml(status || "Unknown")}</span>`;
+}
+
+function escapeHtml(s) {
+  if (!s) return "";
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// ============== EVENT WIRING ==============
+function setupEvents() {
+  // Time pills
+  document.querySelectorAll(".time-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll(".time-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      currentPeriod = pill.dataset.period;
+      applyFilters();
+    });
   });
 
-  // ----- MTD -----
-  const m = data.mtd;
-  document.getElementById("mtd-month").textContent = m.month;
-  document.getElementById("mtd-spend").textContent = fmt.aud(m.spend);
-  document.getElementById("mtd-results").textContent = fmt.num(m.results);
-  document.getElementById("mtd-cpr").textContent = fmt.audPrecise(m.cost_per_result);
-  document.getElementById("mtd-days").textContent = `${m.days_elapsed} days elapsed`;
-  document.getElementById("mtd-pacing").textContent = m.pacing_note || "-";
+  // Campaign select
+  document.getElementById("campaign-select").addEventListener("change", e => {
+    currentCampaignId = e.target.value;
+    applyFilters();
+  });
 
-  // ----- Top ads -----
-  const topBody = document.getElementById("top-ads-body");
-  if (!data.top_ads || data.top_ads.length === 0) {
-    topBody.innerHTML = `<tr><td colspan="4" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
-  } else {
-    topBody.innerHTML = data.top_ads.map(ad => `
-      <tr>
-        <td>${ad.name}</td>
-        <td class="num">${fmt.aud(ad.spend)}</td>
-        <td class="num">${fmt.num(ad.results)}</td>
-        <td class="num">${fmt.audPrecise(ad.cost_per_result)}</td>
-      </tr>
-    `).join("");
-  }
+  // Sort headers - delegated by table id
+  document.querySelectorAll("#campaigns-body").forEach(tb => {
+    tb.closest("table").querySelectorAll("th.sortable").forEach(th => {
+      th.addEventListener("click", () => {
+        const col = th.dataset.sort;
+        if (currentCampaignSort.col === col) {
+          currentCampaignSort.dir = currentCampaignSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          currentCampaignSort = { col, dir: "desc" };
+        }
+        applyFilters();
+      });
+    });
+  });
+  document.querySelectorAll("#creatives-body").forEach(tb => {
+    tb.closest("table").querySelectorAll("th.sortable").forEach(th => {
+      th.addEventListener("click", () => {
+        const col = th.dataset.sort;
+        if (currentCreativeSort.col === col) {
+          currentCreativeSort.dir = currentCreativeSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          currentCreativeSort = { col, dir: "desc" };
+        }
+        applyFilters();
+      });
+    });
+  });
 
-  // ----- Bottom ads -----
-  const botBody = document.getElementById("bottom-ads-body");
-  if (!data.bottom_ads || data.bottom_ads.length === 0) {
-    botBody.innerHTML = `<tr><td colspan="4" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
-  } else {
-    botBody.innerHTML = data.bottom_ads.map(ad => `
-      <tr>
-        <td>${ad.name}</td>
-        <td class="num">${fmt.aud(ad.spend)}</td>
-        <td class="num">${fmt.num(ad.results)}</td>
-        <td class="num">${fmt.audPrecise(ad.cost_per_result)}</td>
-      </tr>
-    `).join("");
-  }
-
-  // ----- Campaigns -----
-  const campBody = document.getElementById("campaigns-body");
-  if (!data.campaigns || data.campaigns.length === 0) {
-    campBody.innerHTML = `<tr><td colspan="6" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
-  } else {
-    campBody.innerHTML = data.campaigns.map(c => `
-      <tr>
-        <td>${c.name}</td>
-        <td>${c.status}</td>
-        <td class="num">${fmt.aud(c.spend)}</td>
-        <td class="num">${fmt.num(c.results)}</td>
-        <td class="num">${fmt.audPrecise(c.cost_per_result)}</td>
-        <td class="num">${fmt.aud(c.daily_budget)}</td>
-      </tr>
-    `).join("");
-  }
+  // Slack button
+  document.getElementById("slack-btn").addEventListener("click", sendToSlack);
 }
 
-// ============== TOAST ==============
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3500);
-}
-
-// ============== SLACK BUTTON ==============
-document.getElementById("slack-btn").addEventListener("click", async () => {
+async function sendToSlack() {
   const btn = document.getElementById("slack-btn");
   const txt = document.getElementById("slack-btn-text");
   btn.disabled = true;
   txt.textContent = "Sending...";
 
-  // Build a clean Slack message with the dashboard URL and key numbers
-  const data = window.__dashboardData || {};
-  const url = window.location.href.split("?")[0]; // strip cache-busters
-  const dailyDate = data?.daily?.date || "today";
-  const spend = data?.daily?.spend ? fmt.aud(data.daily.spend) : "-";
-  const results = data?.daily?.results ?? "-";
-  const cpr = data?.daily?.cost_per_result ? fmt.audPrecise(data.daily.cost_per_result) : "-";
-  const isPlaceholder = data?.meta?.is_placeholder;
+  const url = window.location.href.split("?")[0];
+  const today = getTodayInSydney();
+  const accountRows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today));
+  const t = aggregate(accountRows);
+  const periodTxt = periodLabel(currentPeriod);
+  const campaignTxt = currentCampaignId === "all" ? "All campaigns"
+    : DATA.campaigns.find(c => c.id === currentCampaignId)?.name || "Unknown";
 
-  const message = isPlaceholder
-    ? {
-        text: `Alaya Ads Dashboard - template preview\nDashboard: ${url}\n(Live data from 2 June 2026)`
-      }
-    : {
-        text: `Alaya Ads Daily - ${dailyDate}\nSpend: ${spend} | Results: ${results} | CPR: ${cpr}\nFull dashboard: ${url}`
-      };
+  const message = {
+    text: `Alaya Ads Dashboard - ${periodTxt}\nCampaign: ${campaignTxt}\nSpend: ${fmt.aud(t.spend)} | ${t.result_type}: ${fmt.num(t.results)} | CPR: ${t.cost_per_result > 0 ? fmt.audPrecise(t.cost_per_result) : "-"}\nFull dashboard: ${url}`
+  };
 
   try {
-    // Slack accepts CORS-less posts as 'no-cors'. We can't read the response, but it does send.
     await fetch(SLACK_WEBHOOK, {
       method: "POST",
       mode: "no-cors",
@@ -667,37 +870,61 @@ document.getElementById("slack-btn").addEventListener("click", async () => {
     btn.classList.add("sent");
     txt.textContent = "Sent to Slack";
     showToast("Message posted to Slack");
-    setTimeout(() => {
-      btn.classList.remove("sent");
-      txt.textContent = "Send to Slack";
-      btn.disabled = false;
-    }, 4000);
+    setTimeout(() => { btn.classList.remove("sent"); txt.textContent = "Send to Slack"; btn.disabled = false; }, 4000);
   } catch (err) {
     btn.classList.add("error");
     txt.textContent = "Error - try again";
-    showToast("Failed to post to Slack: " + err.message);
-    setTimeout(() => {
-      btn.classList.remove("error");
-      txt.textContent = "Send to Slack";
-      btn.disabled = false;
-    }, 4000);
+    showToast("Failed to post: " + err.message);
+    setTimeout(() => { btn.classList.remove("error"); txt.textContent = "Send to Slack"; btn.disabled = false; }, 4000);
   }
-});
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
 
 // ============== BOOTSTRAP ==============
+function populateCampaignSelect() {
+  const select = document.getElementById("campaign-select");
+  // Sort campaigns by name
+  const sorted = [...DATA.campaigns].sort((a, b) => a.name.localeCompare(b.name));
+  for (const c of sorted) {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.name;
+    select.appendChild(opt);
+  }
+}
+
 (async function init() {
   try {
-    // Cache-bust so we always get the latest data.json
     const res = await fetch(`data.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    window.__dashboardData = data;
-    renderDashboard(data);
+    DATA = await res.json();
+
+    // Header info
+    const updatedDate = new Date(DATA.meta.last_updated);
+    document.getElementById("last-updated").textContent = updatedDate.toLocaleString("en-AU", {
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+    document.getElementById("report-subtitle").textContent =
+      `${DATA.meta.account_name} - ${DATA.campaigns.length} campaigns, ${DATA.ads.length} ads tracked`;
+
+    populateCampaignSelect();
+    setupEvents();
+
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    applyFilters();
   } catch (err) {
-    document.querySelector(".page").insertAdjacentHTML("afterbegin",
-      `<div class="placeholder-banner" style="background: #fee2e2; border-color: #fca5a5; color: #991b1b;">
-        <strong>Could not load data.json -</strong>&nbsp;${err.message}
-      </div>`);
+    document.getElementById("loader").innerHTML =
+      `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+        <strong>Could not load data.json -</strong> ${err.message}
+        <div style="margin-top: 8px; font-size: 12px;">If this is the first run, the GitHub Action may still be populating data. Check the Actions tab.</div>
+      </div>`;
   }
 })();
 </script>
