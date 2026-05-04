@@ -1,52 +1,170 @@
 {
   "meta": {
-    "last_updated": "2026-05-04T00:00:00+10:00",
-    "report_for_date": "PLACEHOLDER",
+    "last_updated": "2026-05-04T23:51:45.976507+10:00",
+    "report_for_date": "Sun 03 May 2026",
     "currency": "AUD",
-    "account_name": "Alaya Property",
-    "is_placeholder": true,
-    "note": "This is template data. Real Meta Ads numbers will be populated starting 2 June 2026 once the AdAdvisor monthly tool limit resets."
+    "account_name": "Alaya Ad Account",
+    "is_placeholder": false,
+    "note": ""
   },
   "daily": {
-    "date": "PLACEHOLDER",
-    "spend": 0,
-    "results": 0,
-    "result_type": "Leads",
-    "cost_per_result": 0,
-    "impressions": 0,
-    "clicks": 0,
-    "ctr": 0,
-    "cpm": 0,
+    "date": "Sun 03 May",
+    "spend": 426.02,
+    "results": 291,
+    "result_type": "Link Clicks",
+    "cost_per_result": 1.46,
+    "impressions": 9097,
+    "clicks": 632,
+    "ctr": 6.95,
+    "cpm": 46.83,
     "vs_yesterday": {
-      "spend_pct": 0,
-      "results_pct": 0,
-      "cpr_pct": 0
+      "spend_pct": 49.7,
+      "results_pct": 39.2,
+      "cpr_pct": 7.5
     }
   },
   "weekly": {
-    "range": "PLACEHOLDER",
-    "spend": 0,
-    "results": 0,
-    "cost_per_result": 0,
+    "range": "27 Apr - 03 May",
+    "spend": 2605.99,
+    "results": 1893,
+    "cost_per_result": 1.38,
     "daily_series": [
-      { "date": "Day -6", "spend": 0, "results": 0 },
-      { "date": "Day -5", "spend": 0, "results": 0 },
-      { "date": "Day -4", "spend": 0, "results": 0 },
-      { "date": "Day -3", "spend": 0, "results": 0 },
-      { "date": "Day -2", "spend": 0, "results": 0 },
-      { "date": "Day -1", "spend": 0, "results": 0 },
-      { "date": "Today",  "spend": 0, "results": 0 }
+      {
+        "date": "Mon 27",
+        "spend": 420.26,
+        "results": 326
+      },
+      {
+        "date": "Tue 28",
+        "spend": 372.68,
+        "results": 300
+      },
+      {
+        "date": "Wed 29",
+        "spend": 357.37,
+        "results": 245
+      },
+      {
+        "date": "Thu 30",
+        "spend": 357.22,
+        "results": 236
+      },
+      {
+        "date": "Fri 01",
+        "spend": 387.85,
+        "results": 286
+      },
+      {
+        "date": "Sat 02",
+        "spend": 284.59,
+        "results": 209
+      },
+      {
+        "date": "Sun 03",
+        "spend": 426.02,
+        "results": 291
+      }
     ]
   },
   "mtd": {
-    "month": "PLACEHOLDER",
-    "spend": 0,
-    "results": 0,
-    "cost_per_result": 0,
-    "days_elapsed": 0,
-    "pacing_note": "PLACEHOLDER"
+    "month": "May 2026",
+    "spend": 1098.46,
+    "results": 786,
+    "cost_per_result": 1.4,
+    "days_elapsed": 3,
+    "pacing_note": "Pacing ~366 AUD/day"
   },
-  "top_ads": [],
-  "bottom_ads": [],
-  "campaigns": []
+  "top_ads": [
+    {
+      "name": "AC10 / Eaglehawk / Reel",
+      "spend": 69.42,
+      "results": 277,
+      "cost_per_result": 0.25
+    },
+    {
+      "name": "AC14 / Regions / Reel",
+      "spend": 69.87,
+      "results": 241,
+      "cost_per_result": 0.29
+    },
+    {
+      "name": "AC11 / Kennington / Reel",
+      "spend": 70.45,
+      "results": 195,
+      "cost_per_result": 0.36
+    },
+    {
+      "name": "AC09 / PureResults / Caro_APPT / VERC",
+      "spend": 52.15,
+      "results": 35,
+      "cost_per_result": 1.49
+    },
+    {
+      "name": "AC18 / FlipScript / Reel",
+      "spend": 1.62,
+      "results": 1,
+      "cost_per_result": 1.62
+    }
+  ],
+  "bottom_ads": [
+    {
+      "name": "AC06 / FastAcquire / Reel / LVB",
+      "spend": 2.54,
+      "results": 0,
+      "cost_per_result": 0
+    },
+    {
+      "name": "AC03 / LeadSignals / Reel / LVB",
+      "spend": 1.22,
+      "results": 0,
+      "cost_per_result": 0
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "120245122336240134",
+      "name": "[2026.04.10] SW / Unified / Leads",
+      "status": "ACTIVE",
+      "spend": 2042.79,
+      "results": 967,
+      "cost_per_result": 2.11,
+      "daily_budget": 300.0
+    },
+    {
+      "id": "120245876704840134",
+      "name": "[2026.04.22] SW / MelbAptLM / Leads",
+      "status": "ACTIVE",
+      "spend": 353.46,
+      "results": 213,
+      "cost_per_result": 1.66,
+      "daily_budget": 50.0
+    },
+    {
+      "id": "120244064020700134",
+      "name": "[2026.03.25] SW / HiPerfReels / Traffic",
+      "status": "ACTIVE",
+      "spend": 209.74,
+      "results": 713,
+      "cost_per_result": 0.29,
+      "daily_budget": 0.0
+    },
+    {
+      "id": "120244638846780134",
+      "name": "[2026.04.03] SW / Relaunch / Leads",
+      "status": "PAUSED",
+      "spend": 0.0,
+      "results": 0,
+      "cost_per_result": 0,
+      "daily_budget": 0.0
+    },
+    {
+      "id": "120244060679430134",
+      "name": "[2026.03.25] SW / Batch01 / Leads VSL",
+      "status": "PAUSED",
+      "spend": 0.0,
+      "results": 0,
+      "cost_per_result": 0,
+      "daily_budget": 300.0
+    }
+  ]
 }
