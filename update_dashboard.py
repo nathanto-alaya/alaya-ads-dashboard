@@ -339,6 +339,26 @@ def main():
     adsets_meta = [a for a in adsets_meta if a.get("effective_status") != "DELETED"]
     log(f"  -> {len(adsets_meta)} ad sets")
 
+    # ===== DEBUG: dump ad set config so we can see how Meta defines the canonical event =====
+    log("=" * 70)
+    log("DEBUG: AD SET CONFIG (optimization_goal + promoted_object per ad set)")
+    log("=" * 70)
+    campaign_name_lookup_pre = {c["id"]: c["name"] for c in campaigns}
+    for ads in adsets_meta:
+        if ads.get("effective_status") not in ("ACTIVE", "PAUSED"):
+            continue
+        cname = campaign_name_lookup_pre.get(ads.get("campaign_id"), "?")
+        log(f"")
+        log(f"AD SET: {ads.get('name')}  (campaign: {cname})")
+        log(f"  optimization_goal: {ads.get('optimization_goal')}")
+        log(f"  destination_type: {ads.get('destination_type')}")
+        log(f"  billing_event: {ads.get('billing_event')}")
+        log(f"  promoted_object: {json.dumps(ads.get('promoted_object'))}")
+    log("=" * 70)
+    log("END AD SET DUMP")
+    log("=" * 70)
+    # ===== END DEBUG =====
+
     # Build adset_id -> (canonical_event_type, label) lookup
     adset_event_lookup = {}
     for ads in adsets_meta:
@@ -423,6 +443,44 @@ def main():
 
     log("Fetching campaign-level daily rows (365 days)...")
     campaign_daily_raw = get_daily_insights("campaign", start_date, yesterday)
+
+    # ===== DEBUG: dump raw action data so we can see what Meta returns =====
+    log("=" * 70)
+    log("DEBUG: RAW ACTION DATA PER CAMPAIGN (for fixing result-type detection)")
+    log("=" * 70)
+    campaign_name_lookup = {c["id"]: c["name"] for c in campaigns}
+    seen_campaigns = set()
+    for r in campaign_daily_raw:
+        cid = r.get("campaign_id")
+        if cid in seen_campaigns:
+            continue
+        # Only dump rows that have actions (i.e. spent + had activity)
+        actions = r.get("actions") or []
+        if not actions:
+            continue
+        seen_campaigns.add(cid)
+        cname = campaign_name_lookup.get(cid, "?")
+        c_hint = campaign_event_lookup.get(cid, (None, None))
+        log(f"")
+        log(f"CAMPAIGN: {cname}")
+        log(f"  Hint event: {c_hint[0]}")
+        log(f"  Hint label: {c_hint[1]}")
+        log(f"  Date sampled: {r.get('date_start')}, Spend: {r.get('spend')}")
+        log(f"  Action types present in this row:")
+        for a in actions:
+            log(f"    - {a.get('action_type')}: {a.get('value')}")
+        # Also dump cost_per_action_type so we see what events Meta charges against
+        cpa = r.get("cost_per_action_type") or []
+        if cpa:
+            log(f"  Cost-per-action types:")
+            for a in cpa:
+                log(f"    - {a.get('action_type')}: ${a.get('value')}")
+    log("")
+    log("=" * 70)
+    log("END DEBUG DUMP")
+    log("=" * 70)
+    # ===== END DEBUG =====
+
     campaign_daily = {}
     for r in campaign_daily_raw:
         cid = r.get("campaign_id")
