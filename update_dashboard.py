@@ -138,14 +138,20 @@ def derive_canonical_event(adset):
 def extract_results(row, hint_event=None, hint_label=None):
     """
     Extract result count + cost per result from an insights row.
-    If hint_event is provided, that's the canonical event we want.
-    Falls back to a priority list when no hint or hint is missing in row.
+    The hint is the CANONICAL label we want (e.g. 'Website Submit Application').
+    Strategy:
+      1. Try the exact hint event - perfect match.
+      2. If not found, look for ANY event of the same family (lead-like, purchase-like, etc.)
+         based on hint_label, and return its count BUT keep the canonical label.
+      3. If the hint type is engagement/clicks, only count those events.
+      4. Fall back to broad priority list with no hint.
+    Never falls through to Page Engagement when a real conversion goal exists.
     """
     actions = row.get("actions") or []
     cost_per = {a["action_type"]: safe_float(a["value"]) for a in (row.get("cost_per_action_type") or [])}
     action_counts = {a["action_type"]: safe_float(a["value"]) for a in actions}
 
-    # ---- HINT PATH: try the canonical event first ----
+    # ---- HINT PATH ----
     if hint_event and hint_event in action_counts:
         count = action_counts[hint_event]
         cpr = cost_per.get(hint_event, 0)
@@ -153,14 +159,67 @@ def extract_results(row, hint_event=None, hint_label=None):
             cpr = safe_float(row.get("spend", 0)) / count
         return count, hint_label or "Results", cpr
 
-    # If hint event was provided but doesn't appear in this row,
-    # we still trust the hint label (so it doesn't fall through to "Page Engagement"
-    # just because the ad got a few page likes that day).
+    # If hint exists but exact event wasn't in the row, try EQUIVALENT events
+    # of the same family. We keep the canonical label either way.
     if hint_event and hint_label:
-        # No conversions yet for the hinted event - return zero with the correct label
+        label_lower = hint_label.lower()
+
+        # Lead-family fallback events (any lead event counts as canonical leads/applications)
+        lead_family = [
+            "offsite_conversion.fb_pixel_lead",
+            "onsite_conversion.lead_grouped",
+            "lead",
+            "offsite_conversion.fb_pixel_complete_registration",
+            "complete_registration",
+        ]
+        # Purchase-family
+        purchase_family = [
+            "offsite_conversion.fb_pixel_purchase",
+            "purchase",
+            "onsite_web_purchase",
+        ]
+
+        # Determine which family this hint belongs to
+        is_lead_like = any(k in label_lower for k in [
+            "lead", "application", "submit", "registration", "signup", "booking", "enquiry"
+        ])
+        is_purchase_like = any(k in label_lower for k in ["purchase", "sale", "order"])
+        is_traffic_like = any(k in label_lower for k in [
+            "click", "visit", "page view", "landing"
+        ])
+        is_engagement_like = any(k in label_lower for k in [
+            "engagement", "video view", "post"
+        ])
+
+        # Also include ANY custom conversion event present in the row,
+        # in case Meta reports the conversion under a slightly different custom name
+        custom_in_row = [k for k in action_counts.keys() if k.startswith("offsite_conversion.custom.")]
+
+        family_events = []
+        if is_lead_like:
+            family_events = custom_in_row + lead_family
+        elif is_purchase_like:
+            family_events = custom_in_row + purchase_family
+        elif is_traffic_like:
+            family_events = ["link_click", "landing_page_view"]
+        elif is_engagement_like:
+            family_events = ["post_engagement", "page_engagement", "video_view"]
+        else:
+            family_events = custom_in_row + lead_family
+
+        for ev in family_events:
+            if ev in action_counts and action_counts[ev] > 0:
+                count = action_counts[ev]
+                cpr = cost_per.get(ev, 0)
+                if not cpr and count > 0:
+                    cpr = safe_float(row.get("spend", 0)) / count
+                # Return with the CANONICAL label so the dashboard stays consistent
+                return count, hint_label, cpr
+
+        # No conversions of this family on this day - zero with canonical label
         return 0, hint_label, 0
 
-    # ---- FALLBACK PATH: only used when no hint (e.g. ad has no ad set lookup) ----
+    # ---- NO HINT (fallback for orphan rows) ----
     fallback_priority = [
         ("offsite_conversion.fb_pixel_lead", "Leads"),
         ("offsite_conversion.fb_pixel_purchase", "Purchases"),
@@ -170,7 +229,6 @@ def extract_results(row, hint_event=None, hint_label=None):
         ("purchase", "Purchases"),
         ("complete_registration", "Registrations"),
     ]
-    # Custom events take precedence over generic ones in fallback mode too
     custom_keys = [k for k in action_counts.keys() if k.startswith("offsite_conversion.custom.")]
     for ck in custom_keys:
         pretty = ck.replace("offsite_conversion.custom.", "").replace("_", " ").title()

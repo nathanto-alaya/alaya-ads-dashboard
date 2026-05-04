@@ -571,13 +571,24 @@ function applyFilters() {
   document.getElementById("kpi-cpm-sub").textContent = `All CTR: ${fmt.pct(totals.ctr)}`;
 
   // ----- Chart (daily spend) -----
-  renderChart(accountRows);
+  try { renderChart(accountRows); }
+  catch (e) { console.error("renderChart failed:", e); }
 
   // ----- Campaign breakdown -----
-  renderCampaigns(today);
+  try { renderCampaigns(today); }
+  catch (e) {
+    console.error("renderCampaigns failed:", e);
+    document.getElementById("campaigns-body").innerHTML =
+      `<tr><td colspan="9" class="empty">Error rendering campaigns: ${e.message}</td></tr>`;
+  }
 
   // ----- Creative rankings -----
-  renderCreatives(today);
+  try { renderCreatives(today); }
+  catch (e) {
+    console.error("renderCreatives failed:", e);
+    document.getElementById("creatives-body").innerHTML =
+      `<tr><td colspan="11" class="empty">Error rendering creatives: ${e.message}</td></tr>`;
+  }
 }
 
 function renderChart(rows) {
@@ -748,7 +759,7 @@ function renderCreatives(today) {
   document.getElementById("creatives-count").textContent = `${rows.length} creative${rows.length === 1 ? "" : "s"} with activity`;
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty">No creatives with activity in this period</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty">No creatives with activity in this period</td></tr>`;
     return;
   }
 
