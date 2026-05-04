@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alaya Ads Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --alaya-royal-blue: #1A1C8F;
+  --alaya-deep-navy: #0D0E5C;
+  --alaya-mid-blue: #2428B8;
+  --alaya-blue-tint: #E8E9F8;
+  --alaya-white: #FFFFFF;
+  --ink: #0D0E5C;
+  --muted: #6b6f8a;
+  --border: #d8daf0;
+  --bg: #f7f8ff;
+  --good: #16a34a;
+  --bad: #dc2626;
+  --neutral: #6b6f8a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* ===== Header ===== */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, var(--alaya-royal-blue), var(--alaya-deep-navy));
+  border-radius: 18px;
+  color: var(--alaya-white);
+  margin-bottom: 24px;
+  box-shadow: 0 12px 32px rgba(13,14,92,0.18);
+}
+.header-left .eyebrow {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--alaya-blue-tint);
+  margin-bottom: 8px;
+}
+.header-left h1 {
+  font-family: 'Figtree', sans-serif;
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.header-left .subtitle {
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  color: var(--alaya-blue-tint);
+  margin-top: 8px;
+}
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.last-updated {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--alaya-blue-tint);
+}
+.last-updated strong { color: var(--alaya-white); font-weight: 600; }
+
+#slack-btn {
+  font-family: 'Figtree', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  background: var(--alaya-white);
+  color: var(--alaya-royal-blue);
+  border: none;
+  padding: 12px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+#slack-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+#slack-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+#slack-btn.sent { background: #16a34a; color: white; }
+#slack-btn.error { background: #dc2626; color: white; }
+#slack-btn .icon { width: 16px; height: 16px; }
+
+/* ===== Placeholder banner ===== */
+.placeholder-banner {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.placeholder-banner.hidden { display: none; }
+
+/* ===== Section titles ===== */
+.section-title {
+  font-family: 'Figtree', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin: 32px 0 14px;
+  color: var(--alaya-deep-navy);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.section-title .meta-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ===== KPI grid ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.kpi-card {
+  background: var(--alaya-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  position: relative;
+}
+.kpi-card .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.kpi-card .value {
+  font-family: 'Figtree', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  color: var(--alaya-deep-navy);
+  line-height: 1.1;
+}
+.kpi-card .delta {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.delta.up { color: var(--good); }
+.delta.down { color: var(--bad); }
+.delta.flat { color: var(--neutral); }
+
+/* ===== Weekly chart ===== */
+.chart-card {
+  background: var(--alaya-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+}
+.chart-area {
+  position: relative;
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  height: 100%;
+  justify-content: flex-end;
+}
+.bar {
+  width: 70%;
+  background: linear-gradient(180deg, var(--alaya-mid-blue), var(--alaya-royal-blue));
+  border-radius: 6px 6px 0 0;
+  min-height: 2px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.bar:hover { filter: brightness(1.1); }
+.bar-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--alaya-deep-navy);
+  position: absolute;
+  top: -18px;
+  white-space: nowrap;
+}
+.bar-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  position: absolute;
+  bottom: -22px;
+  white-space: nowrap;
+}
+
+/* ===== Tables ===== */
+.table-wrap {
+  background: var(--alaya-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; }
+thead {
+  background: var(--alaya-blue-tint);
+  color: var(--alaya-deep-navy);
+}
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+td { padding: 14px 16px; border-top: 1px solid var(--border); color: var(--alaya-deep-navy); }
+tbody tr:hover { background: #fafbff; }
+td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ===== Two-column row for top/bottom ===== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .two-col { grid-template-columns: 1fr; }
+  .header-right { align-items: flex-start; width: 100%; }
+}
+
+/* ===== Footer ===== */
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.footer a { color: var(--alaya-royal-blue); text-decoration: none; }
+
+/* Toast for Slack feedback */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--alaya-deep-navy);
+  color: white;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+  z-index: 100;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============== HEADER ============== -->
+  <header class="header">
+    <div class="header-left">
+      <div class="eyebrow">Alaya Property</div>
+      <h1>Ads Performance</h1>
+      <div class="subtitle" id="report-subtitle">Daily snapshot of Meta Ads activity</div>
+    </div>
+    <div class="header-right">
+      <div class="last-updated">Last updated: <strong id="last-updated">-</strong></div>
+      <button id="slack-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+        </svg>
+        <span id="slack-btn-text">Send to Slack</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============== PLACEHOLDER BANNER ============== -->
+  <div id="placeholder-banner" class="placeholder-banner hidden">
+    <strong>Template mode -</strong>&nbsp;Live Meta Ads data will populate from 2 June 2026 once the data feed resets. The structure below is what you will see each morning.
+  </div>
+
+  <!-- ============== DAILY ============== -->
+  <h2 class="section-title">
+    Yesterday
+    <span class="meta-label" id="daily-date-label">-</span>
+  </h2>
+  <div class="kpi-grid" id="daily-grid">
+    <div class="kpi-card">
+      <div class="label">Spend</div>
+      <div class="value" id="daily-spend">-</div>
+      <div class="delta flat" id="daily-spend-delta">vs day prior: -</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label" id="daily-results-label">Results</div>
+      <div class="value" id="daily-results">-</div>
+      <div class="delta flat" id="daily-results-delta">vs day prior: -</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Cost per Result</div>
+      <div class="value" id="daily-cpr">-</div>
+      <div class="delta flat" id="daily-cpr-delta">vs day prior: -</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">CTR</div>
+      <div class="value" id="daily-ctr">-</div>
+      <div class="delta flat" id="daily-ctr-extra">CPM: -</div>
+    </div>
+  </div>
+
+  <!-- ============== WEEKLY ============== -->
+  <h2 class="section-title">
+    Last 7 Days
+    <span class="meta-label" id="weekly-range">-</span>
+  </h2>
+  <div class="chart-card">
+    <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap: 14px;">
+      <div class="kpi-card">
+        <div class="label">7-day Spend</div>
+        <div class="value" id="weekly-spend">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">7-day Results</div>
+        <div class="value" id="weekly-results">-</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">7-day Avg CPR</div>
+        <div class="value" id="weekly-cpr">-</div>
+      </div>
+    </div>
+    <div class="chart-area" id="weekly-chart"></div>
+    <div style="font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 32px;">Daily spend (AUD) - hover bars for details</div>
+  </div>
+
+  <!-- ============== MTD ============== -->
+  <h2 class="section-title">
+    Month to Date
+    <span class="meta-label" id="mtd-month">-</span>
+  </h2>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="label">MTD Spend</div>
+      <div class="value" id="mtd-spend">-</div>
+      <div class="delta flat" id="mtd-pacing">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">MTD Results</div>
+      <div class="value" id="mtd-results">-</div>
+      <div class="delta flat" id="mtd-days">- days elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">MTD Avg CPR</div>
+      <div class="value" id="mtd-cpr">-</div>
+      <div class="delta flat">Across all active campaigns</div>
+    </div>
+  </div>
+
+  <!-- ============== TOP / BOTTOM ADS ============== -->
+  <h2 class="section-title">Top &amp; Bottom Performers (last 7 days)</h2>
+  <div class="two-col">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50%;">Top Ads</th>
+            <th>Spend</th>
+            <th>Results</th>
+            <th>CPR</th>
+          </tr>
+        </thead>
+        <tbody id="top-ads-body">
+          <tr><td colspan="4" class="empty">Loading top ads -</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50%;">Bottom Ads</th>
+            <th>Spend</th>
+            <th>Results</th>
+            <th>CPR</th>
+          </tr>
+        </thead>
+        <tbody id="bottom-ads-body">
+          <tr><td colspan="4" class="empty">Loading bottom ads -</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============== CAMPAIGNS ============== -->
+  <h2 class="section-title">Campaigns (last 7 days)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40%;">Campaign</th>
+          <th>Status</th>
+          <th>Spend</th>
+          <th>Results</th>
+          <th>CPR</th>
+          <th>Daily Budget</th>
+        </tr>
+      </thead>
+      <tbody id="campaigns-body">
+        <tr><td colspan="6" class="empty">Loading campaigns -</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============== FOOTER ============== -->
+  <div class="footer">
+    Alaya Property &middot; Internal ads dashboard &middot; Updated daily by Claude
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============== CONFIG ==============
+const SLACK_WEBHOOK = "https://hooks.slack.com/services/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";
+
+// ============== UTILITIES ==============
+const fmt = {
+  aud(n) {
+    if (n === null || n === undefined || isNaN(n)) return "-";
+    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
+  },
+  audPrecise(n) {
+    if (n === null || n === undefined || isNaN(n)) return "-";
+    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 2 }).format(n);
+  },
+  num(n) {
+    if (n === null || n === undefined || isNaN(n)) return "-";
+    return new Intl.NumberFormat("en-AU").format(n);
+  },
+  pct(n, decimals = 1) {
+    if (n === null || n === undefined || isNaN(n)) return "-";
+    return `${n.toFixed(decimals)}%`;
+  },
+  delta(n) {
+    if (n === null || n === undefined || isNaN(n) || n === 0) return { txt: "vs day prior: flat", cls: "flat" };
+    const sign = n > 0 ? "+" : "";
+    return {
+      txt: `vs day prior: ${sign}${n.toFixed(0)}%`,
+      cls: n > 0 ? "up" : "down"
+    };
+  }
+};
+
+// ============== RENDER ==============
+function renderDashboard(data) {
+  // Placeholder banner
+  if (data.meta.is_placeholder) {
+    document.getElementById("placeholder-banner").classList.remove("hidden");
+  }
+
+  // Header meta
+  const updatedDate = new Date(data.meta.last_updated);
+  document.getElementById("last-updated").textContent = updatedDate.toLocaleString("en-AU", {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+  document.getElementById("report-subtitle").textContent =
+    `Account: ${data.meta.account_name} - Report for ${data.meta.report_for_date}`;
+
+  // ----- Daily -----
+  const d = data.daily;
+  document.getElementById("daily-date-label").textContent = d.date;
+  document.getElementById("daily-spend").textContent = fmt.aud(d.spend);
+  document.getElementById("daily-results-label").textContent = d.result_type || "Results";
+  document.getElementById("daily-results").textContent = fmt.num(d.results);
+  document.getElementById("daily-cpr").textContent = fmt.audPrecise(d.cost_per_result);
+  document.getElementById("daily-ctr").textContent = fmt.pct(d.ctr, 2);
+  document.getElementById("daily-ctr-extra").textContent = `CPM: ${fmt.audPrecise(d.cpm)}`;
+
+  if (d.vs_yesterday) {
+    const ds = fmt.delta(d.vs_yesterday.spend_pct);
+    const dr = fmt.delta(d.vs_yesterday.results_pct);
+    const dc = fmt.delta(-1 * d.vs_yesterday.cpr_pct); // lower CPR is good, invert sign
+    document.getElementById("daily-spend-delta").textContent = ds.txt;
+    document.getElementById("daily-spend-delta").className = `delta ${ds.cls}`;
+    document.getElementById("daily-results-delta").textContent = dr.txt;
+    document.getElementById("daily-results-delta").className = `delta ${dr.cls}`;
+    const cprTxt = d.vs_yesterday.cpr_pct === 0 ? "vs day prior: flat" :
+      `vs day prior: ${d.vs_yesterday.cpr_pct > 0 ? "+" : ""}${d.vs_yesterday.cpr_pct.toFixed(0)}%`;
+    document.getElementById("daily-cpr-delta").textContent = cprTxt;
+    document.getElementById("daily-cpr-delta").className = `delta ${dc.cls}`;
+  }
+
+  // ----- Weekly -----
+  const w = data.weekly;
+  document.getElementById("weekly-range").textContent = w.range;
+  document.getElementById("weekly-spend").textContent = fmt.aud(w.spend);
+  document.getElementById("weekly-results").textContent = fmt.num(w.results);
+  document.getElementById("weekly-cpr").textContent = fmt.audPrecise(w.cost_per_result);
+
+  // Build the bar chart
+  const chartEl = document.getElementById("weekly-chart");
+  chartEl.innerHTML = "";
+  const max = Math.max(1, ...w.daily_series.map(p => p.spend));
+  w.daily_series.forEach(point => {
+    const heightPct = max > 0 ? (point.spend / max) * 100 : 0;
+    const group = document.createElement("div");
+    group.className = "bar-group";
+    group.innerHTML = `
+      <div class="bar" style="height: ${heightPct}%;" title="${point.date}: ${fmt.aud(point.spend)} - ${fmt.num(point.results)} results">
+        <div class="bar-value">${point.spend > 0 ? fmt.aud(point.spend) : ""}</div>
+      </div>
+      <div class="bar-label">${point.date}</div>
+    `;
+    chartEl.appendChild(group);
+  });
+
+  // ----- MTD -----
+  const m = data.mtd;
+  document.getElementById("mtd-month").textContent = m.month;
+  document.getElementById("mtd-spend").textContent = fmt.aud(m.spend);
+  document.getElementById("mtd-results").textContent = fmt.num(m.results);
+  document.getElementById("mtd-cpr").textContent = fmt.audPrecise(m.cost_per_result);
+  document.getElementById("mtd-days").textContent = `${m.days_elapsed} days elapsed`;
+  document.getElementById("mtd-pacing").textContent = m.pacing_note || "-";
+
+  // ----- Top ads -----
+  const topBody = document.getElementById("top-ads-body");
+  if (!data.top_ads || data.top_ads.length === 0) {
+    topBody.innerHTML = `<tr><td colspan="4" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
+  } else {
+    topBody.innerHTML = data.top_ads.map(ad => `
+      <tr>
+        <td>${ad.name}</td>
+        <td class="num">${fmt.aud(ad.spend)}</td>
+        <td class="num">${fmt.num(ad.results)}</td>
+        <td class="num">${fmt.audPrecise(ad.cost_per_result)}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ----- Bottom ads -----
+  const botBody = document.getElementById("bottom-ads-body");
+  if (!data.bottom_ads || data.bottom_ads.length === 0) {
+    botBody.innerHTML = `<tr><td colspan="4" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
+  } else {
+    botBody.innerHTML = data.bottom_ads.map(ad => `
+      <tr>
+        <td>${ad.name}</td>
+        <td class="num">${fmt.aud(ad.spend)}</td>
+        <td class="num">${fmt.num(ad.results)}</td>
+        <td class="num">${fmt.audPrecise(ad.cost_per_result)}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ----- Campaigns -----
+  const campBody = document.getElementById("campaigns-body");
+  if (!data.campaigns || data.campaigns.length === 0) {
+    campBody.innerHTML = `<tr><td colspan="6" class="empty">No data yet - populates from 2 June 2026</td></tr>`;
+  } else {
+    campBody.innerHTML = data.campaigns.map(c => `
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.status}</td>
+        <td class="num">${fmt.aud(c.spend)}</td>
+        <td class="num">${fmt.num(c.results)}</td>
+        <td class="num">${fmt.audPrecise(c.cost_per_result)}</td>
+        <td class="num">${fmt.aud(c.daily_budget)}</td>
+      </tr>
+    `).join("");
+  }
+}
+
+// ============== TOAST ==============
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+// ============== SLACK BUTTON ==============
+document.getElementById("slack-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("slack-btn");
+  const txt = document.getElementById("slack-btn-text");
+  btn.disabled = true;
+  txt.textContent = "Sending...";
+
+  // Build a clean Slack message with the dashboard URL and key numbers
+  const data = window.__dashboardData || {};
+  const url = window.location.href.split("?")[0]; // strip cache-busters
+  const dailyDate = data?.daily?.date || "today";
+  const spend = data?.daily?.spend ? fmt.aud(data.daily.spend) : "-";
+  const results = data?.daily?.results ?? "-";
+  const cpr = data?.daily?.cost_per_result ? fmt.audPrecise(data.daily.cost_per_result) : "-";
+  const isPlaceholder = data?.meta?.is_placeholder;
+
+  const message = isPlaceholder
+    ? {
+        text: `Alaya Ads Dashboard - template preview\nDashboard: ${url}\n(Live data from 2 June 2026)`
+      }
+    : {
+        text: `Alaya Ads Daily - ${dailyDate}\nSpend: ${spend} | Results: ${results} | CPR: ${cpr}\nFull dashboard: ${url}`
+      };
+
+  try {
+    // Slack accepts CORS-less posts as 'no-cors'. We can't read the response, but it does send.
+    await fetch(SLACK_WEBHOOK, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "payload=" + encodeURIComponent(JSON.stringify(message))
+    });
+    btn.classList.add("sent");
+    txt.textContent = "Sent to Slack";
+    showToast("Message posted to Slack");
+    setTimeout(() => {
+      btn.classList.remove("sent");
+      txt.textContent = "Send to Slack";
+      btn.disabled = false;
+    }, 4000);
+  } catch (err) {
+    btn.classList.add("error");
+    txt.textContent = "Error - try again";
+    showToast("Failed to post to Slack: " + err.message);
+    setTimeout(() => {
+      btn.classList.remove("error");
+      txt.textContent = "Send to Slack";
+      btn.disabled = false;
+    }, 4000);
+  }
+});
+
+// ============== BOOTSTRAP ==============
+(async function init() {
+  try {
+    // Cache-bust so we always get the latest data.json
+    const res = await fetch(`data.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    window.__dashboardData = data;
+    renderDashboard(data);
+  } catch (err) {
+    document.querySelector(".page").insertAdjacentHTML("afterbegin",
+      `<div class="placeholder-banner" style="background: #fee2e2; border-color: #fca5a5; color: #991b1b;">
+        <strong>Could not load data.json -</strong>&nbsp;${err.message}
+      </div>`);
+  }
+})();
+</script>
+</body>
+</html>

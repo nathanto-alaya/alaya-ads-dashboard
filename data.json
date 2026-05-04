@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "last_updated": "2026-05-04T00:00:00+10:00",
+    "report_for_date": "PLACEHOLDER",
+    "currency": "AUD",
+    "account_name": "Alaya Property",
+    "is_placeholder": true,
+    "note": "This is template data. Real Meta Ads numbers will be populated starting 2 June 2026 once the AdAdvisor monthly tool limit resets."
+  },
+  "daily": {
+    "date": "PLACEHOLDER",
+    "spend": 0,
+    "results": 0,
+    "result_type": "Leads",
+    "cost_per_result": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "ctr": 0,
+    "cpm": 0,
+    "vs_yesterday": {
+      "spend_pct": 0,
+      "results_pct": 0,
+      "cpr_pct": 0
+    }
+  },
+  "weekly": {
+    "range": "PLACEHOLDER",
+    "spend": 0,
+    "results": 0,
+    "cost_per_result": 0,
+    "daily_series": [
+      { "date": "Day -6", "spend": 0, "results": 0 },
+      { "date": "Day -5", "spend": 0, "results": 0 },
+      { "date": "Day -4", "spend": 0, "results": 0 },
+      { "date": "Day -3", "spend": 0, "results": 0 },
+      { "date": "Day -2", "spend": 0, "results": 0 },
+      { "date": "Day -1", "spend": 0, "results": 0 },
+      { "date": "Today",  "spend": 0, "results": 0 }
+    ]
+  },
+  "mtd": {
+    "month": "PLACEHOLDER",
+    "spend": 0,
+    "results": 0,
+    "cost_per_result": 0,
+    "days_elapsed": 0,
+    "pacing_note": "PLACEHOLDER"
+  },
+  "top_ads": [],
+  "bottom_ads": [],
+  "campaigns": []
+}
