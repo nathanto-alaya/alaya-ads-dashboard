@@ -73,49 +73,110 @@ def safe_float(val, default=0.0):
         return default
 
 
-def extract_results(row):
+def derive_canonical_event(adset):
+    """
+    Given an ad set's metadata, return (event_type, human_label).
+    Maps optimization_goal + promoted_object.custom_event_str to the canonical
+    event Meta Ads Manager uses for the Results column.
+    """
+    goal = (adset.get("optimization_goal") or "").upper()
+    promoted = adset.get("promoted_object") or {}
+    custom_event_str = promoted.get("custom_event_str") or ""
+    custom_event_type = (promoted.get("custom_event_type") or "").upper()
+
+    # If the ad set has a custom conversion event, that's the canonical result
+    if custom_event_str:
+        # The event in actions[] will look like: offsite_conversion.custom.<event_str>
+        event_type = f"offsite_conversion.custom.{custom_event_str}"
+        # Pretty label - replace underscores, title case
+        label = custom_event_str.replace("_", " ").title()
+        # Special-cased pretty names
+        special = {
+            "Website Submit Application": "Website Submit Application",
+            "Calendly Booking": "Calendly Booking",
+            "Lead": "Lead",
+        }
+        return (event_type, special.get(label, label))
+
+    # Standard pixel events from custom_event_type
+    if custom_event_type:
+        pixel_map = {
+            "LEAD": ("offsite_conversion.fb_pixel_lead", "Leads"),
+            "PURCHASE": ("offsite_conversion.fb_pixel_purchase", "Purchases"),
+            "COMPLETE_REGISTRATION": ("offsite_conversion.fb_pixel_complete_registration", "Registrations"),
+            "ADD_TO_CART": ("offsite_conversion.fb_pixel_add_to_cart", "Adds to Cart"),
+            "INITIATE_CHECKOUT": ("offsite_conversion.fb_pixel_initiate_checkout", "Checkouts Initiated"),
+            "VIEW_CONTENT": ("offsite_conversion.fb_pixel_view_content", "Content Views"),
+        }
+        if custom_event_type in pixel_map:
+            return pixel_map[custom_event_type]
+
+    # Map optimization_goal to standard events when no promoted object
+    goal_map = {
+        "LEAD_GENERATION": ("onsite_conversion.lead_grouped", "Leads"),
+        "QUALITY_LEAD": ("onsite_conversion.lead_grouped", "Leads"),
+        "OFFSITE_CONVERSIONS": ("offsite_conversion.fb_pixel_lead", "Leads"),
+        "LINK_CLICKS": ("link_click", "Link Clicks"),
+        "LANDING_PAGE_VIEWS": ("landing_page_view", "Landing Page Views"),
+        "REACH": ("reach", "Reach"),
+        "IMPRESSIONS": ("impressions", "Impressions"),
+        "PROFILE_VISIT": ("onsite_conversion.profile_visit", "Profile Visits"),
+        "PROFILE_AND_PAGE_ENGAGEMENT": ("page_engagement", "Page Engagement"),
+        "POST_ENGAGEMENT": ("post_engagement", "Post Engagement"),
+        "VIDEO_VIEWS": ("video_view", "Video Views"),
+        "MESSAGES": ("onsite_conversion.messaging_conversation_started_7d", "Conversations Started"),
+        "APP_INSTALLS": ("mobile_app_install", "App Installs"),
+        "PURCHASE": ("offsite_conversion.fb_pixel_purchase", "Purchases"),
+        "VALUE": ("offsite_conversion.fb_pixel_purchase", "Purchases"),
+    }
+    if goal in goal_map:
+        return goal_map[goal]
+
+    return (None, "Results")
+
+
+def extract_results(row, hint_event=None, hint_label=None):
+    """
+    Extract result count + cost per result from an insights row.
+    If hint_event is provided, that's the canonical event we want.
+    Falls back to a priority list when no hint or hint is missing in row.
+    """
     actions = row.get("actions") or []
     cost_per = {a["action_type"]: safe_float(a["value"]) for a in (row.get("cost_per_action_type") or [])}
     action_counts = {a["action_type"]: safe_float(a["value"]) for a in actions}
 
-    # Order matters: more specific custom events first, then generic events.
-    # Labels match what shows in Meta Ads Manager's "Results" column.
-    event_priority = [
-        # Custom website conversion events (these are what your Unified campaign uses)
-        ("offsite_conversion.custom.website_submit_application", "Website Submit Application"),
-        ("offsite_conversion.custom.submit_application", "Website Submit Application"),
-        ("offsite_conversion.custom.application", "Website Submit Application"),
-        ("offsite_conversion.custom.calendly_booking", "Calendly Booking"),
-        ("offsite_conversion.custom.booking", "Bookings"),
-        # Standard pixel events
+    # ---- HINT PATH: try the canonical event first ----
+    if hint_event and hint_event in action_counts:
+        count = action_counts[hint_event]
+        cpr = cost_per.get(hint_event, 0)
+        if not cpr and count > 0:
+            cpr = safe_float(row.get("spend", 0)) / count
+        return count, hint_label or "Results", cpr
+
+    # If hint event was provided but doesn't appear in this row,
+    # we still trust the hint label (so it doesn't fall through to "Page Engagement"
+    # just because the ad got a few page likes that day).
+    if hint_event and hint_label:
+        # No conversions yet for the hinted event - return zero with the correct label
+        return 0, hint_label, 0
+
+    # ---- FALLBACK PATH: only used when no hint (e.g. ad has no ad set lookup) ----
+    fallback_priority = [
         ("offsite_conversion.fb_pixel_lead", "Leads"),
-        ("offsite_conversion.fb_pixel_complete_registration", "Registrations"),
         ("offsite_conversion.fb_pixel_purchase", "Purchases"),
-        # On-site events
+        ("offsite_conversion.fb_pixel_complete_registration", "Registrations"),
         ("onsite_conversion.lead_grouped", "Leads"),
-        ("onsite_conversion.messaging_conversation_started_7d", "Conversations Started"),
-        # Generic events
         ("lead", "Leads"),
         ("purchase", "Purchases"),
         ("complete_registration", "Registrations"),
-        # Profile / engagement
-        ("onsite_conversion.flow_complete", "Flow Completes"),
-        ("page_engagement", "Page Engagement"),
-        ("post_engagement", "Post Engagement"),
-        ("video_view", "Video Views"),
-        ("link_click", "Link Clicks"),
     ]
-
-    # Also try ANY custom conversion that starts with offsite_conversion.custom.
-    # This catches custom events whose names we haven't hard-coded.
+    # Custom events take precedence over generic ones in fallback mode too
     custom_keys = [k for k in action_counts.keys() if k.startswith("offsite_conversion.custom.")]
     for ck in custom_keys:
-        if not any(p[0] == ck for p in event_priority):
-            # Pretty-print the custom event name
-            pretty = ck.replace("offsite_conversion.custom.", "").replace("_", " ").title()
-            event_priority.insert(0, (ck, pretty))
+        pretty = ck.replace("offsite_conversion.custom.", "").replace("_", " ").title()
+        fallback_priority.insert(0, (ck, pretty))
 
-    for event_type, label in event_priority:
+    for event_type, label in fallback_priority:
         if event_type in action_counts:
             count = action_counts[event_type]
             cpr = cost_per.get(event_type, 0)
@@ -210,6 +271,26 @@ def main():
     ads_meta = [a for a in ads_meta if a.get("effective_status") != "DELETED"]
     log(f"  -> {len(ads_meta)} ads")
 
+    # Fetch ad sets with optimization_goal + promoted_object so we know each
+    # ad set's canonical result type (matches what Ads Manager shows in 'Results' col)
+    log("Fetching ad set metadata for result-type mapping...")
+    adsets_meta = fetch(f"act_{AD_ACCOUNT_ID}/adsets", {
+        "fields": "id,name,campaign_id,optimization_goal,promoted_object,destination_type,billing_event,effective_status",
+        "limit": 500,
+    })
+    adsets_meta = [a for a in adsets_meta if a.get("effective_status") != "DELETED"]
+    log(f"  -> {len(adsets_meta)} ad sets")
+
+    # Build adset_id -> (canonical_event_type, label) lookup
+    adset_event_lookup = {}
+    for ads in adsets_meta:
+        adset_event_lookup[ads["id"]] = derive_canonical_event(ads)
+
+    # Build ad_id -> canonical event by going through the ad set
+    ad_event_lookup = {}
+    for a in ads_meta:
+        ad_event_lookup[a["id"]] = adset_event_lookup.get(a.get("adset_id"), (None, None))
+
     log(f"Fetching creative thumbnails...")
     creatives = get_ad_creatives([a["id"] for a in ads_meta])
     log(f"  -> {len(creatives)} creatives")
@@ -217,6 +298,7 @@ def main():
     ads = []
     for a in ads_meta:
         cr = creatives.get(a["id"], {})
+        canonical_event, canonical_label = ad_event_lookup.get(a["id"], (None, None))
         ads.append({
             "id": a["id"],
             "name": a["name"],
@@ -226,13 +308,46 @@ def main():
             "created_time": a.get("created_time", ""),
             "thumbnail": cr.get("thumbnail", ""),
             "creative_type": cr.get("type", "UNKNOWN"),
+            "canonical_event": canonical_event or "",
+            "canonical_label": canonical_label or "",
         })
+
+    # Build campaign_id -> dominant canonical event lookup (for campaign-level rows)
+    # Picks the most common label across the campaign's ad sets
+    from collections import Counter
+    campaign_event_lookup = {}
+    for c in campaigns:
+        cid = c["id"]
+        labels = [adset_event_lookup.get(ads["id"], (None, None))[1]
+                  for ads in adsets_meta if ads.get("campaign_id") == cid]
+        labels = [l for l in labels if l]
+        if labels:
+            top_label = Counter(labels).most_common(1)[0][0]
+            # Find a matching event type for that label
+            for ads in adsets_meta:
+                if ads.get("campaign_id") == cid:
+                    et, lbl = adset_event_lookup.get(ads["id"], (None, None))
+                    if lbl == top_label:
+                        campaign_event_lookup[cid] = (et, lbl)
+                        break
+        c["result_type"] = campaign_event_lookup.get(cid, (None, "Results"))[1]
+
+    # Account-level: pick the most common label across all ad sets (weighted by recency would be ideal, but volume is good enough)
+    all_labels = [v[1] for v in adset_event_lookup.values() if v[1]]
+    account_dominant_event = (None, "Results")
+    if all_labels:
+        top_label = Counter(all_labels).most_common(1)[0][0]
+        for v in adset_event_lookup.values():
+            if v[1] == top_label:
+                account_dominant_event = v
+                break
 
     log("Fetching account-level daily rows (365 days)...")
     account_daily_raw = get_daily_insights("account", start_date, yesterday)
     account_daily = []
+    acc_hint_event, acc_hint_label = account_dominant_event
     for r in account_daily_raw:
-        results, result_label, cpr = extract_results(r)
+        results, result_label, cpr = extract_results(r, hint_event=acc_hint_event, hint_label=acc_hint_label)
         account_daily.append({
             "date": r.get("date_start"),
             "spend": round(safe_float(r.get("spend")), 2),
@@ -255,7 +370,8 @@ def main():
         cid = r.get("campaign_id")
         if not cid:
             continue
-        results, result_label, cpr = extract_results(r)
+        c_hint_event, c_hint_label = campaign_event_lookup.get(cid, (None, None))
+        results, result_label, cpr = extract_results(r, hint_event=c_hint_event, hint_label=c_hint_label)
         row = {
             "date": r.get("date_start"),
             "spend": round(safe_float(r.get("spend")), 2),
@@ -279,7 +395,8 @@ def main():
         aid = r.get("ad_id")
         if not aid:
             continue
-        results, result_label, cpr = extract_results(r)
+        a_hint_event, a_hint_label = ad_event_lookup.get(aid, (None, None))
+        results, result_label, cpr = extract_results(r, hint_event=a_hint_event, hint_label=a_hint_label)
         row = {
             "date": r.get("date_start"),
             "spend": round(safe_float(r.get("spend")), 2),
