@@ -181,6 +181,9 @@ th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 9px; }
 th.sorted .sort-arrow { opacity: 1; color: var(--alaya-royal-blue); }
 td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--alaya-deep-navy); vertical-align: middle; }
 tbody tr:hover { background: #fafbff; }
+tbody tr.row-dormant { opacity: 0.55; background: #fafbff; }
+tbody tr.row-dormant:hover { opacity: 0.85; }
+.muted-text { color: var(--muted); font-style: italic; }
 td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
 .empty {
   padding: 28px 16px; text-align: center; color: var(--muted);
@@ -337,12 +340,12 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
         <div class="sub" id="kpi-reach-sub">-</div>
       </div>
       <div class="kpi-card">
-        <div class="label">Clicks</div>
+        <div class="label">Link Clicks</div>
         <div class="value" id="kpi-clicks">-</div>
         <div class="sub" id="kpi-cpc-sub">-</div>
       </div>
       <div class="kpi-card">
-        <div class="label">CTR</div>
+        <div class="label">Link CTR</div>
         <div class="value" id="kpi-ctr">-</div>
         <div class="sub" id="kpi-cpm-sub">-</div>
       </div>
@@ -367,18 +370,19 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
       <table>
         <thead>
           <tr>
-            <th class="sortable" data-sort="name" style="width: 28%;">Campaign <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="name" style="width: 24%;">Campaign <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="result_type">Result Type <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="ctr">CTR <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="link_ctr">Link CTR <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="impressions">Impressions <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="clicks">Clicks <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="link_clicks">Link Clicks <span class="sort-arrow">▼</span></th>
           </tr>
         </thead>
         <tbody id="campaigns-body">
-          <tr><td colspan="8" class="empty">Loading -</td></tr>
+          <tr><td colspan="9" class="empty">Loading -</td></tr>
         </tbody>
       </table>
     </div>
@@ -392,19 +396,21 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
       <table>
         <thead>
           <tr>
-            <th style="width: 60px;">Rank</th>
-            <th class="sortable" data-sort="score" style="width: 110px;">Score <span class="sort-arrow">▼</span></th>
-            <th style="width: 30%;">Creative</th>
+            <th style="width: 50px;">Rank</th>
+            <th class="sortable" data-sort="score" style="width: 100px;">Score <span class="sort-arrow">▼</span></th>
+            <th style="width: 24%;">Creative</th>
             <th class="sortable" data-sort="campaign_name">Campaign <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="result_type">Result Type <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
             <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="ctr">CTR <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="link_clicks">Link Clicks <span class="sort-arrow">▼</span></th>
+            <th class="sortable" data-sort="link_ctr">Link CTR <span class="sort-arrow">▼</span></th>
           </tr>
         </thead>
         <tbody id="creatives-body">
-          <tr><td colspan="9" class="empty">Loading -</td></tr>
+          <tr><td colspan="11" class="empty">Loading -</td></tr>
         </tbody>
       </table>
     </div>
@@ -490,25 +496,36 @@ function periodLabel(period) {
 function aggregate(rows) {
   // Aggregate an array of daily rows into totals
   const out = {
-    spend: 0, impressions: 0, clicks: 0, results: 0, result_type: "Results",
-    cost_per_result: 0, ctr: 0, cpm: 0, cpc: 0, days: 0,
+    spend: 0, impressions: 0, clicks: 0, link_clicks: 0,
+    results: 0, result_type: "Results",
+    cost_per_result: 0, ctr: 0, link_ctr: 0, cpm: 0, cpc: 0, days: 0,
   };
-  let resultTypeCount = {};
+  // Weight result types by total RESULTS not by day count, so the dominant
+  // conversion event for the period wins (e.g. Website Submit Application beats
+  // a stray day of Link Clicks).
+  let resultTypeWeight = {};
   for (const r of rows) {
     out.spend += r.spend || 0;
     out.impressions += r.impressions || 0;
     out.clicks += r.clicks || 0;
+    out.link_clicks += r.link_clicks || 0;
     out.results += r.results || 0;
     out.days += 1;
     const rt = r.result_type || "Results";
-    resultTypeCount[rt] = (resultTypeCount[rt] || 0) + 1;
+    resultTypeWeight[rt] = (resultTypeWeight[rt] || 0) + (r.results || 0);
   }
-  // Pick the most common result type
-  const sortedRT = Object.entries(resultTypeCount).sort((a, b) => b[1] - a[1]);
-  if (sortedRT.length) out.result_type = sortedRT[0][0];
+  // Pick the result type with the most actual results. Fall back to most-common.
+  const weighted = Object.entries(resultTypeWeight).filter(([k, v]) => v > 0);
+  if (weighted.length) {
+    weighted.sort((a, b) => b[1] - a[1]);
+    out.result_type = weighted[0][0];
+  } else if (Object.keys(resultTypeWeight).length) {
+    out.result_type = Object.keys(resultTypeWeight)[0];
+  }
 
   out.cost_per_result = out.results > 0 ? out.spend / out.results : 0;
   out.ctr = out.impressions > 0 ? (out.clicks / out.impressions) * 100 : 0;
+  out.link_ctr = out.impressions > 0 ? (out.link_clicks / out.impressions) * 100 : 0;
   out.cpm = out.impressions > 0 ? (out.spend / out.impressions) * 1000 : 0;
   out.cpc = out.clicks > 0 ? out.spend / out.clicks : 0;
   return out;
@@ -546,10 +563,12 @@ function applyFilters() {
   document.getElementById("kpi-cpr").textContent = totals.cost_per_result > 0 ? fmt.audPrecise(totals.cost_per_result) : "-";
   document.getElementById("kpi-impressions").textContent = fmt.num(totals.impressions);
   document.getElementById("kpi-reach-sub").textContent = `CPM: ${fmt.audPrecise(totals.cpm)}`;
-  document.getElementById("kpi-clicks").textContent = fmt.num(totals.clicks);
-  document.getElementById("kpi-cpc-sub").textContent = totals.clicks > 0 ? `CPC: ${fmt.audPrecise(totals.cpc)}` : "-";
-  document.getElementById("kpi-ctr").textContent = fmt.pct(totals.ctr);
-  document.getElementById("kpi-cpm-sub").textContent = `${fmt.num(totals.impressions)} impressions`;
+  document.getElementById("kpi-clicks").textContent = fmt.num(totals.link_clicks);
+  document.getElementById("kpi-cpc-sub").textContent = totals.link_clicks > 0
+    ? `CPC: ${fmt.audPrecise(totals.spend / totals.link_clicks)} - ${fmt.num(totals.clicks)} all clicks`
+    : `${fmt.num(totals.clicks)} all clicks`;
+  document.getElementById("kpi-ctr").textContent = fmt.pct(totals.link_ctr);
+  document.getElementById("kpi-cpm-sub").textContent = `All CTR: ${fmt.pct(totals.ctr)}`;
 
   // ----- Chart (daily spend) -----
   renderChart(accountRows);
@@ -596,7 +615,7 @@ function renderChart(rows) {
 function renderCampaigns(today) {
   const tbody = document.getElementById("campaigns-body");
 
-  // Build aggregated rows per campaign for the active period
+  // Build aggregated rows for EVERY campaign (including paused with zero spend in period)
   const rows = DATA.campaigns.map(c => {
     const dailyRows = (DATA.daily_rows.campaign[c.id] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
     const agg = aggregate(dailyRows);
@@ -606,7 +625,7 @@ function renderCampaigns(today) {
       status: c.status,
       ...agg,
     };
-  }).filter(r => r.spend > 0 || r.status === "ACTIVE"); // Hide totally inactive campaigns with no spend
+  });
 
   // Apply campaign slicer
   let displayRows = rows;
@@ -614,28 +633,40 @@ function renderCampaigns(today) {
     displayRows = rows.filter(r => r.id === currentCampaignId);
   }
 
-  // Sort
-  displayRows.sort((a, b) => sortFn(a, b, currentCampaignSort));
+  // Sort - paused-with-no-spend always at the bottom unless explicitly sorted otherwise
+  displayRows.sort((a, b) => {
+    // Primary: active campaigns above paused-with-no-spend
+    const aIsDormant = a.spend === 0 && a.status !== "ACTIVE";
+    const bIsDormant = b.spend === 0 && b.status !== "ACTIVE";
+    if (aIsDormant !== bIsDormant) return aIsDormant ? 1 : -1;
+    // Secondary: user's selected sort
+    return sortFn(a, b, currentCampaignSort);
+  });
 
   document.getElementById("campaigns-count").textContent = `${displayRows.length} campaign${displayRows.length === 1 ? "" : "s"}`;
 
   if (displayRows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">No campaigns with activity in this period</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">No campaigns to show</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = displayRows.map(r => `
-    <tr>
-      <td><strong>${escapeHtml(r.name)}</strong></td>
-      <td>${statusPill(r.status)}</td>
-      <td class="num">${fmt.aud(r.spend)}</td>
-      <td class="num">${fmt.num(r.results)}</td>
-      <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
-      <td class="num">${fmt.pct(r.ctr)}</td>
-      <td class="num">${fmt.num(r.impressions)}</td>
-      <td class="num">${fmt.num(r.clicks)}</td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = displayRows.map(r => {
+    const isDormant = r.spend === 0 && r.status !== "ACTIVE";
+    const rowClass = isDormant ? ' class="row-dormant"' : "";
+    return `
+      <tr${rowClass}>
+        <td><strong>${escapeHtml(r.name)}</strong></td>
+        <td>${statusPill(r.status)}</td>
+        <td>${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted-text">-</span>'}</td>
+        <td class="num">${fmt.aud(r.spend)}</td>
+        <td class="num">${fmt.num(r.results)}</td>
+        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
+        <td class="num">${fmt.pct(r.link_ctr)}</td>
+        <td class="num">${fmt.num(r.impressions)}</td>
+        <td class="num">${fmt.num(r.link_clicks)}</td>
+      </tr>
+    `;
+  }).join("");
 
   updateSortIcons("campaigns-body", currentCampaignSort);
 }
@@ -744,10 +775,12 @@ function renderCreatives(today) {
         </td>
         <td>${escapeHtml(r.campaign_name)}</td>
         <td>${statusPill(r.status)}</td>
+        <td>${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted-text">-</span>'}</td>
         <td class="num">${fmt.aud(r.spend)}</td>
         <td class="num">${fmt.num(r.results)}</td>
         <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
-        <td class="num">${fmt.pct(r.ctr)}</td>
+        <td class="num">${fmt.num(r.link_clicks)}</td>
+        <td class="num">${fmt.pct(r.link_ctr)}</td>
       </tr>
     `;
   }).join("");

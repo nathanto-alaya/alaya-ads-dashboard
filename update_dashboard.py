@@ -26,6 +26,7 @@ INSIGHT_FIELDS = [
     "adset_id", "adset_name",
     "ad_id", "ad_name",
     "spend", "impressions", "clicks", "ctr", "cpm", "cpc",
+    "inline_link_clicks", "inline_link_click_ctr",
     "actions", "cost_per_action_type",
     "date_start"
 ]
@@ -77,15 +78,44 @@ def extract_results(row):
     cost_per = {a["action_type"]: safe_float(a["value"]) for a in (row.get("cost_per_action_type") or [])}
     action_counts = {a["action_type"]: safe_float(a["value"]) for a in actions}
 
-    for event_type, label in [
-        ("lead", "Leads"),
-        ("onsite_conversion.lead_grouped", "Leads"),
+    # Order matters: more specific custom events first, then generic events.
+    # Labels match what shows in Meta Ads Manager's "Results" column.
+    event_priority = [
+        # Custom website conversion events (these are what your Unified campaign uses)
+        ("offsite_conversion.custom.website_submit_application", "Website Submit Application"),
+        ("offsite_conversion.custom.submit_application", "Website Submit Application"),
+        ("offsite_conversion.custom.application", "Website Submit Application"),
+        ("offsite_conversion.custom.calendly_booking", "Calendly Booking"),
+        ("offsite_conversion.custom.booking", "Bookings"),
+        # Standard pixel events
         ("offsite_conversion.fb_pixel_lead", "Leads"),
-        ("purchase", "Purchases"),
+        ("offsite_conversion.fb_pixel_complete_registration", "Registrations"),
         ("offsite_conversion.fb_pixel_purchase", "Purchases"),
+        # On-site events
+        ("onsite_conversion.lead_grouped", "Leads"),
+        ("onsite_conversion.messaging_conversation_started_7d", "Conversations Started"),
+        # Generic events
+        ("lead", "Leads"),
+        ("purchase", "Purchases"),
         ("complete_registration", "Registrations"),
+        # Profile / engagement
+        ("onsite_conversion.flow_complete", "Flow Completes"),
+        ("page_engagement", "Page Engagement"),
+        ("post_engagement", "Post Engagement"),
+        ("video_view", "Video Views"),
         ("link_click", "Link Clicks"),
-    ]:
+    ]
+
+    # Also try ANY custom conversion that starts with offsite_conversion.custom.
+    # This catches custom events whose names we haven't hard-coded.
+    custom_keys = [k for k in action_counts.keys() if k.startswith("offsite_conversion.custom.")]
+    for ck in custom_keys:
+        if not any(p[0] == ck for p in event_priority):
+            # Pretty-print the custom event name
+            pretty = ck.replace("offsite_conversion.custom.", "").replace("_", " ").title()
+            event_priority.insert(0, (ck, pretty))
+
+    for event_type, label in event_priority:
         if event_type in action_counts:
             count = action_counts[event_type]
             cpr = cost_per.get(event_type, 0)
@@ -208,7 +238,9 @@ def main():
             "spend": round(safe_float(r.get("spend")), 2),
             "impressions": int(safe_float(r.get("impressions"))),
             "clicks": int(safe_float(r.get("clicks"))),
+            "link_clicks": int(safe_float(r.get("inline_link_clicks"))),
             "ctr": round(safe_float(r.get("ctr")), 3),
+            "link_ctr": round(safe_float(r.get("inline_link_click_ctr")), 3),
             "cpm": round(safe_float(r.get("cpm")), 2),
             "results": int(results),
             "result_type": result_label,
@@ -229,7 +261,9 @@ def main():
             "spend": round(safe_float(r.get("spend")), 2),
             "impressions": int(safe_float(r.get("impressions"))),
             "clicks": int(safe_float(r.get("clicks"))),
+            "link_clicks": int(safe_float(r.get("inline_link_clicks"))),
             "ctr": round(safe_float(r.get("ctr")), 3),
+            "link_ctr": round(safe_float(r.get("inline_link_click_ctr")), 3),
             "cpm": round(safe_float(r.get("cpm")), 2),
             "results": int(results),
             "result_type": result_label,
@@ -251,7 +285,9 @@ def main():
             "spend": round(safe_float(r.get("spend")), 2),
             "impressions": int(safe_float(r.get("impressions"))),
             "clicks": int(safe_float(r.get("clicks"))),
+            "link_clicks": int(safe_float(r.get("inline_link_clicks"))),
             "ctr": round(safe_float(r.get("ctr")), 3),
+            "link_ctr": round(safe_float(r.get("inline_link_click_ctr")), 3),
             "cpm": round(safe_float(r.get("cpm")), 2),
             "results": int(results),
             "result_type": result_label,
