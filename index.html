@@ -912,30 +912,86 @@ function getTodayInSydney() {
 
 function applyFilters() {
   const today = getTodayInSydney();
-  let accountRows;
-  if (currentCampaignId === "all") {
-    accountRows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today));
-  } else {
-    const cRows = DATA.daily_rows.campaign[currentCampaignId] || [];
-    accountRows = cRows.filter(r => dateInPeriod(r.date, currentPeriod, today));
+
+  // Build per-campaign aggregates (one row per campaign, with its own result_type)
+  const perCampaign = DATA.campaigns.map(c => {
+    const dailyRows = (DATA.daily_rows.campaign[c.id] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+    const agg = aggregate(dailyRows);
+    return { id: c.id, name: c.name, status: c.status, ...agg };
+  });
+
+  // Active campaigns matching the slicer
+  const slicedCampaigns = currentCampaignId === "all"
+    ? perCampaign
+    : perCampaign.filter(r => r.id === currentCampaignId);
+
+  // Account totals (just spend, impressions, clicks - these aggregate fine across types)
+  const sumSpend = slicedCampaigns.reduce((s, c) => s + c.spend, 0);
+  const sumImpressions = slicedCampaigns.reduce((s, c) => s + c.impressions, 0);
+  const sumClicks = slicedCampaigns.reduce((s, c) => s + c.clicks, 0);
+  const sumLinkClicks = slicedCampaigns.reduce((s, c) => s + c.link_clicks, 0);
+
+  // Group results by result_type (so Submit Application sums across MelbAptLM + Unified)
+  const resultsByType = {};
+  for (const c of slicedCampaigns) {
+    if (c.results > 0) {
+      const rt = c.result_type;
+      if (!resultsByType[rt]) {
+        resultsByType[rt] = { count: 0, spend: 0 };
+      }
+      resultsByType[rt].count += c.results;
+      resultsByType[rt].spend += c.spend;  // spend that drove these results
+    }
   }
-  const totals = aggregate(accountRows);
+  // Sort result types by count descending
+  const resultTypeEntries = Object.entries(resultsByType).sort((a, b) => b[1].count - a[1].count);
+
+  // Days elapsed (use account-level daily rows for accurate day count)
+  const accountRows = currentCampaignId === "all"
+    ? DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today))
+    : (DATA.daily_rows.campaign[currentCampaignId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+  const days = accountRows.length;
+
+  // Pick the headline result type (most volume) for the big number
+  const headlineType = resultTypeEntries[0];
+  const headlineLabel = headlineType ? headlineType[0] : "Results";
+  const headlineCount = headlineType ? headlineType[1].count : 0;
+  const headlineSpend = headlineType ? headlineType[1].spend : 0;
+  const headlineCpr = headlineCount > 0 ? headlineSpend / headlineCount : 0;
+
+  // Build a sub-line that breaks down the other result types
+  let resultsSub = "—";
+  if (resultTypeEntries.length === 0) {
+    resultsSub = days > 0 ? `0/day avg` : "—";
+  } else if (resultTypeEntries.length === 1) {
+    resultsSub = days > 0 ? `${(headlineCount / days).toFixed(1)}/day avg` : "—";
+  } else {
+    // Multiple result types - show a compact breakdown of the others
+    const others = resultTypeEntries.slice(1).map(([rt, v]) => `${fmt.num(v.count)} ${rt}`).join(" / ");
+    resultsSub = `+ ${others}`;
+  }
+
+  // Aggregate stats
+  const overallCtr = sumImpressions > 0 ? (sumClicks / sumImpressions) * 100 : 0;
+  const overallLinkCtr = sumImpressions > 0 ? (sumLinkClicks / sumImpressions) * 100 : 0;
+  const overallCpm = sumImpressions > 0 ? (sumSpend / sumImpressions) * 1000 : 0;
+  const overallCpc = sumLinkClicks > 0 ? sumSpend / sumLinkClicks : 0;
 
   document.getElementById("kpi-range").textContent = periodLabel(currentPeriod);
-  document.getElementById("kpi-spend").textContent = fmt.aud(totals.spend);
-  document.getElementById("kpi-spend-sub").textContent = totals.days > 0 ? `Avg ${fmt.aud(totals.spend / totals.days)}/day` : "—";
-  document.getElementById("kpi-results-label").textContent = totals.result_type || "Results";
-  document.getElementById("kpi-results").textContent = fmt.num(totals.results);
-  document.getElementById("kpi-results-sub").textContent = totals.days > 0 ? `${(totals.results / totals.days).toFixed(1)}/day avg` : "—";
-  document.getElementById("kpi-cpr").textContent = totals.cost_per_result > 0 ? fmt.audPrecise(totals.cost_per_result) : "—";
-  document.getElementById("kpi-impressions").textContent = fmt.num(totals.impressions);
-  document.getElementById("kpi-reach-sub").textContent = `CPM ${fmt.audPrecise(totals.cpm)}`;
-  document.getElementById("kpi-clicks").textContent = fmt.num(totals.link_clicks);
-  document.getElementById("kpi-cpc-sub").textContent = totals.link_clicks > 0
-    ? `CPC ${fmt.audPrecise(totals.spend / totals.link_clicks)} / ${fmt.num(totals.clicks)} all`
-    : `${fmt.num(totals.clicks)} all clicks`;
-  document.getElementById("kpi-ctr").textContent = fmt.pct(totals.link_ctr);
-  document.getElementById("kpi-cpm-sub").textContent = `All CTR ${fmt.pct(totals.ctr)}`;
+  document.getElementById("kpi-spend").textContent = fmt.aud(sumSpend);
+  document.getElementById("kpi-spend-sub").textContent = days > 0 ? `Avg ${fmt.aud(sumSpend / days)}/day` : "—";
+  document.getElementById("kpi-results-label").textContent = headlineLabel.toUpperCase();
+  document.getElementById("kpi-results").textContent = fmt.num(headlineCount);
+  document.getElementById("kpi-results-sub").textContent = resultsSub;
+  document.getElementById("kpi-cpr").textContent = headlineCpr > 0 ? fmt.audPrecise(headlineCpr) : "—";
+  document.getElementById("kpi-impressions").textContent = fmt.num(sumImpressions);
+  document.getElementById("kpi-reach-sub").textContent = `CPM ${fmt.audPrecise(overallCpm)}`;
+  document.getElementById("kpi-clicks").textContent = fmt.num(sumLinkClicks);
+  document.getElementById("kpi-cpc-sub").textContent = sumLinkClicks > 0
+    ? `CPC ${fmt.audPrecise(overallCpc)} / ${fmt.num(sumClicks)} all`
+    : `${fmt.num(sumClicks)} all clicks`;
+  document.getElementById("kpi-ctr").textContent = fmt.pct(overallLinkCtr);
+  document.getElementById("kpi-cpm-sub").textContent = `All CTR ${fmt.pct(overallCtr)}`;
 
   try { renderChart(accountRows); } catch (e) { console.error("renderChart failed:", e); }
   try { renderCampaigns(today); } catch (e) {
