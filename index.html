@@ -3,506 +3,880 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alaya Ads Dashboard</title>
+<title>ADS / ALAYA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --alaya-royal-blue: #1A1C8F;
-  --alaya-deep-navy: #0D0E5C;
-  --alaya-mid-blue: #2428B8;
-  --alaya-blue-tint: #E8E9F8;
-  --alaya-white: #FFFFFF;
-  --ink: #0D0E5C;
-  --muted: #6b6f8a;
-  --border: #d8daf0;
-  --bg: #f7f8ff;
-  --good: #16a34a;
-  --bad: #dc2626;
-  --neutral: #6b6f8a;
-  --gold: #f59e0b;
-  --silver: #94a3b8;
-  --bronze: #b45309;
+  --bg: #FFFFFF;
+  --fg: #000000;
+  --muted: #F2F2F2;
+  --accent: #FF3000;
+  --border: #000000;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 html, body {
-  font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
   background: var(--bg);
-  color: var(--ink);
+  color: var(--fg);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  font-variant-numeric: tabular-nums;
+}
+
+/* =============== Pattern textures =============== */
+.swiss-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.swiss-dots {
+  background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.swiss-diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,0.025) 0,
+    rgba(0,0,0,0.025) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+.swiss-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E"); }
+
+/* =============== Layout =============== */
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  border-left: 4px solid var(--border);
+  border-right: 4px solid var(--border);
+  background: var(--bg);
   min-height: 100vh;
 }
-.page { max-width: 1400px; margin: 0 auto; padding: 28px 24px 80px; }
 
-/* ===== Header ===== */
-.header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; flex-wrap: wrap;
-  padding: 24px 28px;
-  background: linear-gradient(135deg, var(--alaya-royal-blue), var(--alaya-deep-navy));
-  border-radius: 18px; color: var(--alaya-white); margin-bottom: 20px;
-  box-shadow: 0 12px 32px rgba(13,14,92,0.18);
+/* =============== HEADER =============== */
+.masthead {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  border-bottom: 4px solid var(--border);
 }
-.header-left .eyebrow {
-  font-family: 'Lato', sans-serif; font-weight: 700; font-size: 11px;
-  letter-spacing: 2px; text-transform: uppercase; color: var(--alaya-blue-tint); margin-bottom: 8px;
+.masthead-left {
+  padding: 32px 32px 28px;
+  border-right: 4px solid var(--border);
+  position: relative;
 }
-.header-left h1 {
-  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 30px;
-  line-height: 1.1; letter-spacing: -0.02em;
+.masthead-meta {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 56px;
 }
-.header-left .subtitle { font-size: 13px; color: var(--alaya-blue-tint); margin-top: 8px; }
-.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-.last-updated { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--alaya-blue-tint); }
-.last-updated strong { color: var(--alaya-white); font-weight: 600; }
+.masthead-meta .accent { color: var(--accent); }
+.masthead-headline {
+  font-size: clamp(56px, 9vw, 128px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+.masthead-headline .red { color: var(--accent); }
+.masthead-sub {
+  margin-top: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.masthead-sub strong { font-weight: 900; }
+
+.masthead-right {
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+.masthead-stamp {
+  padding: 32px;
+  border-bottom: 4px solid var(--border);
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.stamp-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.stamp-time {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-top: 12px;
+}
+.stamp-account {
+  margin-top: 24px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
 
 #slack-btn {
-  font-family: 'Figtree', sans-serif; font-weight: 700; font-size: 14px;
-  background: var(--alaya-white); color: var(--alaya-royal-blue);
-  border: none; padding: 11px 20px; border-radius: 999px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px;
-  transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  font-family: inherit;
+  background: var(--fg);
+  color: var(--bg);
+  border: none;
+  padding: 24px 32px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
 }
-#slack-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
-#slack-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-#slack-btn.sent { background: #16a34a; color: white; }
-#slack-btn.error { background: #dc2626; color: white; }
-#slack-btn .icon { width: 16px; height: 16px; }
+#slack-btn:hover { background: var(--accent); color: var(--bg); }
+#slack-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+#slack-btn.sent { background: #0EA539; }
+#slack-btn.error { background: var(--accent); }
+#slack-btn .arrow { font-weight: 400; font-size: 18px; }
 
-/* ===== Slicer bar ===== */
+/* =============== SLICERS =============== */
 .slicers {
-  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
-  background: var(--alaya-white); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px 20px; margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(13,14,92,0.04);
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  border-bottom: 4px solid var(--border);
 }
-.slicer-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
-.slicer-label {
-  font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
-  color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase;
+.slicer-block {
+  padding: 24px 32px;
+  position: relative;
 }
-.slicer-select {
-  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 9px 12px; color: var(--ink); cursor: pointer;
-  transition: all 0.15s ease;
+.slicer-block + .slicer-block { border-left: 4px solid var(--border); }
+.slicer-num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
-.slicer-select:hover { border-color: var(--alaya-mid-blue); }
-.slicer-select:focus { outline: none; border-color: var(--alaya-royal-blue); box-shadow: 0 0 0 3px rgba(26,28,143,0.1); }
+.slicer-num span { color: var(--fg); }
 
-.time-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Time pills */
+.time-pills { display: flex; flex-wrap: wrap; gap: 0; }
 .time-pill {
-  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
-  background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
-  padding: 7px 14px; cursor: pointer; color: var(--ink);
-  transition: all 0.15s ease;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--bg);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  padding: 12px 18px;
+  cursor: pointer;
+  margin-left: -2px;
+  margin-bottom: -2px;
+  transition: all 0.15s ease-linear;
 }
-.time-pill:hover { border-color: var(--alaya-mid-blue); }
+.time-pill:hover { background: var(--fg); color: var(--bg); }
 .time-pill.active {
-  background: var(--alaya-royal-blue); color: var(--alaya-white);
-  border-color: var(--alaya-royal-blue);
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  position: relative;
+  z-index: 2;
 }
 
-/* ===== Section titles ===== */
-.section-title {
-  font-family: 'Figtree', sans-serif; font-weight: 700; font-size: 17px;
-  letter-spacing: -0.01em; margin: 28px 0 12px; color: var(--alaya-deep-navy);
-  display: flex; align-items: baseline; justify-content: space-between;
+/* Campaign selector - native styled */
+.campaign-select-wrap { position: relative; }
+#campaign-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  background: var(--bg);
+  color: var(--fg);
+  border: 4px solid var(--fg);
+  padding: 16px 56px 16px 18px;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.15s ease-out;
 }
-.section-title .meta-label {
-  font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px;
-  color: var(--muted); letter-spacing: 0; text-transform: none;
+#campaign-select:hover { background: var(--muted); }
+#campaign-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.campaign-select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--fg);
+  clip-path: polygon(0 30%, 100% 30%, 50% 100%);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.campaign-status-line {
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.status-dot.paused { background: var(--fg); opacity: 0.3; }
+
+/* =============== SECTION TITLES =============== */
+.section {
+  border-bottom: 4px solid var(--border);
+}
+.section-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: 24px 32px;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg);
+}
+.section-head .num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.section-head h2 {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+.section-head .meta {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: right;
 }
 
-/* ===== KPI grid ===== */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-.kpi-card {
-  background: var(--alaya-white); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px 18px;
+/* =============== KPIs =============== */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
 }
-.kpi-card .label {
-  font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px;
+.kpi {
+  padding: 28px 24px 28px;
+  border-right: 2px solid var(--border);
+  position: relative;
 }
-.kpi-card .value {
-  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 24px;
-  letter-spacing: -0.02em; color: var(--alaya-deep-navy); line-height: 1.1;
+.kpi:last-child { border-right: none; }
+.kpi:nth-child(even) { background: var(--muted); }
+.kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg);
+  opacity: 0.7;
+  margin-bottom: 14px;
 }
-.kpi-card .sub {
-  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 4px;
+.kpi-value {
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+.kpi-sub {
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
-/* ===== Chart ===== */
-.chart-card {
-  background: var(--alaya-white); border: 1px solid var(--border);
-  border-radius: 14px; padding: 20px 22px;
+/* =============== CHART =============== */
+.chart-container {
+  padding: 32px;
+  background: var(--muted);
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 .chart-area {
-  position: relative; height: 220px;
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 4px; margin-top: 8px; padding-bottom: 28px;
-  border-bottom: 1px solid var(--border);
+  position: relative;
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2px;
+  padding-bottom: 36px;
+  border-bottom: 4px solid var(--border);
+  background: var(--bg);
+  padding: 16px 16px 36px;
 }
 .bar-group {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  position: relative; height: 100%; justify-content: flex-end; min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  height: 100%;
+  justify-content: flex-end;
+  min-width: 0;
 }
 .bar {
-  width: 80%; max-width: 40px;
-  background: linear-gradient(180deg, var(--alaya-mid-blue), var(--alaya-royal-blue));
-  border-radius: 4px 4px 0 0; min-height: 1px;
-  transition: all 0.3s ease;
+  width: 70%;
+  max-width: 36px;
+  background: var(--fg);
+  min-height: 1px;
+  transition: background 0.15s ease-out;
+  position: relative;
 }
-.bar:hover { filter: brightness(1.15); }
+.bar:hover { background: var(--accent); }
 .bar-label {
-  font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500;
-  color: var(--muted); position: absolute; bottom: -22px;
-  white-space: nowrap; transform: rotate(-45deg); transform-origin: top left;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg);
+  position: absolute;
+  bottom: -28px;
+  white-space: nowrap;
 }
-.chart-caption {
-  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); margin-top: 36px;
+.chart-axis {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
-/* ===== Tables ===== */
+/* =============== TABLES =============== */
 .table-wrap {
-  background: var(--alaya-white); border: 1px solid var(--border);
-  border-radius: 14px; overflow: hidden;
+  overflow-x: auto;
+  background: var(--bg);
 }
-table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; }
-thead { background: var(--alaya-blue-tint); color: var(--alaya-deep-navy); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 900px;
+}
+thead {
+  background: var(--fg);
+  color: var(--bg);
+}
 th {
-  text-align: left; padding: 11px 14px;
-  font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-  cursor: pointer; user-select: none;
+  text-align: left;
+  padding: 16px 18px;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  user-select: none;
+  border-right: 1px solid rgba(255,255,255,0.15);
+  white-space: nowrap;
 }
-th.sortable:hover { background: rgba(26,28,143,0.06); }
-th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 9px; }
-th.sorted .sort-arrow { opacity: 1; color: var(--alaya-royal-blue); }
-td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--alaya-deep-navy); vertical-align: middle; }
-tbody tr:hover { background: #fafbff; }
-tbody tr.row-dormant { opacity: 0.55; background: #fafbff; }
-tbody tr.row-dormant:hover { opacity: 0.85; }
-.muted-text { color: var(--muted); font-style: italic; }
-td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+th:last-child { border-right: none; }
+th.sortable:hover { color: var(--accent); }
+th.sorted { color: var(--accent); }
+th .arrow { margin-left: 4px; opacity: 0.6; font-size: 9px; }
+th.sorted .arrow { opacity: 1; }
+
+td {
+  padding: 18px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  vertical-align: middle;
+  font-weight: 500;
+}
+tbody tr { transition: background 0.15s ease-out; }
+tbody tr:hover { background: var(--muted); }
+tbody tr.row-paused { opacity: 0.45; }
+tbody tr.row-paused:hover { opacity: 0.75; }
+td.num { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.muted { color: var(--fg); opacity: 0.4; font-style: italic; }
+td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
 .empty {
-  padding: 28px 16px; text-align: center; color: var(--muted);
-  font-size: 13px; font-style: italic;
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.5;
 }
 
 /* Status pills */
 .status-pill {
-  display: inline-block; padding: 3px 9px; border-radius: 999px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 2px solid;
+  white-space: nowrap;
 }
-.status-pill.active { background: rgba(22,163,74,0.12); color: var(--good); }
-.status-pill.paused { background: rgba(107,111,138,0.12); color: var(--muted); }
-.status-pill.other { background: rgba(220,38,38,0.12); color: var(--bad); }
+.status-pill.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.status-pill.paused { background: var(--bg); color: var(--fg); border-color: var(--fg); opacity: 0.55; }
+.status-pill.other { background: var(--bg); color: var(--fg); border-color: var(--fg); }
 
-/* Rank badge */
+/* Rank badge - bauhaus circle */
+.rank-cell { display: flex; align-items: center; }
 .rank-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border-radius: 50%;
-  font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 12px;
-  background: var(--alaya-blue-tint); color: var(--alaya-deep-navy);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+  border: 2px solid var(--fg);
+  border-radius: 50%;
 }
-.rank-badge.gold { background: #fef3c7; color: #92400e; }
-.rank-badge.silver { background: #e2e8f0; color: #475569; }
-.rank-badge.bronze { background: #fee2c4; color: #9a3412; }
+.rank-badge.top-1 { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.rank-badge.top-2 { background: var(--fg); color: var(--bg); }
+.rank-badge.top-3 { background: var(--bg); color: var(--fg); border-color: var(--fg); }
 
 /* Score bar */
-.score-cell { display: flex; align-items: center; gap: 8px; }
-.score-bar { flex: 1; height: 6px; background: var(--alaya-blue-tint); border-radius: 3px; overflow: hidden; min-width: 60px; }
-.score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--alaya-mid-blue), var(--alaya-royal-blue)); }
-.score-num { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 26px; text-align: right; }
+.score-cell { display: flex; align-items: center; gap: 12px; min-width: 110px; }
+.score-bar { flex: 1; height: 4px; background: rgba(0,0,0,0.08); position: relative; }
+.score-bar-fill { height: 100%; background: var(--fg); }
+.score-num { font-weight: 900; font-size: 13px; min-width: 28px; text-align: right; }
 
-/* Thumbnail */
+/* Creative cell */
+.creative-cell { display: flex; align-items: center; gap: 14px; max-width: 360px; }
 .thumb {
-  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
-  background: var(--alaya-blue-tint); flex-shrink: 0;
-  border: 1px solid var(--border);
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 2px solid var(--fg);
+  flex-shrink: 0;
 }
 .thumb-placeholder {
-  width: 44px; height: 44px; border-radius: 8px;
-  background: var(--alaya-blue-tint); display: inline-flex;
-  align-items: center; justify-content: center;
-  color: var(--alaya-royal-blue); font-weight: 700; font-size: 14px;
-  border: 1px solid var(--border);
+  width: 48px;
+  height: 48px;
+  background: var(--muted);
+  border: 2px solid var(--fg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 16px;
 }
-.creative-cell { display: flex; align-items: center; gap: 12px; max-width: 360px; }
 .creative-name {
-  font-weight: 600; line-height: 1.3; overflow: hidden;
-  text-overflow: ellipsis; display: -webkit-box;
-  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-/* Footer */
-.footer {
-  margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--border);
-  font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); text-align: center;
+/* Result Type cell */
+.result-type {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
+
+/* =============== FOOTER =============== */
+.colophon {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 4px solid var(--border);
+  padding: 24px 32px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.colophon .right { text-align: right; }
+.colophon .center { text-align: center; }
 
 /* Toast */
 #toast {
-  position: fixed; bottom: 24px; left: 50%;
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: var(--alaya-deep-navy); color: white;
-  padding: 12px 22px; border-radius: 999px;
-  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease; z-index: 100;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 16px 28px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 2px solid var(--fg);
+  transition: transform 0.2s ease-out;
+  z-index: 100;
 }
 #toast.show { transform: translateX(-50%) translateY(0); }
 
 /* Loader */
 .loader {
-  text-align: center; padding: 60px 20px;
-  font-family: 'Inter', sans-serif; color: var(--muted);
+  padding: 96px 24px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
 }
+.loader::after {
+  content: "_";
+  color: var(--accent);
+  animation: blink 0.6s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
 
+/* =============== RESPONSIVE =============== */
+@media (max-width: 1024px) {
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .kpi:nth-child(3n) { border-right: none; }
+  .kpi:nth-child(n+4) { border-top: 2px solid var(--border); }
+  .kpi:nth-child(even) { background: var(--bg); }
+  .kpi:nth-child(2), .kpi:nth-child(4), .kpi:nth-child(6) { background: var(--muted); }
+}
 @media (max-width: 768px) {
-  .slicer-group { min-width: 100%; }
-  .header-right { align-items: flex-start; width: 100%; }
-  .creative-cell { max-width: 220px; }
+  .page { border-left: none; border-right: none; }
+  .masthead { grid-template-columns: 1fr; }
+  .masthead-left { border-right: none; border-bottom: 4px solid var(--border); }
+  .masthead-headline { font-size: 56px; }
+  .slicers { grid-template-columns: 1fr; }
+  .slicer-block + .slicer-block { border-left: none; border-top: 4px solid var(--border); }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .kpi:nth-child(odd) { background: var(--bg); }
+  .kpi:nth-child(even) { background: var(--muted); }
+  .kpi:nth-child(2n) { border-right: none; }
+  .kpi:nth-child(n+3) { border-top: 2px solid var(--border); }
+  .section-head { grid-template-columns: 1fr; gap: 12px; }
+  .section-head .meta { text-align: left; }
+  .colophon { grid-template-columns: 1fr; gap: 8px; }
+  .colophon .right, .colophon .center { text-align: left; }
 }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- ============== HEADER ============== -->
-  <header class="header">
-    <div class="header-left">
-      <div class="eyebrow">Alaya Property</div>
-      <h1>Ads Performance</h1>
-      <div class="subtitle" id="report-subtitle">Loading -</div>
+  <!-- ============== MASTHEAD ============== -->
+  <header class="masthead">
+    <div class="masthead-left swiss-grid-pattern">
+      <div class="masthead-meta">
+        <span><span class="accent">●</span> ALAYA / ADS</span>
+        <span>VOL. 01 / DAILY</span>
+      </div>
+      <h1 class="masthead-headline">
+        ADS<br><span class="red">PERFORMANCE</span>
+      </h1>
+      <div class="masthead-sub">
+        <span>ACCOUNT <strong id="account-name">—</strong></span>
+        <span>CAMPAIGNS <strong id="campaign-count">—</strong></span>
+        <span>ADS <strong id="ad-count">—</strong></span>
+      </div>
     </div>
-    <div class="header-right">
-      <div class="last-updated">Last updated: <strong id="last-updated">-</strong></div>
+    <div class="masthead-right">
+      <div class="masthead-stamp">
+        <div>
+          <div class="stamp-label">LAST UPDATED</div>
+          <div class="stamp-time" id="last-updated">—</div>
+        </div>
+        <div class="stamp-account">
+          AUTO-REFRESH / 08:00 AEST
+        </div>
+      </div>
       <button id="slack-btn">
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
-        </svg>
-        <span id="slack-btn-text">Send to Slack</span>
+        <span id="slack-btn-text">SEND TO SLACK</span>
+        <span class="arrow">→</span>
       </button>
     </div>
   </header>
 
   <!-- ============== SLICERS ============== -->
-  <div class="slicers">
-    <div class="slicer-group" style="flex: 2;">
-      <div class="slicer-label">Time Period</div>
-      <div class="time-pills" id="time-pills">
-        <button class="time-pill" data-period="today">Today</button>
-        <button class="time-pill active" data-period="week">This Week</button>
-        <button class="time-pill" data-period="14d">14 Days</button>
-        <button class="time-pill" data-period="30d">30 Days</button>
-        <button class="time-pill" data-period="45d">45 Days</button>
-        <button class="time-pill" data-period="60d">60 Days</button>
-        <button class="time-pill" data-period="lifetime">12 Months</button>
+  <section class="slicers">
+    <div class="slicer-block">
+      <div class="slicer-num"><span>01.</span> CAMPAIGN</div>
+      <div class="campaign-select-wrap">
+        <select id="campaign-select" aria-label="Filter by campaign">
+          <option value="all">ALL CAMPAIGNS</option>
+        </select>
+      </div>
+      <div class="campaign-status-line" id="campaign-status-line">
+        <span><span class="status-dot"></span><span id="active-count">—</span> ACTIVE</span>
+        <span><span class="status-dot paused"></span><span id="paused-count">—</span> PAUSED</span>
       </div>
     </div>
-    <div class="slicer-group">
-      <div class="slicer-label">Campaign</div>
-      <select class="slicer-select" id="campaign-select">
-        <option value="all">All Campaigns</option>
-      </select>
+    <div class="slicer-block">
+      <div class="slicer-num"><span>02.</span> TIME PERIOD</div>
+      <div class="time-pills" id="time-pills">
+        <button class="time-pill" data-period="today">TODAY</button>
+        <button class="time-pill active" data-period="week">7 DAYS</button>
+        <button class="time-pill" data-period="14d">14 DAYS</button>
+        <button class="time-pill" data-period="30d">30 DAYS</button>
+        <button class="time-pill" data-period="45d">45 DAYS</button>
+        <button class="time-pill" data-period="60d">60 DAYS</button>
+        <button class="time-pill" data-period="lifetime">12 MONTHS</button>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div id="loader" class="loader">Loading dashboard data -</div>
+  <div id="loader" class="loader">LOADING DASHBOARD DATA</div>
 
   <div id="dashboard" style="display: none;">
-    <!-- ============== KPIs ============== -->
-    <h2 class="section-title">
-      Performance Snapshot
-      <span class="meta-label" id="kpi-range">-</span>
-    </h2>
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="label">Spend</div>
-        <div class="value" id="kpi-spend">-</div>
-        <div class="sub" id="kpi-spend-sub">-</div>
+    <!-- ============== KPI ============== -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="num">03. SNAPSHOT</div>
+          <h2>BY THE<br>NUMBERS</h2>
+        </div>
+        <div class="meta" id="kpi-range">—</div>
       </div>
-      <div class="kpi-card">
-        <div class="label" id="kpi-results-label">Results</div>
-        <div class="value" id="kpi-results">-</div>
-        <div class="sub" id="kpi-results-sub">-</div>
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Spend</div>
+          <div class="kpi-value" id="kpi-spend">—</div>
+          <div class="kpi-sub" id="kpi-spend-sub">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label" id="kpi-results-label">Results</div>
+          <div class="kpi-value" id="kpi-results">—</div>
+          <div class="kpi-sub" id="kpi-results-sub">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Cost / Result</div>
+          <div class="kpi-value" id="kpi-cpr">—</div>
+          <div class="kpi-sub">Lower is better</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Impressions</div>
+          <div class="kpi-value" id="kpi-impressions">—</div>
+          <div class="kpi-sub" id="kpi-reach-sub">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Link Clicks</div>
+          <div class="kpi-value" id="kpi-clicks">—</div>
+          <div class="kpi-sub" id="kpi-cpc-sub">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Link CTR</div>
+          <div class="kpi-value" id="kpi-ctr">—</div>
+          <div class="kpi-sub" id="kpi-cpm-sub">—</div>
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="label">Cost per Result</div>
-        <div class="value" id="kpi-cpr">-</div>
-        <div class="sub">Lower is better</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">Impressions</div>
-        <div class="value" id="kpi-impressions">-</div>
-        <div class="sub" id="kpi-reach-sub">-</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">Link Clicks</div>
-        <div class="value" id="kpi-clicks">-</div>
-        <div class="sub" id="kpi-cpc-sub">-</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">Link CTR</div>
-        <div class="value" id="kpi-ctr">-</div>
-        <div class="sub" id="kpi-cpm-sub">-</div>
-      </div>
-    </div>
+    </section>
 
-    <!-- ============== TREND CHART ============== -->
-    <h2 class="section-title">
-      Daily Spend Trend
-      <span class="meta-label" id="chart-caption">-</span>
-    </h2>
-    <div class="chart-card">
-      <div class="chart-area" id="chart-area"></div>
-      <div class="chart-caption">Hover bars to see daily spend and results.</div>
-    </div>
+    <!-- ============== CHART ============== -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="num">04. TIME SERIES</div>
+          <h2>DAILY<br>SPEND</h2>
+        </div>
+        <div class="meta" id="chart-caption">—</div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-area" id="chart-area"></div>
+        <div class="chart-axis">
+          <span>← EARLIEST</span>
+          <span id="chart-total">—</span>
+          <span>LATEST →</span>
+        </div>
+      </div>
+    </section>
 
     <!-- ============== CAMPAIGNS ============== -->
-    <h2 class="section-title" id="campaigns-section-title">
-      Campaign Breakdown
-      <span class="meta-label" id="campaigns-count">-</span>
-    </h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th class="sortable" data-sort="name" style="width: 24%;">Campaign <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="result_type">Result Type <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="link_ctr">Link CTR <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="impressions">Impressions <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="link_clicks">Link Clicks <span class="sort-arrow">▼</span></th>
-          </tr>
-        </thead>
-        <tbody id="campaigns-body">
-          <tr><td colspan="9" class="empty">Loading -</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="num">05. CAMPAIGNS</div>
+          <h2 id="campaigns-section-title">CAMPAIGN<br>BREAKDOWN</h2>
+        </div>
+        <div class="meta" id="campaigns-count">—</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="name" style="width: 24%;">CAMPAIGN <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="status">STATUS <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="result_type">RESULT TYPE <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="spend">SPEND <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="results">RESULTS <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="cost_per_result">CPR <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="link_ctr">LINK CTR <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="impressions">IMP <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="link_clicks">LINK CLICKS <span class="arrow">▼</span></th>
+            </tr>
+          </thead>
+          <tbody id="campaigns-body">
+            <tr><td colspan="9" class="empty">LOADING</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    <!-- ============== CREATIVES (RANKED) ============== -->
-    <h2 class="section-title" id="creatives-section-title">
-      Creative Rankings
-      <span class="meta-label" id="creatives-count">-</span>
-    </h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 50px;">Rank</th>
-            <th class="sortable" data-sort="score" style="width: 100px;">Score <span class="sort-arrow">▼</span></th>
-            <th style="width: 24%;">Creative</th>
-            <th class="sortable" data-sort="campaign_name">Campaign <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="status">Status <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="result_type">Result Type <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="spend">Spend <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="results">Results <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="cost_per_result">CPR <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="link_clicks">Link Clicks <span class="sort-arrow">▼</span></th>
-            <th class="sortable" data-sort="link_ctr">Link CTR <span class="sort-arrow">▼</span></th>
-          </tr>
-        </thead>
-        <tbody id="creatives-body">
-          <tr><td colspan="11" class="empty">Loading -</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- ============== CREATIVES ============== -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="num">06. CREATIVE</div>
+          <h2>CREATIVE<br>RANKINGS</h2>
+        </div>
+        <div class="meta" id="creatives-count">—</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">RANK</th>
+              <th class="sortable" data-sort="score" style="width: 100px;">SCORE <span class="arrow">▼</span></th>
+              <th style="width: 24%;">CREATIVE</th>
+              <th class="sortable" data-sort="campaign_name">CAMPAIGN <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="status">STATUS <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="result_type">RESULT TYPE <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="spend">SPEND <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="results">RESULTS <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="cost_per_result">CPR <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="link_clicks">LINK CLICKS <span class="arrow">▼</span></th>
+              <th class="sortable" data-sort="link_ctr">LINK CTR <span class="arrow">▼</span></th>
+            </tr>
+          </thead>
+          <tbody id="creatives-body">
+            <tr><td colspan="11" class="empty">LOADING</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
-  <div class="footer">
-    Alaya Property &middot; Internal ads dashboard &middot; Data refreshed daily at 8am AEST
-  </div>
+  <!-- ============== COLOPHON ============== -->
+  <footer class="colophon">
+    <div>ALAYA PROPERTY / INTERNAL</div>
+    <div class="center">DAILY REFRESH 08:00 AEST</div>
+    <div class="right">2026 / META ADS</div>
+  </footer>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ============== CONFIG ==============
 const SLACK_WEBHOOK = "https://hooks.slack.com/services/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";
 
-// ============== STATE ==============
 let DATA = null;
 let currentPeriod = "week";
 let currentCampaignId = "all";
 let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
 
-// ============== UTILS ==============
 const fmt = {
   aud(n) {
-    if (n == null || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "—";
     return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
   },
   audPrecise(n) {
-    if (n == null || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "—";
     return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 2 }).format(n);
   },
   num(n) {
-    if (n == null || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "—";
     return new Intl.NumberFormat("en-AU").format(Math.round(n));
   },
   pct(n, dp = 2) {
-    if (n == null || isNaN(n)) return "-";
+    if (n == null || isNaN(n)) return "—";
     return n.toFixed(dp) + "%";
   }
 };
 
 function dateInPeriod(dateStr, period, today) {
-  // dateStr is YYYY-MM-DD
   const d = new Date(dateStr + "T00:00:00");
   const todayD = new Date(today + "T00:00:00");
   const diffDays = Math.floor((todayD - d) / 86400000);
-
   switch (period) {
-    case "today":
-      // "Today" = yesterday's data (most recent complete day in Meta's data)
-      return diffDays === 1;
-    case "week":
-      return diffDays >= 1 && diffDays <= 7;
-    case "14d":
-      return diffDays >= 1 && diffDays <= 14;
-    case "30d":
-      return diffDays >= 1 && diffDays <= 30;
-    case "45d":
-      return diffDays >= 1 && diffDays <= 45;
-    case "60d":
-      return diffDays >= 1 && diffDays <= 60;
-    case "lifetime":
-      return diffDays >= 1 && diffDays <= 365;
-    default:
-      return false;
+    case "today":    return diffDays === 1;
+    case "week":     return diffDays >= 1 && diffDays <= 7;
+    case "14d":      return diffDays >= 1 && diffDays <= 14;
+    case "30d":      return diffDays >= 1 && diffDays <= 30;
+    case "45d":      return diffDays >= 1 && diffDays <= 45;
+    case "60d":      return diffDays >= 1 && diffDays <= 60;
+    case "lifetime": return diffDays >= 1 && diffDays <= 365;
+    default:         return false;
   }
 }
 
 function periodLabel(period) {
   return {
-    today: "Yesterday",
-    week: "Last 7 days",
-    "14d": "Last 14 days",
-    "30d": "Last 30 days",
-    "45d": "Last 45 days",
-    "60d": "Last 60 days",
-    lifetime: "Last 12 months",
-  }[period] || period;
+    today: "YESTERDAY",
+    week: "LAST 7 DAYS",
+    "14d": "LAST 14 DAYS",
+    "30d": "LAST 30 DAYS",
+    "45d": "LAST 45 DAYS",
+    "60d": "LAST 60 DAYS",
+    lifetime: "LAST 12 MONTHS",
+  }[period] || period.toUpperCase();
 }
 
 function aggregate(rows) {
-  // Aggregate an array of daily rows into totals
   const out = {
     spend: 0, impressions: 0, clicks: 0, link_clicks: 0,
     results: 0, result_type: "Results",
     cost_per_result: 0, ctr: 0, link_ctr: 0, cpm: 0, cpc: 0, days: 0,
   };
-  // Weight result types by total RESULTS not by day count, so the dominant
-  // conversion event for the period wins (e.g. Website Submit Application beats
-  // a stray day of Link Clicks).
   let resultTypeWeight = {};
   for (const r of rows) {
     out.spend += r.spend || 0;
@@ -514,7 +888,6 @@ function aggregate(rows) {
     const rt = r.result_type || "Results";
     resultTypeWeight[rt] = (resultTypeWeight[rt] || 0) + (r.results || 0);
   }
-  // Pick the result type with the most actual results. Fall back to most-common.
   const weighted = Object.entries(resultTypeWeight).filter(([k, v]) => v > 0);
   if (weighted.length) {
     weighted.sort((a, b) => b[1] - a[1]);
@@ -522,7 +895,6 @@ function aggregate(rows) {
   } else if (Object.keys(resultTypeWeight).length) {
     out.result_type = Object.keys(resultTypeWeight)[0];
   }
-
   out.cost_per_result = out.results > 0 ? out.spend / out.results : 0;
   out.ctr = out.impressions > 0 ? (out.clicks / out.impressions) * 100 : 0;
   out.link_ctr = out.impressions > 0 ? (out.link_clicks / out.impressions) * 100 : 0;
@@ -532,17 +904,12 @@ function aggregate(rows) {
 }
 
 function getTodayInSydney() {
-  // Use the meta.last_updated date, treated as Sydney
   const d = new Date(DATA.meta.last_updated);
-  // Format as YYYY-MM-DD
   return d.toISOString().slice(0, 10);
 }
 
-// ============== RENDER ==============
 function applyFilters() {
   const today = getTodayInSydney();
-
-  // 1. Get filtered ACCOUNT-level rows for KPIs and chart
   let accountRows;
   if (currentCampaignId === "all") {
     accountRows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today));
@@ -550,73 +917,56 @@ function applyFilters() {
     const cRows = DATA.daily_rows.campaign[currentCampaignId] || [];
     accountRows = cRows.filter(r => dateInPeriod(r.date, currentPeriod, today));
   }
-
   const totals = aggregate(accountRows);
 
-  // ----- KPIs -----
   document.getElementById("kpi-range").textContent = periodLabel(currentPeriod);
   document.getElementById("kpi-spend").textContent = fmt.aud(totals.spend);
-  document.getElementById("kpi-spend-sub").textContent = totals.days > 0 ? `Avg ${fmt.aud(totals.spend / totals.days)}/day` : "-";
-  document.getElementById("kpi-results-label").textContent = totals.result_type;
+  document.getElementById("kpi-spend-sub").textContent = totals.days > 0 ? `Avg ${fmt.aud(totals.spend / totals.days)}/day` : "—";
+  document.getElementById("kpi-results-label").textContent = totals.result_type || "Results";
   document.getElementById("kpi-results").textContent = fmt.num(totals.results);
-  document.getElementById("kpi-results-sub").textContent = totals.days > 0 ? `${(totals.results / totals.days).toFixed(1)}/day avg` : "-";
-  document.getElementById("kpi-cpr").textContent = totals.cost_per_result > 0 ? fmt.audPrecise(totals.cost_per_result) : "-";
+  document.getElementById("kpi-results-sub").textContent = totals.days > 0 ? `${(totals.results / totals.days).toFixed(1)}/day avg` : "—";
+  document.getElementById("kpi-cpr").textContent = totals.cost_per_result > 0 ? fmt.audPrecise(totals.cost_per_result) : "—";
   document.getElementById("kpi-impressions").textContent = fmt.num(totals.impressions);
-  document.getElementById("kpi-reach-sub").textContent = `CPM: ${fmt.audPrecise(totals.cpm)}`;
+  document.getElementById("kpi-reach-sub").textContent = `CPM ${fmt.audPrecise(totals.cpm)}`;
   document.getElementById("kpi-clicks").textContent = fmt.num(totals.link_clicks);
   document.getElementById("kpi-cpc-sub").textContent = totals.link_clicks > 0
-    ? `CPC: ${fmt.audPrecise(totals.spend / totals.link_clicks)} - ${fmt.num(totals.clicks)} all clicks`
+    ? `CPC ${fmt.audPrecise(totals.spend / totals.link_clicks)} / ${fmt.num(totals.clicks)} all`
     : `${fmt.num(totals.clicks)} all clicks`;
   document.getElementById("kpi-ctr").textContent = fmt.pct(totals.link_ctr);
-  document.getElementById("kpi-cpm-sub").textContent = `All CTR: ${fmt.pct(totals.ctr)}`;
+  document.getElementById("kpi-cpm-sub").textContent = `All CTR ${fmt.pct(totals.ctr)}`;
 
-  // ----- Chart (daily spend) -----
-  try { renderChart(accountRows); }
-  catch (e) { console.error("renderChart failed:", e); }
-
-  // ----- Campaign breakdown -----
-  try { renderCampaigns(today); }
-  catch (e) {
+  try { renderChart(accountRows); } catch (e) { console.error("renderChart failed:", e); }
+  try { renderCampaigns(today); } catch (e) {
     console.error("renderCampaigns failed:", e);
-    document.getElementById("campaigns-body").innerHTML =
-      `<tr><td colspan="9" class="empty">Error rendering campaigns: ${e.message}</td></tr>`;
+    document.getElementById("campaigns-body").innerHTML = `<tr><td colspan="9" class="empty">ERROR: ${e.message}</td></tr>`;
   }
-
-  // ----- Creative rankings -----
-  try { renderCreatives(today); }
-  catch (e) {
+  try { renderCreatives(today); } catch (e) {
     console.error("renderCreatives failed:", e);
-    document.getElementById("creatives-body").innerHTML =
-      `<tr><td colspan="11" class="empty">Error rendering creatives: ${e.message}</td></tr>`;
+    document.getElementById("creatives-body").innerHTML = `<tr><td colspan="11" class="empty">ERROR: ${e.message}</td></tr>`;
   }
 }
 
 function renderChart(rows) {
   const chart = document.getElementById("chart-area");
   chart.innerHTML = "";
-  // Sort by date ascending
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
-  document.getElementById("chart-caption").textContent = `${sorted.length} days`;
-
+  document.getElementById("chart-caption").textContent = `${sorted.length} DAYS`;
+  document.getElementById("chart-total").textContent = `${sorted.length} DATA POINTS`;
   if (sorted.length === 0) {
-    chart.innerHTML = `<div style="margin: auto; color: var(--muted); font-family: 'Inter';">No data for this period</div>`;
+    chart.innerHTML = `<div style="margin: auto; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; font-size: 11px; opacity: 0.5;">No data for this period</div>`;
     return;
   }
-
   const maxSpend = Math.max(1, ...sorted.map(r => r.spend));
-  // For long periods, show fewer x-axis labels
-  const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 3 : sorted.length <= 90 ? 7 : 30;
-
+  const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 4 : sorted.length <= 90 ? 10 : 30;
   sorted.forEach((row, idx) => {
     const heightPct = (row.spend / maxSpend) * 100;
     const showLabel = idx % labelEvery === 0 || idx === sorted.length - 1;
     const dt = new Date(row.date + "T00:00:00");
     const dateLabel = dt.toLocaleDateString("en-AU", { day: "2-digit", month: "short" });
-
     const group = document.createElement("div");
     group.className = "bar-group";
     group.innerHTML = `
-      <div class="bar" style="height: ${heightPct}%;" title="${dateLabel}: ${fmt.aud(row.spend)} - ${fmt.num(row.results)} ${row.result_type}"></div>
+      <div class="bar" style="height: ${heightPct}%;" title="${dateLabel}: ${fmt.aud(row.spend)} — ${fmt.num(row.results)} ${row.result_type}"></div>
       ${showLabel ? `<div class="bar-label">${dateLabel}</div>` : ""}
     `;
     chart.appendChild(group);
@@ -625,153 +975,110 @@ function renderChart(rows) {
 
 function renderCampaigns(today) {
   const tbody = document.getElementById("campaigns-body");
-
-  // Build aggregated rows for EVERY campaign (including paused with zero spend in period)
   const rows = DATA.campaigns.map(c => {
     const dailyRows = (DATA.daily_rows.campaign[c.id] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
     const agg = aggregate(dailyRows);
-    return {
-      id: c.id,
-      name: c.name,
-      status: c.status,
-      ...agg,
-    };
+    return { id: c.id, name: c.name, status: c.status, ...agg };
   });
-
-  // Apply campaign slicer
   let displayRows = rows;
   if (currentCampaignId !== "all") {
     displayRows = rows.filter(r => r.id === currentCampaignId);
   }
-
-  // Sort - paused-with-no-spend always at the bottom unless explicitly sorted otherwise
   displayRows.sort((a, b) => {
-    // Primary: active campaigns above paused-with-no-spend
-    const aIsDormant = a.spend === 0 && a.status !== "ACTIVE";
-    const bIsDormant = b.spend === 0 && b.status !== "ACTIVE";
-    if (aIsDormant !== bIsDormant) return aIsDormant ? 1 : -1;
-    // Secondary: user's selected sort
+    const aDormant = a.spend === 0 && a.status !== "ACTIVE";
+    const bDormant = b.spend === 0 && b.status !== "ACTIVE";
+    if (aDormant !== bDormant) return aDormant ? 1 : -1;
     return sortFn(a, b, currentCampaignSort);
   });
-
-  document.getElementById("campaigns-count").textContent = `${displayRows.length} campaign${displayRows.length === 1 ? "" : "s"}`;
-
+  document.getElementById("campaigns-count").textContent = `${displayRows.length} CAMPAIGN${displayRows.length === 1 ? "" : "S"}`;
   if (displayRows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty">No campaigns to show</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">NO CAMPAIGNS</td></tr>`;
     return;
   }
-
   tbody.innerHTML = displayRows.map(r => {
-    const isDormant = r.spend === 0 && r.status !== "ACTIVE";
-    const rowClass = isDormant ? ' class="row-dormant"' : "";
+    const isPaused = r.status !== "ACTIVE";
     return `
-      <tr${rowClass}>
+      <tr${isPaused && r.spend === 0 ? ' class="row-paused"' : ""}>
         <td><strong>${escapeHtml(r.name)}</strong></td>
         <td>${statusPill(r.status)}</td>
-        <td>${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted-text">-</span>'}</td>
+        <td><span class="result-type">${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted">—</span>'}</span></td>
         <td class="num">${fmt.aud(r.spend)}</td>
         <td class="num">${fmt.num(r.results)}</td>
-        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
+        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "—"}</td>
         <td class="num">${fmt.pct(r.link_ctr)}</td>
         <td class="num">${fmt.num(r.impressions)}</td>
         <td class="num">${fmt.num(r.link_clicks)}</td>
       </tr>
     `;
   }).join("");
-
   updateSortIcons("campaigns-body", currentCampaignSort);
 }
 
 function calculateCreativeScore(row, pool) {
-  // 0-100 score based on:
-  // - 50% inverted CPR (lower is better) vs pool min/max
-  // - 30% CTR (higher is better) vs pool min/max
-  // - 20% volume of results (higher is better) vs pool max
-  if (row.spend < 1) return 0; // ignore creatives with negligible spend
-
+  if (row.spend < 1) return 0;
   const validCpr = pool.filter(p => p.cost_per_result > 0).map(p => p.cost_per_result);
-  const ctrs = pool.map(p => p.ctr);
+  const ctrs = pool.map(p => p.link_ctr);
   const results = pool.map(p => p.results);
-
   const minCpr = Math.min(...validCpr, row.cost_per_result || Infinity);
   const maxCpr = Math.max(...validCpr, 0.01);
   const maxCtr = Math.max(...ctrs, 0.01);
   const maxResults = Math.max(...results, 1);
-
-  // CPR component: 100 if best, 0 if worst
   let cprScore = 0;
   if (row.cost_per_result > 0 && validCpr.length) {
     cprScore = ((maxCpr - row.cost_per_result) / Math.max(0.01, maxCpr - minCpr)) * 100;
     cprScore = Math.max(0, Math.min(100, cprScore));
   }
-  const ctrScore = (row.ctr / maxCtr) * 100;
+  const ctrScore = (row.link_ctr / maxCtr) * 100;
   const volScore = (row.results / maxResults) * 100;
-
   let total;
   if (row.results > 0 && row.cost_per_result > 0) {
     total = cprScore * 0.5 + ctrScore * 0.3 + volScore * 0.2;
   } else {
-    // For ads with no results, score on CTR + spend efficiency only
     total = ctrScore * 0.6 + volScore * 0.4;
   }
-
   return Math.round(total);
 }
 
 function renderCreatives(today) {
   const tbody = document.getElementById("creatives-body");
-
-  // Build per-ad rows aggregated for this period
+  if (!DATA.ads || !Array.isArray(DATA.ads)) {
+    tbody.innerHTML = `<tr><td colspan="11" class="empty">NO ADS DATA</td></tr>`;
+    return;
+  }
   const adMap = new Map(DATA.ads.map(a => [a.id, a]));
   const campMap = new Map(DATA.campaigns.map(c => [c.id, c.name]));
-
   let rows = [];
   for (const [adId, ad] of adMap.entries()) {
-    // Filter by campaign slicer
     if (currentCampaignId !== "all" && ad.campaign_id !== currentCampaignId) continue;
-
     const dailyRows = (DATA.daily_rows.ad[adId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
     const agg = aggregate(dailyRows);
     if (agg.spend === 0 && agg.impressions === 0) continue;
-
     rows.push({
-      id: ad.id,
-      name: ad.name,
-      thumbnail: ad.thumbnail,
+      id: ad.id, name: ad.name, thumbnail: ad.thumbnail,
       campaign_id: ad.campaign_id,
       campaign_name: campMap.get(ad.campaign_id) || "Unknown",
-      status: ad.status,
-      ...agg,
+      status: ad.status, ...agg,
     });
   }
-
-  // Calculate scores RELATIVE to the displayed pool (so ranks are meaningful within filter)
   rows.forEach(r => { r.score = calculateCreativeScore(r, rows); });
-
-  // Sort
   rows.sort((a, b) => sortFn(a, b, currentCreativeSort));
-
-  // Assign ranks based on score (always score-desc, regardless of sort)
   const ranked = [...rows].sort((a, b) => b.score - a.score);
   const rankMap = new Map(ranked.map((r, i) => [r.id, i + 1]));
   rows.forEach(r => { r.rank = rankMap.get(r.id); });
-
-  document.getElementById("creatives-count").textContent = `${rows.length} creative${rows.length === 1 ? "" : "s"} with activity`;
-
+  document.getElementById("creatives-count").textContent = `${rows.length} CREATIVE${rows.length === 1 ? "" : "S"}`;
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty">No creatives with activity in this period</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty">NO CREATIVES WITH ACTIVITY</td></tr>`;
     return;
   }
-
   tbody.innerHTML = rows.map(r => {
-    const rankClass = r.rank === 1 ? "gold" : r.rank === 2 ? "silver" : r.rank === 3 ? "bronze" : "";
+    const rankClass = r.rank === 1 ? "top-1" : r.rank === 2 ? "top-2" : r.rank === 3 ? "top-3" : "";
     const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
     const thumb = r.thumbnail
       ? `<img class="thumb" src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'thumb-placeholder\\'>${initial}</span>'">`
       : `<span class="thumb-placeholder">${initial}</span>`;
     return `
       <tr>
-        <td><span class="rank-badge ${rankClass}">${r.rank}</span></td>
+        <td><div class="rank-cell"><span class="rank-badge ${rankClass}">${r.rank}</span></div></td>
         <td>
           <div class="score-cell">
             <div class="score-bar"><div class="score-bar-fill" style="width: ${r.score}%;"></div></div>
@@ -786,16 +1093,15 @@ function renderCreatives(today) {
         </td>
         <td>${escapeHtml(r.campaign_name)}</td>
         <td>${statusPill(r.status)}</td>
-        <td>${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted-text">-</span>'}</td>
+        <td><span class="result-type">${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted">—</span>'}</span></td>
         <td class="num">${fmt.aud(r.spend)}</td>
         <td class="num">${fmt.num(r.results)}</td>
-        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "-"}</td>
+        <td class="num">${r.cost_per_result > 0 ? fmt.audPrecise(r.cost_per_result) : "—"}</td>
         <td class="num">${fmt.num(r.link_clicks)}</td>
         <td class="num">${fmt.pct(r.link_ctr)}</td>
       </tr>
     `;
   }).join("");
-
   updateSortIcons("creatives-body", currentCreativeSort);
 }
 
@@ -813,7 +1119,7 @@ function updateSortIcons(bodyId, sortState) {
   const table = document.getElementById(bodyId).closest("table");
   table.querySelectorAll("th.sortable").forEach(th => {
     th.classList.remove("sorted");
-    const arrow = th.querySelector(".sort-arrow");
+    const arrow = th.querySelector(".arrow");
     if (th.dataset.sort === sortState.col) {
       th.classList.add("sorted");
       if (arrow) arrow.textContent = sortState.dir === "asc" ? "▲" : "▼";
@@ -826,19 +1132,17 @@ function updateSortIcons(bodyId, sortState) {
 function statusPill(status) {
   const s = (status || "").toUpperCase();
   if (s === "ACTIVE") return `<span class="status-pill active">Active</span>`;
-  if (s === "PAUSED") return `<span class="status-pill paused">Paused</span>`;
+  if (s === "PAUSED" || s.includes("PAUSED")) return `<span class="status-pill paused">Paused</span>`;
   return `<span class="status-pill other">${escapeHtml(status || "Unknown")}</span>`;
 }
 
 function escapeHtml(s) {
-  if (!s) return "";
+  if (s == null) return "";
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
-// ============== EVENT WIRING ==============
 function setupEvents() {
-  // Time pills
   document.querySelectorAll(".time-pill").forEach(pill => {
     pill.addEventListener("click", () => {
       document.querySelectorAll(".time-pill").forEach(p => p.classList.remove("active"));
@@ -847,14 +1151,10 @@ function setupEvents() {
       applyFilters();
     });
   });
-
-  // Campaign select
   document.getElementById("campaign-select").addEventListener("change", e => {
     currentCampaignId = e.target.value;
     applyFilters();
   });
-
-  // Sort headers - delegated by table id
   document.querySelectorAll("#campaigns-body").forEach(tb => {
     tb.closest("table").querySelectorAll("th.sortable").forEach(th => {
       th.addEventListener("click", () => {
@@ -881,8 +1181,6 @@ function setupEvents() {
       });
     });
   });
-
-  // Slack button
   document.getElementById("slack-btn").addEventListener("click", sendToSlack);
 }
 
@@ -890,20 +1188,19 @@ async function sendToSlack() {
   const btn = document.getElementById("slack-btn");
   const txt = document.getElementById("slack-btn-text");
   btn.disabled = true;
-  txt.textContent = "Sending...";
-
+  txt.textContent = "SENDING...";
   const url = window.location.href.split("?")[0];
   const today = getTodayInSydney();
-  const accountRows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today));
+  const accountRows = currentCampaignId === "all"
+    ? DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, today))
+    : (DATA.daily_rows.campaign[currentCampaignId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
   const t = aggregate(accountRows);
   const periodTxt = periodLabel(currentPeriod);
   const campaignTxt = currentCampaignId === "all" ? "All campaigns"
     : DATA.campaigns.find(c => c.id === currentCampaignId)?.name || "Unknown";
-
   const message = {
-    text: `Alaya Ads Dashboard - ${periodTxt}\nCampaign: ${campaignTxt}\nSpend: ${fmt.aud(t.spend)} | ${t.result_type}: ${fmt.num(t.results)} | CPR: ${t.cost_per_result > 0 ? fmt.audPrecise(t.cost_per_result) : "-"}\nFull dashboard: ${url}`
+    text: `Alaya Ads — ${periodTxt}\nCampaign: ${campaignTxt}\nSpend: ${fmt.aud(t.spend)} | ${t.result_type}: ${fmt.num(t.results)} | CPR: ${t.cost_per_result > 0 ? fmt.audPrecise(t.cost_per_result) : "—"}\nDashboard: ${url}`
   };
-
   try {
     await fetch(SLACK_WEBHOOK, {
       method: "POST",
@@ -912,14 +1209,14 @@ async function sendToSlack() {
       body: "payload=" + encodeURIComponent(JSON.stringify(message))
     });
     btn.classList.add("sent");
-    txt.textContent = "Sent to Slack";
-    showToast("Message posted to Slack");
-    setTimeout(() => { btn.classList.remove("sent"); txt.textContent = "Send to Slack"; btn.disabled = false; }, 4000);
+    txt.textContent = "SENT TO SLACK ✓";
+    showToast("POSTED TO SLACK");
+    setTimeout(() => { btn.classList.remove("sent"); txt.textContent = "SEND TO SLACK"; btn.disabled = false; }, 4000);
   } catch (err) {
     btn.classList.add("error");
-    txt.textContent = "Error - try again";
-    showToast("Failed to post: " + err.message);
-    setTimeout(() => { btn.classList.remove("error"); txt.textContent = "Send to Slack"; btn.disabled = false; }, 4000);
+    txt.textContent = "ERROR — RETRY";
+    showToast("FAILED: " + err.message);
+    setTimeout(() => { btn.classList.remove("error"); txt.textContent = "SEND TO SLACK"; btn.disabled = false; }, 4000);
   }
 }
 
@@ -930,17 +1227,26 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 3500);
 }
 
-// ============== BOOTSTRAP ==============
 function populateCampaignSelect() {
   const select = document.getElementById("campaign-select");
-  // Sort campaigns by name
-  const sorted = [...DATA.campaigns].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...DATA.campaigns].sort((a, b) => {
+    if ((a.status === "ACTIVE") !== (b.status === "ACTIVE")) {
+      return a.status === "ACTIVE" ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
   for (const c of sorted) {
     const opt = document.createElement("option");
     opt.value = c.id;
-    opt.textContent = c.name;
+    const isActive = c.status === "ACTIVE";
+    opt.textContent = `${isActive ? "● " : "○ "}${c.name}${isActive ? "" : " (PAUSED)"}`;
     select.appendChild(opt);
   }
+
+  const active = DATA.campaigns.filter(c => c.status === "ACTIVE").length;
+  const paused = DATA.campaigns.length - active;
+  document.getElementById("active-count").textContent = active;
+  document.getElementById("paused-count").textContent = paused;
 }
 
 (async function init() {
@@ -949,13 +1255,13 @@ function populateCampaignSelect() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     DATA = await res.json();
 
-    // Header info
     const updatedDate = new Date(DATA.meta.last_updated);
     document.getElementById("last-updated").textContent = updatedDate.toLocaleString("en-AU", {
-      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-    });
-    document.getElementById("report-subtitle").textContent =
-      `${DATA.meta.account_name} - ${DATA.campaigns.length} campaigns, ${DATA.ads.length} ads tracked`;
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+    }).toUpperCase();
+    document.getElementById("account-name").textContent = (DATA.meta.account_name || "ALAYA").toUpperCase();
+    document.getElementById("campaign-count").textContent = DATA.campaigns.length;
+    document.getElementById("ad-count").textContent = (DATA.ads || []).length;
 
     populateCampaignSelect();
     setupEvents();
@@ -965,9 +1271,9 @@ function populateCampaignSelect() {
     applyFilters();
   } catch (err) {
     document.getElementById("loader").innerHTML =
-      `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 12px; max-width: 600px; margin: 0 auto;">
-        <strong>Could not load data.json -</strong> ${err.message}
-        <div style="margin-top: 8px; font-size: 12px;">If this is the first run, the GitHub Action may still be populating data. Check the Actions tab.</div>
+      `<div style="border: 4px solid var(--accent); padding: 24px; max-width: 600px; margin: 0 auto; color: var(--accent); font-weight: 900; letter-spacing: 0.15em; text-align: left;">
+        ERROR — COULD NOT LOAD DATA<br>
+        <span style="font-weight: 500; letter-spacing: 0.05em; opacity: 0.7; margin-top: 12px; display: block;">${err.message}</span>
       </div>`;
   }
 })();
