@@ -84,32 +84,48 @@ def derive_canonical_event(adset):
     custom_event_str = promoted.get("custom_event_str") or ""
     custom_event_type = (promoted.get("custom_event_type") or "").upper()
 
-    # If the ad set has a custom conversion event, that's the canonical result
-    if custom_event_str:
-        # The event in actions[] will look like: offsite_conversion.custom.<event_str>
-        event_type = f"offsite_conversion.custom.{custom_event_str}"
-        # Pretty label - replace underscores, title case
-        label = custom_event_str.replace("_", " ").title()
-        # Special-cased pretty names
-        special = {
-            "Website Submit Application": "Website Submit Application",
-            "Calendly Booking": "Calendly Booking",
-            "Lead": "Lead",
-        }
-        return (event_type, special.get(label, label))
+    def pretty_label(raw):
+        """SUBMIT_APPLICATION -> 'Submit Application'"""
+        return raw.replace("_", " ").title()
 
-    # Standard pixel events from custom_event_type
+    # If the ad set has a custom_event_str, that's the canonical result
+    if custom_event_str:
+        return (f"offsite_conversion.custom.{custom_event_str}", pretty_label(custom_event_str))
+
+    # custom_event_type can be either a standard Meta event OR a custom pixel event name
+    # (like SUBMIT_APPLICATION which is custom, not a Meta-defined standard event).
     if custom_event_type:
-        pixel_map = {
+        # Standard Meta-defined pixel events
+        standard_pixel_map = {
             "LEAD": ("offsite_conversion.fb_pixel_lead", "Leads"),
             "PURCHASE": ("offsite_conversion.fb_pixel_purchase", "Purchases"),
             "COMPLETE_REGISTRATION": ("offsite_conversion.fb_pixel_complete_registration", "Registrations"),
             "ADD_TO_CART": ("offsite_conversion.fb_pixel_add_to_cart", "Adds to Cart"),
             "INITIATE_CHECKOUT": ("offsite_conversion.fb_pixel_initiate_checkout", "Checkouts Initiated"),
             "VIEW_CONTENT": ("offsite_conversion.fb_pixel_view_content", "Content Views"),
+            "SEARCH": ("offsite_conversion.fb_pixel_search", "Searches"),
+            "ADD_TO_WISHLIST": ("offsite_conversion.fb_pixel_add_to_wishlist", "Wishlist Adds"),
+            "ADD_PAYMENT_INFO": ("offsite_conversion.fb_pixel_add_payment_info", "Payment Info Added"),
+            "SUBSCRIBE": ("offsite_conversion.fb_pixel_subscribe", "Subscriptions"),
+            "START_TRIAL": ("offsite_conversion.fb_pixel_start_trial", "Trial Starts"),
+            "CONTACT": ("offsite_conversion.fb_pixel_contact", "Contacts"),
+            "DONATE": ("offsite_conversion.fb_pixel_donate", "Donations"),
+            "FIND_LOCATION": ("offsite_conversion.fb_pixel_find_location", "Locations Found"),
+            "SCHEDULE": ("offsite_conversion.fb_pixel_schedule", "Schedules"),
+            "SUBMIT_APPLICATION_OFFICIAL_BUT_THIS_NEVER_HAPPENS": None,  # placeholder
         }
-        if custom_event_type in pixel_map:
-            return pixel_map[custom_event_type]
+        if custom_event_type in standard_pixel_map and standard_pixel_map[custom_event_type]:
+            return standard_pixel_map[custom_event_type]
+
+        # Otherwise it's a CUSTOM pixel event (like SUBMIT_APPLICATION).
+        # The action_type in insights[] will be one of these patterns - we'll try them in order:
+        # - offsite_conversion.fb_pixel_custom.<EVENT_NAME>
+        # - offsite_conversion.custom.<EVENT_NAME>
+        # extract_results() will fall back to the family if the exact one isn't there.
+        return (
+            f"offsite_conversion.fb_pixel_custom.{custom_event_type}",
+            pretty_label(custom_event_type)
+        )
 
     # Map optimization_goal to standard events when no promoted object
     goal_map = {
@@ -120,7 +136,7 @@ def derive_canonical_event(adset):
         "LANDING_PAGE_VIEWS": ("landing_page_view", "Landing Page Views"),
         "REACH": ("reach", "Reach"),
         "IMPRESSIONS": ("impressions", "Impressions"),
-        "PROFILE_VISIT": ("onsite_conversion.profile_visit", "Profile Visits"),
+        "PROFILE_VISIT": ("onsite_conversion.profile_visit", "Profile Visit View"),
         "PROFILE_AND_PAGE_ENGAGEMENT": ("page_engagement", "Page Engagement"),
         "POST_ENGAGEMENT": ("post_engagement", "Post Engagement"),
         "VIDEO_VIEWS": ("video_view", "Video Views"),
@@ -152,12 +168,49 @@ def extract_results(row, hint_event=None, hint_label=None):
     action_counts = {a["action_type"]: safe_float(a["value"]) for a in actions}
 
     # ---- HINT PATH ----
+    # Try the exact hint first
     if hint_event and hint_event in action_counts:
         count = action_counts[hint_event]
         cpr = cost_per.get(hint_event, 0)
         if not cpr and count > 0:
             cpr = safe_float(row.get("spend", 0)) / count
         return count, hint_label or "Results", cpr
+
+    # Try variant patterns for custom pixel events.
+    # Meta uses several different prefix conventions for the same custom event:
+    #   - offsite_conversion.fb_pixel_custom.SUBMIT_APPLICATION
+    #   - offsite_conversion.custom.SUBMIT_APPLICATION
+    #   - offsite_conversion.fb_pixel_custom (generic catch-all, no event name)
+    # Try them all before falling back to family matching.
+    if hint_event:
+        # Extract the event name from the hint (the part after the last dot)
+        event_name = hint_event.split(".")[-1] if "." in hint_event else ""
+        if event_name:
+            variant_patterns = [
+                f"offsite_conversion.fb_pixel_custom.{event_name}",
+                f"offsite_conversion.custom.{event_name}",
+                f"offsite_conversion.fb_pixel_custom_{event_name.lower()}",
+                # Some accounts report the event under just the event name (lowercased)
+                event_name.lower(),
+            ]
+            for variant in variant_patterns:
+                if variant in action_counts and action_counts[variant] > 0:
+                    count = action_counts[variant]
+                    cpr = cost_per.get(variant, 0)
+                    if not cpr and count > 0:
+                        cpr = safe_float(row.get("spend", 0)) / count
+                    return count, hint_label or "Results", cpr
+
+        # Final attempt: scan ALL action types for one that contains the event name
+        if event_name:
+            event_name_lower = event_name.lower()
+            for at in action_counts.keys():
+                if event_name_lower in at.lower() and action_counts[at] > 0:
+                    count = action_counts[at]
+                    cpr = cost_per.get(at, 0)
+                    if not cpr and count > 0:
+                        cpr = safe_float(row.get("spend", 0)) / count
+                    return count, hint_label or "Results", cpr
 
     # If hint exists but exact event wasn't in the row, try EQUIVALENT events
     # of the same family. We keep the canonical label either way.
@@ -252,6 +305,10 @@ def get_daily_insights(level, since_date, until_date):
         "time_range": json.dumps({"since": since_date.isoformat(), "until": until_date.isoformat()}),
         "time_increment": 1,
         "limit": 500,
+        # CRITICAL: This makes Meta return conversion events using the ad set's attribution
+        # window — without this, custom conversion events (like SUBMIT_APPLICATION) get
+        # filtered out of the actions array.
+        "use_unified_attribution_setting": "true",
     }
     return fetch(f"act_{AD_ACCOUNT_ID}/insights", params)
 
@@ -449,32 +506,67 @@ def main():
     log("DEBUG: RAW ACTION DATA PER CAMPAIGN (for fixing result-type detection)")
     log("=" * 70)
     campaign_name_lookup = {c["id"]: c["name"] for c in campaigns}
-    seen_campaigns = set()
+
+    # For each campaign, find the row with the HIGHEST spend (most likely to have conversions)
+    best_row_per_campaign = {}
     for r in campaign_daily_raw:
         cid = r.get("campaign_id")
-        if cid in seen_campaigns:
+        if not cid:
             continue
-        # Only dump rows that have actions (i.e. spent + had activity)
+        spend = safe_float(r.get("spend"))
+        existing = best_row_per_campaign.get(cid)
+        if existing is None or spend > safe_float(existing.get("spend")):
+            best_row_per_campaign[cid] = r
+
+    for cid, r in best_row_per_campaign.items():
         actions = r.get("actions") or []
-        if not actions:
-            continue
-        seen_campaigns.add(cid)
         cname = campaign_name_lookup.get(cid, "?")
         c_hint = campaign_event_lookup.get(cid, (None, None))
         log(f"")
         log(f"CAMPAIGN: {cname}")
         log(f"  Hint event: {c_hint[0]}")
         log(f"  Hint label: {c_hint[1]}")
-        log(f"  Date sampled: {r.get('date_start')}, Spend: {r.get('spend')}")
-        log(f"  Action types present in this row:")
+        log(f"  HIGHEST-SPEND day sampled: {r.get('date_start')}, Spend: ${r.get('spend')}")
+        log(f"  Total action types in this row: {len(actions)}")
+        log(f"  Full action list:")
         for a in actions:
-            log(f"    - {a.get('action_type')}: {a.get('value')}")
-        # Also dump cost_per_action_type so we see what events Meta charges against
+            at = a.get("action_type", "")
+            val = a.get("value", "")
+            # Flag conversion-likely event types
+            flag = ""
+            if any(k in at.lower() for k in ["conversion", "submit", "lead", "purchase", "register", "complete"]):
+                flag = "  <-- POSSIBLE CONVERSION"
+            log(f"    - {at}: {val}{flag}")
         cpa = r.get("cost_per_action_type") or []
         if cpa:
             log(f"  Cost-per-action types:")
             for a in cpa:
                 log(f"    - {a.get('action_type')}: ${a.get('value')}")
+
+        # Also try fetching this single day with explicit action_breakdowns to expose custom events
+        log(f"  Probing with action_breakdowns=action_type for richer event data...")
+        try:
+            probe = fetch(f"act_{AD_ACCOUNT_ID}/insights", {
+                "level": "campaign",
+                "fields": "actions,action_values,cost_per_action_type",
+                "filtering": json.dumps([{"field": "campaign.id", "operator": "EQUAL", "value": cid}]),
+                "time_range": json.dumps({"since": r.get("date_start"), "until": r.get("date_start")}),
+                "action_breakdowns": "action_type",
+                "use_unified_attribution_setting": "true",
+            })
+            if probe:
+                p_actions = probe[0].get("actions") or []
+                log(f"  Probe returned {len(p_actions)} action types:")
+                for a in p_actions:
+                    at = a.get("action_type", "")
+                    val = a.get("value", "")
+                    flag = ""
+                    if any(k in at.lower() for k in ["conversion", "submit", "lead", "purchase", "register", "complete"]):
+                        flag = "  <-- POSSIBLE CONVERSION"
+                    log(f"    - {at}: {val}{flag}")
+        except Exception as e:
+            log(f"  probe failed: {e}")
+
     log("")
     log("=" * 70)
     log("END DEBUG DUMP")
