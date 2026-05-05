@@ -492,6 +492,114 @@ def main():
     log("Fetching campaign-level daily rows (365 days)...")
     campaign_daily_raw = get_daily_insights("campaign", start_date, yesterday)
 
+    # ===== DEBUG: Sum ALL event types across last 30 days per campaign =====
+    log("=" * 70)
+    log("DEBUG: 30-DAY EVENT TOTALS (find what matches Meta UI)")
+    log("=" * 70)
+    from collections import defaultdict
+    thirty_days_ago = yesterday - timedelta(days=30)
+    campaign_name_lookup = {c["id"]: c["name"] for c in campaigns}
+
+    # Group rows by campaign for last 30 days
+    per_campaign_30d_rows = defaultdict(list)
+    for r in campaign_daily_raw:
+        cid = r.get("campaign_id")
+        if not cid:
+            continue
+        ds = r.get("date_start")
+        if not ds:
+            continue
+        try:
+            d = datetime.fromisoformat(ds).date()
+        except Exception:
+            continue
+        if thirty_days_ago <= d <= yesterday:
+            per_campaign_30d_rows[cid].append(r)
+
+    for cid, rows in per_campaign_30d_rows.items():
+        cname = campaign_name_lookup.get(cid, "?")
+        if "Unified" not in cname and "MelbAptLM" not in cname:
+            continue  # focus on the two SUBMIT_APPLICATION campaigns
+        log("")
+        log(f"CAMPAIGN: {cname}")
+        log(f"  Date range: {thirty_days_ago} -> {yesterday}, {len(rows)} daily rows")
+
+        # Sum each event type across all 30 days
+        event_totals = defaultdict(float)
+        total_spend = 0
+        for r in rows:
+            total_spend += safe_float(r.get("spend"))
+            for a in (r.get("actions") or []):
+                event_totals[a.get("action_type")] += safe_float(a.get("value"))
+
+        log(f"  Total spend (30d): ${total_spend:,.2f}")
+        log(f"  Sum of each event type across 30 days:")
+        # Show only conversion-relevant events
+        for evt in sorted(event_totals.keys()):
+            val = event_totals[evt]
+            if val == 0:
+                continue
+            flag = ""
+            if any(k in evt.lower() for k in ["conversion", "submit", "lead", "purchase", "register", "complete", "schedule"]):
+                flag = "  <-- CONVERSION"
+            log(f"    - {evt}: {val:.0f}{flag}")
+
+    # Also try a single insights call with the same params Meta UI uses by default
+    # Meta UI default: action_attribution_windows = ['7d_click', '1d_view']
+    log("")
+    log("PROBE: Last 30 days with explicit Meta UI attribution windows")
+    for cid, cname in campaign_name_lookup.items():
+        if "Unified" not in cname and "MelbAptLM" not in cname:
+            continue
+        log(f"")
+        log(f"CAMPAIGN: {cname}")
+        for attr_setting in ["true", "false"]:
+            try:
+                params = {
+                    "level": "campaign",
+                    "fields": "spend,actions,cost_per_action_type",
+                    "filtering": json.dumps([{"field": "campaign.id", "operator": "EQUAL", "value": cid}]),
+                    "time_range": json.dumps({"since": thirty_days_ago.isoformat(), "until": yesterday.isoformat()}),
+                    "use_unified_attribution_setting": attr_setting,
+                }
+                probe = fetch(f"act_{AD_ACCOUNT_ID}/insights", params)
+                if probe:
+                    p = probe[0]
+                    p_spend = safe_float(p.get("spend"))
+                    p_actions = p.get("actions") or []
+                    log(f"  use_unified_attribution_setting={attr_setting}: spend=${p_spend:,.2f}")
+                    for a in p_actions:
+                        at = a.get("action_type", "")
+                        v = safe_float(a.get("value"))
+                        if any(k in at.lower() for k in ["conversion", "submit", "lead", "schedule"]):
+                            log(f"    - {at}: {v:.0f}  <-- CONVERSION")
+            except Exception as e:
+                log(f"    probe error: {e}")
+
+        # Also try with explicit action_attribution_windows
+        for windows in [["7d_click", "1d_view"], ["1d_click"], ["7d_click"], ["28d_click"]]:
+            try:
+                params = {
+                    "level": "campaign",
+                    "fields": "spend,actions",
+                    "filtering": json.dumps([{"field": "campaign.id", "operator": "EQUAL", "value": cid}]),
+                    "time_range": json.dumps({"since": thirty_days_ago.isoformat(), "until": yesterday.isoformat()}),
+                    "action_attribution_windows": json.dumps(windows),
+                }
+                probe = fetch(f"act_{AD_ACCOUNT_ID}/insights", params)
+                if probe:
+                    p_actions = probe[0].get("actions") or []
+                    fpc = next((safe_float(a.get("value")) for a in p_actions if a.get("action_type") == "offsite_conversion.fb_pixel_custom"), 0)
+                    custom_id = next((safe_float(a.get("value")) for a in p_actions if a.get("action_type", "").startswith("offsite_conversion.custom.")), 0)
+                    log(f"  attribution={windows}: fb_pixel_custom={fpc:.0f}, custom.<id>={custom_id:.0f}")
+            except Exception as e:
+                log(f"    probe error: {e}")
+
+    log("=" * 70)
+    log("END EVENT TOTALS DEBUG")
+    log("=" * 70)
+    # ===== END DEBUG =====
+
 
     campaign_daily = {}
     for r in campaign_daily_raw:
