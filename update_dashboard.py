@@ -154,21 +154,18 @@ def derive_canonical_event(adset):
 def extract_results(row, hint_event=None, hint_label=None):
     """
     Extract result count + cost per result from an insights row.
-    The hint is the CANONICAL label we want (e.g. 'Website Submit Application').
-    Strategy:
-      1. Try the exact hint event - perfect match.
-      2. If not found, look for ANY event of the same family (lead-like, purchase-like, etc.)
-         based on hint_label, and return its count BUT keep the canonical label.
-      3. If the hint type is engagement/clicks, only count those events.
-      4. Fall back to broad priority list with no hint.
-    Never falls through to Page Engagement when a real conversion goal exists.
+    The hint is the CANONICAL label we want (e.g. 'Submit Application').
     """
     actions = row.get("actions") or []
     cost_per = {a["action_type"]: safe_float(a["value"]) for a in (row.get("cost_per_action_type") or [])}
     action_counts = {a["action_type"]: safe_float(a["value"]) for a in actions}
 
+    # Detect if the hint is a custom pixel event (e.g. SUBMIT_APPLICATION, etc.)
+    is_custom_pixel = hint_event and "fb_pixel_custom" in hint_event
+
     # ---- HINT PATH ----
-    # Try the exact hint first
+
+    # 1) Exact match
     if hint_event and hint_event in action_counts:
         count = action_counts[hint_event]
         cpr = cost_per.get(hint_event, 0)
@@ -176,21 +173,35 @@ def extract_results(row, hint_event=None, hint_label=None):
             cpr = safe_float(row.get("spend", 0)) / count
         return count, hint_label or "Results", cpr
 
-    # Try variant patterns for custom pixel events.
-    # Meta uses several different prefix conventions for the same custom event:
-    #   - offsite_conversion.fb_pixel_custom.SUBMIT_APPLICATION
-    #   - offsite_conversion.custom.SUBMIT_APPLICATION
-    #   - offsite_conversion.fb_pixel_custom (generic catch-all, no event name)
-    # Try them all before falling back to family matching.
+    # 2) Custom pixel events: Meta groups all custom pixel events into a single
+    #    bucket called `offsite_conversion.fb_pixel_custom` (no suffix). Since each
+    #    ad set only optimizes for ONE custom event, that count IS the count of that event.
+    #    Verified from raw API dumps - this is how Meta actually reports custom conversions.
+    if is_custom_pixel:
+        # Try the generic bucket
+        if "offsite_conversion.fb_pixel_custom" in action_counts:
+            count = action_counts["offsite_conversion.fb_pixel_custom"]
+            cpr = cost_per.get("offsite_conversion.fb_pixel_custom", 0)
+            if not cpr and count > 0:
+                cpr = safe_float(row.get("spend", 0)) / count
+            return count, hint_label or "Results", cpr
+        # Also try numeric-id custom events (offsite_conversion.custom.<pixel_event_id>)
+        for at, val in action_counts.items():
+            if at.startswith("offsite_conversion.custom.") and val > 0:
+                cpr = cost_per.get(at, 0)
+                if not cpr and val > 0:
+                    cpr = safe_float(row.get("spend", 0)) / val
+                return val, hint_label or "Results", cpr
+
+    # 3) Try common variant patterns
     if hint_event:
-        # Extract the event name from the hint (the part after the last dot)
         event_name = hint_event.split(".")[-1] if "." in hint_event else ""
         if event_name:
             variant_patterns = [
                 f"offsite_conversion.fb_pixel_custom.{event_name}",
                 f"offsite_conversion.custom.{event_name}",
                 f"offsite_conversion.fb_pixel_custom_{event_name.lower()}",
-                # Some accounts report the event under just the event name (lowercased)
+                f"offsite_{event_name.lower()}_add_meta_leads",  # seen in cost_per_action
                 event_name.lower(),
             ]
             for variant in variant_patterns:
@@ -201,7 +212,7 @@ def extract_results(row, hint_event=None, hint_label=None):
                         cpr = safe_float(row.get("spend", 0)) / count
                     return count, hint_label or "Results", cpr
 
-        # Final attempt: scan ALL action types for one that contains the event name
+        # Last resort scan: any action type that contains the event name
         if event_name:
             event_name_lower = event_name.lower()
             for at in action_counts.keys():
@@ -398,19 +409,21 @@ def main():
 
     # ===== DEBUG: dump ad set config so we can see how Meta defines the canonical event =====
     log("=" * 70)
-    log("DEBUG: AD SET CONFIG (optimization_goal + promoted_object per ad set)")
+    log(f"DEBUG: AD SET CONFIG ({len(adsets_meta)} total ad sets)")
     log("=" * 70)
     campaign_name_lookup_pre = {c["id"]: c["name"] for c in campaigns}
-    for ads in adsets_meta:
-        if ads.get("effective_status") not in ("ACTIVE", "PAUSED"):
-            continue
+    for idx, ads in enumerate(adsets_meta, 1):
         cname = campaign_name_lookup_pre.get(ads.get("campaign_id"), "?")
         log(f"")
-        log(f"AD SET: {ads.get('name')}  (campaign: {cname})")
-        log(f"  optimization_goal: {ads.get('optimization_goal')}")
-        log(f"  destination_type: {ads.get('destination_type')}")
-        log(f"  billing_event: {ads.get('billing_event')}")
-        log(f"  promoted_object: {json.dumps(ads.get('promoted_object'))}")
+        log(f"[{idx}/{len(adsets_meta)}] AD SET: {ads.get('name')}")
+        log(f"     campaign: {cname}")
+        log(f"     status: {ads.get('effective_status')}")
+        log(f"     optimization_goal: {ads.get('optimization_goal')}")
+        log(f"     destination_type: {ads.get('destination_type')}")
+        log(f"     promoted_object: {json.dumps(ads.get('promoted_object'))}")
+        derived = derive_canonical_event(ads)
+        log(f"     -> canonical event: {derived[0]}")
+        log(f"     -> canonical label: {derived[1]}")
     log("=" * 70)
     log("END AD SET DUMP")
     log("=" * 70)
