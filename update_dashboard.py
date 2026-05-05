@@ -407,32 +407,10 @@ def main():
     adsets_meta = [a for a in adsets_meta if a.get("effective_status") != "DELETED"]
     log(f"  -> {len(adsets_meta)} ad sets")
 
-    # ===== DEBUG: dump ad set config so we can see how Meta defines the canonical event =====
-    log("=" * 70)
-    log(f"DEBUG: AD SET CONFIG ({len(adsets_meta)} total ad sets)")
-    log("=" * 70)
-    campaign_name_lookup_pre = {c["id"]: c["name"] for c in campaigns}
-    for idx, ads in enumerate(adsets_meta, 1):
-        cname = campaign_name_lookup_pre.get(ads.get("campaign_id"), "?")
-        log(f"")
-        log(f"[{idx}/{len(adsets_meta)}] AD SET: {ads.get('name')}")
-        log(f"     campaign: {cname}")
-        log(f"     status: {ads.get('effective_status')}")
-        log(f"     optimization_goal: {ads.get('optimization_goal')}")
-        log(f"     destination_type: {ads.get('destination_type')}")
-        log(f"     promoted_object: {json.dumps(ads.get('promoted_object'))}")
-        derived = derive_canonical_event(ads)
-        log(f"     -> canonical event: {derived[0]}")
-        log(f"     -> canonical label: {derived[1]}")
-    log("=" * 70)
-    log("END AD SET DUMP")
-    log("=" * 70)
-    # ===== END DEBUG =====
-
     # Build adset_id -> (canonical_event_type, label) lookup
     adset_event_lookup = {}
-    for ads in adsets_meta:
-        adset_event_lookup[ads["id"]] = derive_canonical_event(ads)
+    for aset in adsets_meta:
+        adset_event_lookup[aset["id"]] = derive_canonical_event(aset)
 
     # Build ad_id -> canonical event by going through the ad set
     ad_event_lookup = {}
@@ -466,15 +444,15 @@ def main():
     campaign_event_lookup = {}
     for c in campaigns:
         cid = c["id"]
-        labels = [adset_event_lookup.get(ads["id"], (None, None))[1]
-                  for ads in adsets_meta if ads.get("campaign_id") == cid]
+        labels = [adset_event_lookup.get(aset["id"], (None, None))[1]
+                  for aset in adsets_meta if aset.get("campaign_id") == cid]
         labels = [l for l in labels if l]
         if labels:
             top_label = Counter(labels).most_common(1)[0][0]
             # Find a matching event type for that label
-            for ads in adsets_meta:
-                if ads.get("campaign_id") == cid:
-                    et, lbl = adset_event_lookup.get(ads["id"], (None, None))
+            for aset in adsets_meta:
+                if aset.get("campaign_id") == cid:
+                    et, lbl = adset_event_lookup.get(aset["id"], (None, None))
                     if lbl == top_label:
                         campaign_event_lookup[cid] = (et, lbl)
                         break
@@ -514,77 +492,6 @@ def main():
     log("Fetching campaign-level daily rows (365 days)...")
     campaign_daily_raw = get_daily_insights("campaign", start_date, yesterday)
 
-    # ===== DEBUG: dump raw action data so we can see what Meta returns =====
-    log("=" * 70)
-    log("DEBUG: RAW ACTION DATA PER CAMPAIGN (for fixing result-type detection)")
-    log("=" * 70)
-    campaign_name_lookup = {c["id"]: c["name"] for c in campaigns}
-
-    # For each campaign, find the row with the HIGHEST spend (most likely to have conversions)
-    best_row_per_campaign = {}
-    for r in campaign_daily_raw:
-        cid = r.get("campaign_id")
-        if not cid:
-            continue
-        spend = safe_float(r.get("spend"))
-        existing = best_row_per_campaign.get(cid)
-        if existing is None or spend > safe_float(existing.get("spend")):
-            best_row_per_campaign[cid] = r
-
-    for cid, r in best_row_per_campaign.items():
-        actions = r.get("actions") or []
-        cname = campaign_name_lookup.get(cid, "?")
-        c_hint = campaign_event_lookup.get(cid, (None, None))
-        log(f"")
-        log(f"CAMPAIGN: {cname}")
-        log(f"  Hint event: {c_hint[0]}")
-        log(f"  Hint label: {c_hint[1]}")
-        log(f"  HIGHEST-SPEND day sampled: {r.get('date_start')}, Spend: ${r.get('spend')}")
-        log(f"  Total action types in this row: {len(actions)}")
-        log(f"  Full action list:")
-        for a in actions:
-            at = a.get("action_type", "")
-            val = a.get("value", "")
-            # Flag conversion-likely event types
-            flag = ""
-            if any(k in at.lower() for k in ["conversion", "submit", "lead", "purchase", "register", "complete"]):
-                flag = "  <-- POSSIBLE CONVERSION"
-            log(f"    - {at}: {val}{flag}")
-        cpa = r.get("cost_per_action_type") or []
-        if cpa:
-            log(f"  Cost-per-action types:")
-            for a in cpa:
-                log(f"    - {a.get('action_type')}: ${a.get('value')}")
-
-        # Also try fetching this single day with explicit action_breakdowns to expose custom events
-        log(f"  Probing with action_breakdowns=action_type for richer event data...")
-        try:
-            probe = fetch(f"act_{AD_ACCOUNT_ID}/insights", {
-                "level": "campaign",
-                "fields": "actions,action_values,cost_per_action_type",
-                "filtering": json.dumps([{"field": "campaign.id", "operator": "EQUAL", "value": cid}]),
-                "time_range": json.dumps({"since": r.get("date_start"), "until": r.get("date_start")}),
-                "action_breakdowns": "action_type",
-                "use_unified_attribution_setting": "true",
-            })
-            if probe:
-                p_actions = probe[0].get("actions") or []
-                log(f"  Probe returned {len(p_actions)} action types:")
-                for a in p_actions:
-                    at = a.get("action_type", "")
-                    val = a.get("value", "")
-                    flag = ""
-                    if any(k in at.lower() for k in ["conversion", "submit", "lead", "purchase", "register", "complete"]):
-                        flag = "  <-- POSSIBLE CONVERSION"
-                    log(f"    - {at}: {val}{flag}")
-        except Exception as e:
-            log(f"  probe failed: {e}")
-
-    log("")
-    log("=" * 70)
-    log("END DEBUG DUMP")
-    log("=" * 70)
-    # ===== END DEBUG =====
 
     campaign_daily = {}
     for r in campaign_daily_raw:
