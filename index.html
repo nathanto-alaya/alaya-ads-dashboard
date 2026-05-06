@@ -352,15 +352,14 @@ body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Cs
 }
 .chart-area {
   position: relative;
-  height: 280px;
+  height: 300px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 2px;
-  padding-bottom: 36px;
   border-bottom: 4px solid var(--border);
   background: var(--bg);
-  padding: 16px 16px 36px;
+  padding: 28px 16px 36px;
 }
 .bar-group {
   flex: 1;
@@ -381,6 +380,17 @@ body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Cs
   position: relative;
 }
 .bar:hover { background: var(--accent); }
+.bar-value {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  position: absolute;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  pointer-events: none;
+}
 .bar-label {
   font-size: 9px;
   font-weight: 700;
@@ -473,30 +483,6 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
 .status-pill.paused { background: var(--bg); color: var(--fg); border-color: var(--fg); opacity: 0.55; }
 .status-pill.other { background: var(--bg); color: var(--fg); border-color: var(--fg); }
 
-/* Campaign tag chip - shown next to campaign names */
-.campaign-tag {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  background: var(--accent);
-  color: var(--bg);
-  border: 2px solid var(--accent);
-  margin-right: 10px;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-.campaign-realname {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  opacity: 0.55;
-  vertical-align: middle;
-}
-
 /* Rank badge - bauhaus circle */
 .rank-cell { display: flex; align-items: center; }
 .rank-badge {
@@ -559,6 +545,50 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
   font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* =============== CAMPAIGN REFERENCE =============== */
+.ref-table-wrap {
+  background: var(--bg);
+  overflow-x: auto;
+}
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ref-table th {
+  text-align: left;
+  padding: 14px 18px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--fg);
+  color: var(--bg);
+  border-right: 1px solid rgba(255,255,255,0.15);
+  white-space: nowrap;
+}
+.ref-table th:last-child { border-right: none; }
+.ref-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  vertical-align: middle;
+  font-weight: 500;
+}
+.ref-table tbody tr:last-child td { border-bottom: none; }
+.ref-table .ref-display-name {
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ref-table .ref-original {
+  font-family: ui-monospace, SF Mono, Monaco, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+  opacity: 0.7;
 }
 
 /* =============== FOOTER =============== */
@@ -831,6 +861,31 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
     </section>
   </div>
 
+  <!-- ============== CAMPAIGN REFERENCE ============== -->
+  <section class="section campaign-reference">
+    <div class="section-head">
+      <div>
+        <div class="num">07. REFERENCE</div>
+        <h2>CAMPAIGN<br>NAMES</h2>
+      </div>
+      <div class="meta">DASHBOARD ALIASES → META AD ACCOUNT</div>
+    </div>
+    <div class="ref-table-wrap">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>DASHBOARD NAME</th>
+            <th>ORIGINAL META NAME</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="ref-body">
+          <tr><td colspan="3" class="empty">LOADING</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- ============== COLOPHON ============== -->
   <footer class="colophon">
     <div>ALAYA PROPERTY / INTERNAL</div>
@@ -1053,6 +1108,16 @@ function applyFilters() {
   }
 }
 
+// Compact AUD format for chart bar values: $1.2k, $850, $12.4k
+function fmtCompactAud(n) {
+  if (n == null || isNaN(n) || n === 0) return "$0";
+  if (n >= 1000) {
+    const k = n / 1000;
+    return "$" + (k >= 10 ? k.toFixed(1).replace(/\.0$/, "") : k.toFixed(1)) + "k";
+  }
+  return "$" + Math.round(n);
+}
+
 function renderChart(rows) {
   const chart = document.getElementById("chart-area");
   chart.innerHTML = "";
@@ -1064,15 +1129,23 @@ function renderChart(rows) {
     return;
   }
   const maxSpend = Math.max(1, ...sorted.map(r => r.spend));
+  // Date labels: how often to show
   const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 4 : sorted.length <= 90 ? 10 : 30;
+  // Value labels: show on every bar if <= 20, every other if <= 45, every third otherwise
+  const valueEvery = sorted.length <= 20 ? 1 : sorted.length <= 45 ? 2 : 3;
   sorted.forEach((row, idx) => {
     const heightPct = (row.spend / maxSpend) * 100;
     const showLabel = idx % labelEvery === 0 || idx === sorted.length - 1;
+    const showValue = (idx % valueEvery === 0 || idx === sorted.length - 1) && row.spend > 0;
     const dt = new Date(row.date + "T00:00:00");
     const dateLabel = dt.toLocaleDateString("en-AU", { day: "2-digit", month: "short" });
+    const valueText = fmtCompactAud(row.spend);
+    // Position the value label: above the bar top. Use bottom + heightPct + 4px gap.
+    const valueBottom = `calc(${heightPct}% + 4px)`;
     const group = document.createElement("div");
     group.className = "bar-group";
     group.innerHTML = `
+      ${showValue ? `<div class="bar-value" style="bottom: ${valueBottom}; left: 50%; transform: translateX(-50%);">${valueText}</div>` : ""}
       <div class="bar" style="height: ${heightPct}%;" title="${dateLabel}: ${fmt.aud(row.spend)} — ${fmt.num(row.results)} ${row.result_type}"></div>
       ${showLabel ? `<div class="bar-label">${dateLabel}</div>` : ""}
     `;
@@ -1243,44 +1316,28 @@ function statusPill(status) {
   return `<span class="status-pill other">${escapeHtml(status || "Unknown")}</span>`;
 }
 
-// Map a campaign name to a short plain-English tag.
-// Pattern-based so new campaigns auto-tag without code changes.
-function campaignTag(campaignName) {
-  if (!campaignName) return null;
-  const n = campaignName.toLowerCase();
-  // Followers campaign (Traffic objective, drives profile visits)
-  if (n.includes("hiperfreels") || (n.includes("traffic") && n.includes("reel"))) {
-    return "FOLLOWERS";
+// Explicit campaign name overrides. Add a new entry here when a new campaign launches.
+// Match is performed via includes() on a stable substring of the original campaign name.
+const CAMPAIGN_DISPLAY_NAMES = [
+  { match: "HiPerfReels",   display: "FOLLOWERS" },
+  { match: "Batch01",       display: "LEADS - OG CAM 1" },
+  { match: "Relaunch",      display: "LEADS - OG CAM 2" },
+  { match: "Unified",       display: "LEADS - GENERIC CAM" },
+  { match: "MelbAptLM",     display: "LEADS - MELBOURNE APT 1" },
+];
+
+// Returns the friendly display name for a campaign, or the original if no match.
+function campaignDisplayName(originalName) {
+  if (!originalName) return "";
+  for (const entry of CAMPAIGN_DISPLAY_NAMES) {
+    if (originalName.includes(entry.match)) return entry.display;
   }
-  // Lead campaigns - sub-tagged by audience
-  if (n.includes("melbaptlm") || n.includes("melb apt") || n.includes("melbourne apt")) {
-    return "LEADS — Melbourne Aps";
-  }
-  if (n.includes("unified")) {
-    return "LEADS — Unified";
-  }
-  if (n.includes("relaunch")) {
-    return "LEADS — OG Campaign";
-  }
-  if (n.includes("vsl") || n.includes("batch")) {
-    return "LEADS — VSL";
-  }
-  // Generic fallback for any other Lead campaign
-  if (n.includes("lead")) {
-    return "LEADS";
-  }
-  // Generic fallback for any other Traffic campaign
-  if (n.includes("traffic")) {
-    return "TRAFFIC";
-  }
-  return null;
+  return originalName; // fallback for new untagged campaigns
 }
 
-// Render campaign with tag chip + name. Used in tables and dropdowns.
+// Render campaign as the friendly name only (used in tables and dropdowns).
 function campaignWithTag(campaignName) {
-  const tag = campaignTag(campaignName);
-  if (!tag) return escapeHtml(campaignName);
-  return `<span class="campaign-tag">${escapeHtml(tag)}</span><span class="campaign-realname">${escapeHtml(campaignName)}</span>`;
+  return escapeHtml(campaignDisplayName(campaignName));
 }
 
 function escapeHtml(s) {
@@ -1374,6 +1431,28 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 3500);
 }
 
+function renderCampaignReference() {
+  const tbody = document.getElementById("ref-body");
+  if (!DATA || !Array.isArray(DATA.campaigns) || DATA.campaigns.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty">NO CAMPAIGNS</td></tr>`;
+    return;
+  }
+  // Sort: active first, then by display name
+  const sorted = [...DATA.campaigns].sort((a, b) => {
+    if ((a.status === "ACTIVE") !== (b.status === "ACTIVE")) {
+      return a.status === "ACTIVE" ? -1 : 1;
+    }
+    return campaignDisplayName(a.name).localeCompare(campaignDisplayName(b.name));
+  });
+  tbody.innerHTML = sorted.map(c => `
+    <tr>
+      <td><span class="ref-display-name">${escapeHtml(campaignDisplayName(c.name))}</span></td>
+      <td><span class="ref-original">${escapeHtml(c.name)}</span></td>
+      <td>${statusPill(c.status)}</td>
+    </tr>
+  `).join("");
+}
+
 function populateCampaignSelect() {
   const select = document.getElementById("campaign-select");
   const sorted = [...DATA.campaigns].sort((a, b) => {
@@ -1386,9 +1465,8 @@ function populateCampaignSelect() {
     const opt = document.createElement("option");
     opt.value = c.id;
     const isActive = c.status === "ACTIVE";
-    const tag = campaignTag(c.name);
-    const tagPrefix = tag ? `[${tag}]  ` : "";
-    opt.textContent = `${isActive ? "● " : "○ "}${tagPrefix}${c.name}${isActive ? "" : " (PAUSED)"}`;
+    const friendlyName = campaignDisplayName(c.name);
+    opt.textContent = `${isActive ? "● " : "○ "}${friendlyName}${isActive ? "" : " (PAUSED)"}`;
     select.appendChild(opt);
   }
 
@@ -1413,6 +1491,7 @@ function populateCampaignSelect() {
     document.getElementById("ad-count").textContent = (DATA.ads || []).length;
 
     populateCampaignSelect();
+    renderCampaignReference();
     setupEvents();
 
     document.getElementById("loader").style.display = "none";
