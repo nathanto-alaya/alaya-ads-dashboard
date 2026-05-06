@@ -473,6 +473,30 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
 .status-pill.paused { background: var(--bg); color: var(--fg); border-color: var(--fg); opacity: 0.55; }
 .status-pill.other { background: var(--bg); color: var(--fg); border-color: var(--fg); }
 
+/* Campaign tag chip - shown next to campaign names */
+.campaign-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--accent);
+  color: var(--bg);
+  border: 2px solid var(--accent);
+  margin-right: 10px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.campaign-realname {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.55;
+  vertical-align: middle;
+}
+
 /* Rank badge - bauhaus circle */
 .rank-cell { display: flex; align-items: center; }
 .rank-badge {
@@ -701,9 +725,9 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
           <div class="kpi-sub" id="kpi-results-sub">—</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">Cost / Result</div>
+          <div class="kpi-label" id="kpi-cpr-label">Cost / Lead</div>
           <div class="kpi-value" id="kpi-cpr">—</div>
-          <div class="kpi-sub">Lower is better</div>
+          <div class="kpi-sub" id="kpi-cpr-sub">Lower is better</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Impressions</div>
@@ -952,23 +976,44 @@ function applyFilters() {
     : (DATA.daily_rows.campaign[currentCampaignId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
   const days = accountRows.length;
 
-  // Pick the headline result type (most volume) for the big number
-  const headlineType = resultTypeEntries[0];
-  const headlineLabel = headlineType ? headlineType[0] : "Results";
-  const headlineCount = headlineType ? headlineType[1].count : 0;
-  const headlineSpend = headlineType ? headlineType[1].spend : 0;
-  const headlineCpr = headlineCount > 0 ? headlineSpend / headlineCount : 0;
+  // ===== LEADS-FIRST KPI LOGIC =====
+  // The "Leads" tile always shows Submit Application count + CPL.
+  // We identify lead-generating result types by name match.
+  const isLeadResultType = (rt) => {
+    if (!rt) return false;
+    const r = rt.toLowerCase();
+    return r.includes("submit") || r.includes("lead") || r.includes("application");
+  };
 
-  // Build a sub-line that breaks down the other result types
-  let resultsSub = "—";
-  if (resultTypeEntries.length === 0) {
-    resultsSub = days > 0 ? `0/day avg` : "—";
-  } else if (resultTypeEntries.length === 1) {
-    resultsSub = days > 0 ? `${(headlineCount / days).toFixed(1)}/day avg` : "—";
+  // Sum Submit Applications across all lead-type campaigns in the slice
+  let leadCount = 0;
+  let leadSpend = 0;
+  for (const [rt, v] of resultTypeEntries) {
+    if (isLeadResultType(rt)) {
+      leadCount += v.count;
+      leadSpend += v.spend;
+    }
+  }
+  const cpl = leadCount > 0 ? leadSpend / leadCount : 0;
+
+  // Other (non-lead) result types - shown as the sub-line
+  const otherResultTypes = resultTypeEntries.filter(([rt]) => !isLeadResultType(rt));
+
+  // Build the sub-line: lead-rate per day + breakdown of other types
+  let leadsSub;
+  if (leadCount > 0 && days > 0) {
+    leadsSub = `${(leadCount / days).toFixed(1)}/day avg`;
+  } else if (otherResultTypes.length > 0) {
+    // No leads but other conversions exist - show those as the sub-line
+    const others = otherResultTypes.map(([rt, v]) => `${fmt.num(v.count)} ${rt}`).join(" / ");
+    leadsSub = `+ ${others}`;
   } else {
-    // Multiple result types - show a compact breakdown of the others
-    const others = resultTypeEntries.slice(1).map(([rt, v]) => `${fmt.num(v.count)} ${rt}`).join(" / ");
-    resultsSub = `+ ${others}`;
+    leadsSub = "—";
+  }
+  // If we have BOTH leads AND other types, append the others
+  if (leadCount > 0 && otherResultTypes.length > 0) {
+    const others = otherResultTypes.map(([rt, v]) => `${fmt.num(v.count)} ${rt}`).join(" / ");
+    leadsSub = `${leadsSub}  •  + ${others}`;
   }
 
   // Aggregate stats
@@ -980,10 +1025,14 @@ function applyFilters() {
   document.getElementById("kpi-range").textContent = periodLabel(currentPeriod);
   document.getElementById("kpi-spend").textContent = fmt.aud(sumSpend);
   document.getElementById("kpi-spend-sub").textContent = days > 0 ? `Avg ${fmt.aud(sumSpend / days)}/day` : "—";
-  document.getElementById("kpi-results-label").textContent = headlineLabel.toUpperCase();
-  document.getElementById("kpi-results").textContent = fmt.num(headlineCount);
-  document.getElementById("kpi-results-sub").textContent = resultsSub;
-  document.getElementById("kpi-cpr").textContent = headlineCpr > 0 ? fmt.audPrecise(headlineCpr) : "—";
+  document.getElementById("kpi-results-label").textContent = "LEADS";
+  document.getElementById("kpi-results").textContent = fmt.num(leadCount);
+  document.getElementById("kpi-results-sub").textContent = leadsSub;
+  document.getElementById("kpi-cpr-label").textContent = "Cost / Lead";
+  document.getElementById("kpi-cpr").textContent = cpl > 0 ? fmt.audPrecise(cpl) : "—";
+  document.getElementById("kpi-cpr-sub").textContent = leadCount > 0
+    ? `Lead spend ${fmt.aud(leadSpend)}`
+    : "No leads in period";
   document.getElementById("kpi-impressions").textContent = fmt.num(sumImpressions);
   document.getElementById("kpi-reach-sub").textContent = `CPM ${fmt.audPrecise(overallCpm)}`;
   document.getElementById("kpi-clicks").textContent = fmt.num(sumLinkClicks);
@@ -1057,7 +1106,7 @@ function renderCampaigns(today) {
     const isPaused = r.status !== "ACTIVE";
     return `
       <tr${isPaused && r.spend === 0 ? ' class="row-paused"' : ""}>
-        <td><strong>${escapeHtml(r.name)}</strong></td>
+        <td><strong>${campaignWithTag(r.name)}</strong></td>
         <td>${statusPill(r.status)}</td>
         <td><span class="result-type">${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted">—</span>'}</span></td>
         <td class="num">${fmt.aud(r.spend)}</td>
@@ -1149,7 +1198,7 @@ function renderCreatives(today) {
             <div class="creative-name" title="${escapeAttr(r.name)}">${escapeHtml(r.name)}</div>
           </div>
         </td>
-        <td>${escapeHtml(r.campaign_name)}</td>
+        <td>${campaignWithTag(r.campaign_name)}</td>
         <td>${statusPill(r.status)}</td>
         <td><span class="result-type">${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted">—</span>'}</span></td>
         <td class="num">${fmt.aud(r.spend)}</td>
@@ -1192,6 +1241,46 @@ function statusPill(status) {
   if (s === "ACTIVE") return `<span class="status-pill active">Active</span>`;
   if (s === "PAUSED" || s.includes("PAUSED")) return `<span class="status-pill paused">Paused</span>`;
   return `<span class="status-pill other">${escapeHtml(status || "Unknown")}</span>`;
+}
+
+// Map a campaign name to a short plain-English tag.
+// Pattern-based so new campaigns auto-tag without code changes.
+function campaignTag(campaignName) {
+  if (!campaignName) return null;
+  const n = campaignName.toLowerCase();
+  // Followers campaign (Traffic objective, drives profile visits)
+  if (n.includes("hiperfreels") || (n.includes("traffic") && n.includes("reel"))) {
+    return "FOLLOWERS";
+  }
+  // Lead campaigns - sub-tagged by audience
+  if (n.includes("melbaptlm") || n.includes("melb apt") || n.includes("melbourne apt")) {
+    return "LEADS — Melbourne Aps";
+  }
+  if (n.includes("unified")) {
+    return "LEADS — Unified";
+  }
+  if (n.includes("relaunch")) {
+    return "LEADS — OG Campaign";
+  }
+  if (n.includes("vsl") || n.includes("batch")) {
+    return "LEADS — VSL";
+  }
+  // Generic fallback for any other Lead campaign
+  if (n.includes("lead")) {
+    return "LEADS";
+  }
+  // Generic fallback for any other Traffic campaign
+  if (n.includes("traffic")) {
+    return "TRAFFIC";
+  }
+  return null;
+}
+
+// Render campaign with tag chip + name. Used in tables and dropdowns.
+function campaignWithTag(campaignName) {
+  const tag = campaignTag(campaignName);
+  if (!tag) return escapeHtml(campaignName);
+  return `<span class="campaign-tag">${escapeHtml(tag)}</span><span class="campaign-realname">${escapeHtml(campaignName)}</span>`;
 }
 
 function escapeHtml(s) {
@@ -1297,7 +1386,9 @@ function populateCampaignSelect() {
     const opt = document.createElement("option");
     opt.value = c.id;
     const isActive = c.status === "ACTIVE";
-    opt.textContent = `${isActive ? "● " : "○ "}${c.name}${isActive ? "" : " (PAUSED)"}`;
+    const tag = campaignTag(c.name);
+    const tagPrefix = tag ? `[${tag}]  ` : "";
+    opt.textContent = `${isActive ? "● " : "○ "}${tagPrefix}${c.name}${isActive ? "" : " (PAUSED)"}`;
     select.appendChild(opt);
   }
 
