@@ -4,7 +4,8 @@ name: Daily Ads Dashboard Refresh
 # Also can be triggered manually from the Actions tab
 on:
   schedule:
-    - cron: '0 22 * * *'  # 22:00 UTC = 8:00 AM AEST / 9:00 AM AEDT
+    - cron: '0 22 * * *'   # 8am AEST (UTC+10)
+    - cron: '0 6 * * *'    # 4pm AEST (UTC+10)
   workflow_dispatch:  # Manual trigger button in GitHub UI
 
 permissions:
