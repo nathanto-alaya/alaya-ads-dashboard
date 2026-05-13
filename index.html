@@ -391,6 +391,31 @@ body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Cs
   text-align: center;
   pointer-events: none;
 }
+
+/* Daily average line overlay */
+.chart-avg-line {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  height: 0;
+  border-top: 2px dashed var(--accent);
+  pointer-events: none;
+  z-index: 5;
+}
+.chart-avg-label {
+  position: absolute;
+  right: 0;
+  top: -22px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 4px 10px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
 .bar-label {
   font-size: 9px;
   font-weight: 700;
@@ -1129,16 +1154,33 @@ function renderChart(rows) {
     return;
   }
   const maxSpend = Math.max(1, ...sorted.map(r => r.spend));
+  const totalSpend = sorted.reduce((s, r) => s + r.spend, 0);
+  const avgSpend = totalSpend / sorted.length;
+
   // Date labels: how often to show
   const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 4 : sorted.length <= 90 ? 10 : 30;
+  // Value labels: smart density based on bar count
+  let valueEvery;
+  if (sorted.length <= 15) valueEvery = 1;
+  else if (sorted.length <= 30) valueEvery = 2;
+  else if (sorted.length <= 60) valueEvery = 4;
+  else valueEvery = 7;
+
+  // Always label the highest, lowest, and most recent bars regardless of density
+  let maxIdx = 0, minIdx = 0, minVal = Infinity, maxVal = -Infinity;
+  sorted.forEach((row, i) => {
+    if (row.spend > maxVal) { maxVal = row.spend; maxIdx = i; }
+    if (row.spend > 0 && row.spend < minVal) { minVal = row.spend; minIdx = i; }
+  });
+  const alwaysShow = new Set([maxIdx, minIdx, sorted.length - 1]);
+
   sorted.forEach((row, idx) => {
     const heightPct = (row.spend / maxSpend) * 100;
     const showLabel = idx % labelEvery === 0 || idx === sorted.length - 1;
-    const showValue = row.spend > 0;  // show value on every bar with spend
+    const showValue = row.spend > 0 && (alwaysShow.has(idx) || idx % valueEvery === 0);
     const dt = new Date(row.date + "T00:00:00");
     const dateLabel = dt.toLocaleDateString("en-AU", { day: "2-digit", month: "short" });
     const valueText = fmtCompactAud(row.spend);
-    // Position the value label: above the bar top. Use bottom + heightPct + 4px gap.
     const valueBottom = `calc(${heightPct}% + 4px)`;
     const group = document.createElement("div");
     group.className = "bar-group";
@@ -1149,6 +1191,14 @@ function renderChart(rows) {
     `;
     chart.appendChild(group);
   });
+
+  // Add the daily-average horizontal line
+  const avgHeightPct = (avgSpend / maxSpend) * 100;
+  const avgLine = document.createElement("div");
+  avgLine.className = "chart-avg-line";
+  avgLine.style.bottom = `calc(${avgHeightPct}% + 36px)`;
+  avgLine.innerHTML = `<span class="chart-avg-label">AVG ${fmt.aud(avgSpend)}/DAY</span>`;
+  chart.appendChild(avgLine);
 }
 
 function renderCampaigns(today) {
