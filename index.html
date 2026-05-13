@@ -359,7 +359,7 @@ body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Cs
   gap: 2px;
   border-bottom: 4px solid var(--border);
   background: var(--bg);
-  padding: 36px 16px 36px;
+  padding: 44px 16px 36px;
 }
 .bar-group {
   flex: 1;
@@ -381,9 +381,9 @@ body { background-color: #FBFBF8; background-image: url("data:image/svg+xml,%3Cs
 }
 .bar:hover { background: var(--accent); }
 .bar-value {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 900;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--fg);
   position: absolute;
   white-space: nowrap;
@@ -1131,12 +1131,10 @@ function renderChart(rows) {
   const maxSpend = Math.max(1, ...sorted.map(r => r.spend));
   // Date labels: how often to show
   const labelEvery = sorted.length <= 10 ? 1 : sorted.length <= 30 ? 4 : sorted.length <= 90 ? 10 : 30;
-  // Value labels: show on every bar if <= 20, every other if <= 45, every third otherwise
-  const valueEvery = sorted.length <= 20 ? 1 : sorted.length <= 45 ? 2 : 3;
   sorted.forEach((row, idx) => {
     const heightPct = (row.spend / maxSpend) * 100;
     const showLabel = idx % labelEvery === 0 || idx === sorted.length - 1;
-    const showValue = (idx % valueEvery === 0 || idx === sorted.length - 1) && row.spend > 0;
+    const showValue = row.spend > 0;  // show value on every bar with spend
     const dt = new Date(row.date + "T00:00:00");
     const dateLabel = dt.toLocaleDateString("en-AU", { day: "2-digit", month: "short" });
     const valueText = fmtCompactAud(row.spend);
