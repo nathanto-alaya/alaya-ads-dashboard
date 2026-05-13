@@ -1377,10 +1377,12 @@ const CAMPAIGN_DISPLAY_NAMES = [
 ];
 
 // Returns the friendly display name for a campaign, or the original if no match.
+// Matching is case-insensitive so "General" matches "GENERAL", "MelbApts" matches "MELBAPTS", etc.
 function campaignDisplayName(originalName) {
   if (!originalName) return "";
+  const lower = originalName.toLowerCase();
   for (const entry of CAMPAIGN_DISPLAY_NAMES) {
-    if (originalName.includes(entry.match)) return entry.display;
+    if (lower.includes(entry.match.toLowerCase())) return entry.display;
   }
   return originalName; // fallback for new untagged campaigns
 }
