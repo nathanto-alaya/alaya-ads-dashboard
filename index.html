@@ -616,6 +616,288 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
   opacity: 0.7;
 }
 
+/* =============== VIEW TABS =============== */
+.view-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 4px solid var(--border);
+  background: var(--bg);
+}
+.view-tab {
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--fg);
+  border: none;
+  border-right: 4px solid var(--border);
+  padding: 22px 32px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+.view-tab:last-child { border-right: none; }
+.view-tab:hover { background: var(--muted); }
+.view-tab.active { background: var(--accent-deep); color: var(--bg); }
+.view-tab-num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+.view-tab.active .view-tab-num { color: var(--bg); opacity: 0.7; }
+
+.view-pane { display: none; }
+.view-pane.active { display: block; }
+
+/* =============== CREATIVE VIEW CONTROLS =============== */
+.cv-controls { border-bottom: 4px solid var(--border); }
+.cv-controls-inner {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 0;
+}
+.cv-control-block {
+  padding: 24px 32px;
+}
+.cv-control-block + .cv-control-block {
+  border-left: 4px solid var(--border);
+}
+.cv-control-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.cv-sort-pills {
+  display: flex;
+  flex-wrap: wrap;
+}
+.cv-sort-pill {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--bg);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  padding: 12px 16px;
+  cursor: pointer;
+  margin-left: -2px;
+  margin-bottom: -2px;
+  transition: all 0.15s ease-linear;
+}
+.cv-sort-pill:hover { background: var(--fg); color: var(--bg); }
+.cv-sort-pill.active {
+  background: var(--accent-deep);
+  color: var(--bg);
+  border-color: var(--accent-deep);
+  position: relative;
+  z-index: 2;
+}
+
+/* =============== CREATIVE CARD GRID =============== */
+.cv-grid-wrap {
+  background: var(--muted);
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  padding: 24px;
+}
+.cv-group {
+  margin-bottom: 32px;
+}
+.cv-group:last-child { margin-bottom: 0; }
+.cv-group-head {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  background: var(--fg);
+  color: var(--bg);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cv-group-head .cv-group-count {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+.cv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.cv-card {
+  background: var(--bg);
+  border: 3px solid var(--fg);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease-out, border-color 0.15s ease-out;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.cv-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.cv-card.is-paused { opacity: 0.55; }
+.cv-card.is-paused:hover { opacity: 0.95; }
+.cv-card-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--muted);
+  border-bottom: 3px solid var(--fg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cv-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cv-card-thumb-placeholder {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--fg);
+  opacity: 0.2;
+}
+.cv-card-rank {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+.cv-card-rank.top-1 {
+  background: var(--accent-deep);
+  color: var(--bg);
+  border-color: var(--accent-deep);
+}
+.cv-card-rank.top-2 { background: var(--fg); color: var(--bg); }
+.cv-card-rank.top-3 { background: var(--bg); color: var(--fg); }
+.cv-card-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--accent-deep);
+  color: var(--bg);
+  border: 2px solid var(--accent-deep);
+}
+.cv-card-status.paused {
+  background: var(--bg);
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.cv-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cv-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  min-height: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.cv-card-campaign {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.cv-card-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+.cv-card-score-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0,0,0,0.08);
+  position: relative;
+}
+.cv-card-score-fill {
+  height: 100%;
+  background: var(--fg);
+}
+.cv-card-score-num {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  min-width: 30px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cv-card-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.12);
+}
+.cv-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cv-card-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.cv-card-metric-value {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* =============== FOOTER =============== */
 .colophon {
   display: grid;
@@ -672,6 +954,7 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
   .kpi:nth-child(n+4) { border-top: 2px solid var(--border); }
   .kpi:nth-child(even) { background: var(--bg); }
   .kpi:nth-child(2), .kpi:nth-child(4), .kpi:nth-child(6) { background: var(--muted); }
+  .cv-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .page { border-left: none; border-right: none; }
@@ -689,6 +972,12 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
   .section-head .meta { text-align: left; }
   .colophon { grid-template-columns: 1fr; gap: 8px; }
   .colophon .right, .colophon .center { text-align: left; }
+  .view-tabs { grid-template-columns: 1fr; }
+  .view-tab { border-right: none; border-bottom: 2px solid var(--border); padding: 16px 20px; font-size: 18px; }
+  .view-tab:last-child { border-bottom: none; }
+  .cv-controls-inner { grid-template-columns: 1fr; }
+  .cv-control-block + .cv-control-block { border-left: none; border-top: 4px solid var(--border); }
+  .cv-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -759,6 +1048,21 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
   <div id="loader" class="loader">LOADING DASHBOARD DATA</div>
 
   <div id="dashboard" style="display: none;">
+
+    <!-- ============== VIEW TABS ============== -->
+    <nav class="view-tabs" role="tablist">
+      <button class="view-tab active" data-view="campaigns" role="tab" aria-selected="true">
+        <span class="view-tab-num">A.</span>
+        <span class="view-tab-label">Campaign View</span>
+      </button>
+      <button class="view-tab" data-view="creatives" role="tab" aria-selected="false">
+        <span class="view-tab-num">B.</span>
+        <span class="view-tab-label">Creative View</span>
+      </button>
+    </nav>
+
+    <!-- ============== CAMPAIGN VIEW ============== -->
+    <div id="view-campaigns" class="view-pane active">
     <!-- ============== KPI ============== -->
     <section class="section">
       <div class="section-head">
@@ -884,6 +1188,93 @@ td .secondary { font-size: 11px; opacity: 0.6; font-weight: 500; text-transform:
         </table>
       </div>
     </section>
+    </div><!-- /view-campaigns -->
+
+    <!-- ============== CREATIVE VIEW ============== -->
+    <div id="view-creatives" class="view-pane">
+
+      <!-- KPIs for creative-centric stats -->
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="num">C1. CREATIVE STATS</div>
+            <h2>BY THE<br>CREATIVES</h2>
+          </div>
+          <div class="meta" id="cv-kpi-range">—</div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-label">Active Creatives</div>
+            <div class="kpi-value" id="cv-kpi-total">—</div>
+            <div class="kpi-sub" id="cv-kpi-total-sub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Top Score</div>
+            <div class="kpi-value" id="cv-kpi-top">—</div>
+            <div class="kpi-sub" id="cv-kpi-top-sub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Avg Cost / Lead</div>
+            <div class="kpi-value" id="cv-kpi-cpl">—</div>
+            <div class="kpi-sub" id="cv-kpi-cpl-sub">Across lead creatives</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Avg Link CTR</div>
+            <div class="kpi-value" id="cv-kpi-ctr">—</div>
+            <div class="kpi-sub" id="cv-kpi-ctr-sub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Total Leads</div>
+            <div class="kpi-value" id="cv-kpi-leads">—</div>
+            <div class="kpi-sub" id="cv-kpi-leads-sub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Total Spend</div>
+            <div class="kpi-value" id="cv-kpi-spend">—</div>
+            <div class="kpi-sub" id="cv-kpi-spend-sub">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sort controls -->
+      <section class="section cv-controls">
+        <div class="cv-controls-inner">
+          <div class="cv-control-block">
+            <div class="cv-control-label">SORT BY</div>
+            <div class="cv-sort-pills" id="cv-sort-pills">
+              <button class="cv-sort-pill active" data-sort="score">Score</button>
+              <button class="cv-sort-pill" data-sort="leads">Leads</button>
+              <button class="cv-sort-pill" data-sort="spend">Spend</button>
+              <button class="cv-sort-pill" data-sort="cpl">Cost / Lead</button>
+              <button class="cv-sort-pill" data-sort="ctr">Link CTR</button>
+              <button class="cv-sort-pill" data-sort="impressions">Impressions</button>
+            </div>
+          </div>
+          <div class="cv-control-block">
+            <div class="cv-control-label">GROUP BY</div>
+            <div class="cv-sort-pills" id="cv-group-pills">
+              <button class="cv-sort-pill active" data-group="flat">All Creatives</button>
+              <button class="cv-sort-pill" data-group="campaign">Campaign</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Creative grid -->
+      <section class="section" id="cv-grid-section">
+        <div class="section-head">
+          <div>
+            <div class="num">C2. CREATIVES</div>
+            <h2 id="cv-grid-title">ALL<br>CREATIVES</h2>
+          </div>
+          <div class="meta" id="cv-grid-count">—</div>
+        </div>
+        <div class="cv-grid-wrap" id="cv-grid-wrap">
+          <div class="loader" style="padding: 64px;">LOADING CREATIVES</div>
+        </div>
+      </section>
+    </div><!-- /view-creatives -->
+
   </div>
 
   <!-- ============== CAMPAIGN REFERENCE ============== -->
@@ -929,6 +1320,9 @@ let currentPeriod = "week";
 let currentCampaignId = "all";
 let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
+let currentView = "campaigns";          // "campaigns" or "creatives"
+let cvSort = "score";                    // creative view sort key
+let cvGroup = "flat";                    // creative view grouping: "flat" or "campaign"
 
 const fmt = {
   aud(n) {
@@ -1130,6 +1524,10 @@ function applyFilters() {
   try { renderCreatives(today); } catch (e) {
     console.error("renderCreatives failed:", e);
     document.getElementById("creatives-body").innerHTML = `<tr><td colspan="11" class="empty">ERROR: ${e.message}</td></tr>`;
+  }
+  try { renderCreativeView(today); } catch (e) {
+    console.error("renderCreativeView failed:", e);
+    document.getElementById("cv-grid-wrap").innerHTML = `<div class="empty" style="padding:48px;">ERROR: ${e.message}</div>`;
   }
 }
 
@@ -1333,6 +1731,197 @@ function renderCreatives(today) {
   updateSortIcons("creatives-body", currentCreativeSort);
 }
 
+// ============== CREATIVE VIEW ==============
+// Build per-creative aggregates for the current filter, score them, render KPIs and card grid.
+function buildCreativeRows(today) {
+  if (!DATA.ads || !Array.isArray(DATA.ads)) return [];
+  const adMap = new Map(DATA.ads.map(a => [a.id, a]));
+  const campMap = new Map(DATA.campaigns.map(c => [c.id, c.name]));
+  const rows = [];
+  for (const [adId, ad] of adMap.entries()) {
+    if (currentCampaignId !== "all" && ad.campaign_id !== currentCampaignId) continue;
+    const dailyRows = (DATA.daily_rows.ad[adId] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+    const agg = aggregate(dailyRows);
+    if (agg.spend === 0 && agg.impressions === 0) continue;
+    const isLead = agg.result_type && /lead|submit|application/i.test(agg.result_type);
+    rows.push({
+      id: ad.id,
+      name: ad.name,
+      thumbnail: ad.thumbnail,
+      campaign_id: ad.campaign_id,
+      campaign_name: campMap.get(ad.campaign_id) || "Unknown",
+      status: ad.status,
+      ...agg,
+      leads: isLead ? agg.results : 0,
+      cpl: isLead && agg.results > 0 ? agg.spend / agg.results : 0,
+      ctr: agg.link_ctr,
+      cpl_sort: isLead && agg.results > 0 ? agg.spend / agg.results : Infinity, // unsorted lasts when sorted asc
+    });
+  }
+  rows.forEach(r => { r.score = calculateCreativeScore(r, rows); });
+  // Compute rank by score (always)
+  const ranked = [...rows].sort((a, b) => b.score - a.score);
+  const rankMap = new Map(ranked.map((r, i) => [r.id, i + 1]));
+  rows.forEach(r => { r.rank = rankMap.get(r.id); });
+  return rows;
+}
+
+function renderCreativeView(today) {
+  const rows = buildCreativeRows(today);
+
+  // ----- KPIs -----
+  const activeCount = rows.filter(r => r.status === "ACTIVE").length;
+  const totalCount = rows.length;
+  const topScore = rows.length > 0 ? Math.max(...rows.map(r => r.score)) : 0;
+  const topCreative = rows.find(r => r.score === topScore);
+  const leadCreatives = rows.filter(r => r.leads > 0);
+  const totalLeadSpend = leadCreatives.reduce((s, r) => s + r.spend, 0);
+  const totalLeads = leadCreatives.reduce((s, r) => s + r.leads, 0);
+  const avgCpl = totalLeads > 0 ? totalLeadSpend / totalLeads : 0;
+  const ctrPool = rows.filter(r => r.impressions > 0);
+  const totalImpressions = ctrPool.reduce((s, r) => s + r.impressions, 0);
+  const totalLinkClicks = ctrPool.reduce((s, r) => s + r.link_clicks, 0);
+  const avgCtr = totalImpressions > 0 ? (totalLinkClicks / totalImpressions) * 100 : 0;
+  const totalSpend = rows.reduce((s, r) => s + r.spend, 0);
+
+  document.getElementById("cv-kpi-range").textContent = periodLabel(currentPeriod);
+  document.getElementById("cv-kpi-total").textContent = fmt.num(activeCount);
+  document.getElementById("cv-kpi-total-sub").textContent = totalCount > 0 ? `${fmt.num(totalCount)} with activity` : "—";
+  document.getElementById("cv-kpi-top").textContent = topScore > 0 ? topScore : "—";
+  document.getElementById("cv-kpi-top-sub").textContent = topCreative ? (topCreative.name || "—").substring(0, 28) : "—";
+  document.getElementById("cv-kpi-cpl").textContent = avgCpl > 0 ? fmt.audPrecise(avgCpl) : "—";
+  document.getElementById("cv-kpi-cpl-sub").textContent = leadCreatives.length > 0
+    ? `${leadCreatives.length} lead creative${leadCreatives.length === 1 ? "" : "s"}`
+    : "No lead creatives";
+  document.getElementById("cv-kpi-ctr").textContent = avgCtr > 0 ? fmt.pct(avgCtr) : "—";
+  document.getElementById("cv-kpi-ctr-sub").textContent = `${fmt.num(totalLinkClicks)} link clicks`;
+  document.getElementById("cv-kpi-leads").textContent = fmt.num(totalLeads);
+  document.getElementById("cv-kpi-leads-sub").textContent = leadCreatives.length > 0
+    ? `From ${leadCreatives.length} creative${leadCreatives.length === 1 ? "" : "s"}`
+    : "—";
+  document.getElementById("cv-kpi-spend").textContent = fmt.aud(totalSpend);
+  document.getElementById("cv-kpi-spend-sub").textContent = totalCount > 0
+    ? `Avg ${fmt.aud(totalSpend / totalCount)}/creative`
+    : "—";
+
+  // ----- Sort -----
+  const sortKey = cvSort;
+  const sortFnCv = (a, b) => {
+    if (sortKey === "score")        return b.score - a.score;
+    if (sortKey === "leads")        return b.leads - a.leads;
+    if (sortKey === "spend")        return b.spend - a.spend;
+    if (sortKey === "cpl") {
+      // Asc - lower CPL is better. Push 0/no-lead creatives to the end.
+      const av = a.leads > 0 ? a.cpl : Infinity;
+      const bv = b.leads > 0 ? b.cpl : Infinity;
+      return av - bv;
+    }
+    if (sortKey === "ctr")          return b.ctr - a.ctr;
+    if (sortKey === "impressions")  return b.impressions - a.impressions;
+    return b.score - a.score;
+  };
+  const sorted = [...rows].sort(sortFnCv);
+
+  // ----- Render grid -----
+  document.getElementById("cv-grid-count").textContent = `${sorted.length} CREATIVE${sorted.length === 1 ? "" : "S"}`;
+
+  const wrap = document.getElementById("cv-grid-wrap");
+  if (sorted.length === 0) {
+    wrap.innerHTML = `<div class="empty" style="padding: 64px; text-align: center;">NO CREATIVES WITH ACTIVITY IN PERIOD</div>`;
+    return;
+  }
+
+  // Group title
+  let titleParts;
+  if (currentCampaignId === "all") {
+    titleParts = ["ALL", "CREATIVES"];
+  } else {
+    const camp = DATA.campaigns.find(c => c.id === currentCampaignId);
+    const friendly = camp ? campaignDisplayName(camp.name) : "CAMPAIGN";
+    titleParts = [friendly, "CREATIVES"];
+  }
+  document.getElementById("cv-grid-title").innerHTML = `${escapeHtml(titleParts[0])}<br>${escapeHtml(titleParts[1])}`;
+
+  // Group by campaign or flat
+  if (cvGroup === "campaign" && currentCampaignId === "all") {
+    const byCampaign = new Map();
+    for (const r of sorted) {
+      if (!byCampaign.has(r.campaign_id)) byCampaign.set(r.campaign_id, []);
+      byCampaign.get(r.campaign_id).push(r);
+    }
+    // Order groups by best score in each
+    const groupArr = [...byCampaign.entries()]
+      .map(([cid, items]) => ({ cid, items, topScore: Math.max(...items.map(i => i.score)) }))
+      .sort((a, b) => b.topScore - a.topScore);
+    wrap.innerHTML = groupArr.map(g => {
+      const campName = DATA.campaigns.find(c => c.id === g.cid)?.name || "Unknown";
+      const friendly = campaignDisplayName(campName);
+      return `
+        <div class="cv-group">
+          <div class="cv-group-head">
+            <span>${escapeHtml(friendly)}</span>
+            <span class="cv-group-count">${g.items.length} CREATIVE${g.items.length === 1 ? "" : "S"}</span>
+          </div>
+          <div class="cv-grid">
+            ${g.items.map(creativeCardHtml).join("")}
+          </div>
+        </div>
+      `;
+    }).join("");
+  } else {
+    wrap.innerHTML = `<div class="cv-grid">${sorted.map(creativeCardHtml).join("")}</div>`;
+  }
+}
+
+function creativeCardHtml(r) {
+  const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
+  const thumb = r.thumbnail
+    ? `<img src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'cv-card-thumb-placeholder\\'>${initial}</span>'">`
+    : `<span class="cv-card-thumb-placeholder">${initial}</span>`;
+  const rankClass = r.rank === 1 ? "top-1" : r.rank === 2 ? "top-2" : r.rank === 3 ? "top-3" : "";
+  const isPaused = r.status !== "ACTIVE";
+  const statusLabel = isPaused ? "Paused" : "Active";
+  const statusClass = isPaused ? "paused" : "";
+  const friendlyCampaign = campaignDisplayName(r.campaign_name);
+  // Pick the two most relevant metrics to show big
+  const cplText = r.leads > 0 ? fmt.audPrecise(r.cpl) : "—";
+  return `
+    <article class="cv-card ${isPaused ? "is-paused" : ""}">
+      <div class="cv-card-thumb">
+        ${thumb}
+        <span class="cv-card-rank ${rankClass}">${r.rank}</span>
+        <span class="cv-card-status ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="cv-card-body">
+        <div class="cv-card-campaign">${escapeHtml(friendlyCampaign)}</div>
+        <div class="cv-card-name" title="${escapeAttr(r.name)}">${escapeHtml(r.name)}</div>
+        <div class="cv-card-score">
+          <div class="cv-card-score-bar"><div class="cv-card-score-fill" style="width: ${r.score}%;"></div></div>
+          <span class="cv-card-score-num">${r.score}</span>
+        </div>
+        <div class="cv-card-metrics">
+          <div class="cv-card-metric">
+            <span class="cv-card-metric-label">Leads</span>
+            <span class="cv-card-metric-value">${fmt.num(r.leads)}</span>
+          </div>
+          <div class="cv-card-metric">
+            <span class="cv-card-metric-label">Cost / Lead</span>
+            <span class="cv-card-metric-value">${cplText}</span>
+          </div>
+          <div class="cv-card-metric">
+            <span class="cv-card-metric-label">Spend</span>
+            <span class="cv-card-metric-value">${fmt.aud(r.spend)}</span>
+          </div>
+          <div class="cv-card-metric">
+            <span class="cv-card-metric-label">Link CTR</span>
+            <span class="cv-card-metric-value">${fmt.pct(r.ctr)}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 function sortFn(a, b, sortState) {
   const dir = sortState.dir === "asc" ? 1 : -1;
   const v1 = a[sortState.col];
@@ -1438,6 +2027,46 @@ function setupEvents() {
     });
   });
   document.getElementById("slack-btn").addEventListener("click", sendToSlack);
+
+  // View tabs (Campaign View / Creative View)
+  document.querySelectorAll(".view-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.view;
+      if (target === currentView) return;
+      currentView = target;
+      document.querySelectorAll(".view-tab").forEach(t => {
+        const isActive = t.dataset.view === target;
+        t.classList.toggle("active", isActive);
+        t.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+      document.querySelectorAll(".view-pane").forEach(p => p.classList.remove("active"));
+      document.getElementById(`view-${target}`).classList.add("active");
+      // Scroll back to top of the view so the user sees the new content
+      const tabsEl = document.querySelector(".view-tabs");
+      if (tabsEl) tabsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  // Creative-view sort pills
+  document.querySelectorAll("#cv-sort-pills .cv-sort-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll("#cv-sort-pills .cv-sort-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      cvSort = pill.dataset.sort;
+      // Re-render just the creative view; data hasn't changed
+      try { renderCreativeView(getTodayInSydney()); } catch (e) { console.error(e); }
+    });
+  });
+
+  // Creative-view group pills
+  document.querySelectorAll("#cv-group-pills .cv-sort-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll("#cv-group-pills .cv-sort-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      cvGroup = pill.dataset.group;
+      try { renderCreativeView(getTodayInSydney()); } catch (e) { console.error(e); }
+    });
+  });
 }
 
 async function sendToSlack() {
