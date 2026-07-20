@@ -36,7 +36,17 @@ def log(msg):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", file=sys.stderr)
 
 
-def fetch(endpoint, params=None, retries=3):
+# Meta error subcodes that mean "you're being rate-limited, back off and retry"
+META_RATE_LIMIT_SUBCODES = {
+    2446079,  # ad account too many API calls
+    1487742,  # rate limit reached
+    80004,    # too many calls for app
+    4,        # application request limit
+    17,       # user request limit
+    32,       # page-level rate limit
+}
+
+def fetch(endpoint, params=None, retries=4):
     url = f"{GRAPH_BASE}/{endpoint}"
     params = params or {}
     params["access_token"] = ACCESS_TOKEN
@@ -45,11 +55,60 @@ def fetch(endpoint, params=None, retries=3):
         for attempt in range(retries):
             try:
                 resp = requests.get(url, params=params if "?" not in url else None, timeout=60)
+
+                # Standard HTTP rate-limit codes
                 if resp.status_code in (429, 613):
-                    wait = 30 * (attempt + 1)
+                    wait = 60 * (2 ** attempt)  # 60, 120, 240, 480 seconds
                     log(f"  rate limited (HTTP {resp.status_code}), sleeping {wait}s")
                     time.sleep(wait)
                     continue
+
+                # HTTP 403 with code 4 = application request limit reached (transient).
+                # Back off hard - the whole app is throttled, not just this call.
+                if resp.status_code == 403:
+                    try:
+                        body = resp.json()
+                        code = body.get("error", {}).get("code")
+                        if code == 4 or "request limit" in body.get("error", {}).get("message", "").lower():
+                            wait_seconds = [120, 300, 900, 1800][min(attempt, 3)]  # 2m, 5m, 15m, 30m
+                            log(f"  app request limit (HTTP 403), sleeping {wait_seconds}s (attempt {attempt + 1}/{retries})")
+                            time.sleep(wait_seconds)
+                            continue
+                    except (ValueError, KeyError):
+                        pass
+
+                # HTTP 500 code 1 = "reduce the amount of data you're asking for".
+                # This is a size problem, not a rate problem. Retrying the same request
+                # won't help, but a brief pause then retry sometimes clears a transient
+                # Meta-side hiccup. If it persists, it'll raise after retries exhaust.
+                if resp.status_code == 500:
+                    try:
+                        body = resp.json()
+                        msg = body.get("error", {}).get("message", "")
+                        if "reduce the amount" in msg.lower():
+                            wait = 30 * (attempt + 1)
+                            log(f"  Meta 'reduce data' (HTTP 500), sleeping {wait}s (attempt {attempt + 1}/{retries})")
+                            time.sleep(wait)
+                            continue
+                    except (ValueError, KeyError):
+                        pass
+
+                # Meta returns 400 with a specific subcode for ad-account rate limits.
+                # Detect it from the JSON body before treating as a hard error.
+                if resp.status_code == 400:
+                    try:
+                        body = resp.json()
+                        subcode = body.get("error", {}).get("error_subcode")
+                        title = body.get("error", {}).get("error_user_title", "")
+                        if subcode in META_RATE_LIMIT_SUBCODES or "too many" in title.lower():
+                            # Long back-off because account-level limits are sticky.
+                            wait_seconds = [60, 300, 900, 1800][min(attempt, 3)]  # 1m, 5m, 15m, 30m
+                            log(f"  Meta rate limit ({title or subcode}), sleeping {wait_seconds}s (attempt {attempt + 1}/{retries})")
+                            time.sleep(wait_seconds)
+                            continue
+                    except (ValueError, KeyError):
+                        pass  # Not JSON or unexpected shape; fall through to raise
+
                 if resp.status_code != 200:
                     log(f"  ERROR {resp.status_code}: {resp.text[:300]}")
                     resp.raise_for_status()
@@ -331,18 +390,45 @@ def extract_results(row, hint_event=None, hint_label=None):
 
 
 def get_daily_insights(level, since_date, until_date):
-    params = {
-        "level": level,
-        "fields": ",".join(INSIGHT_FIELDS),
-        "time_range": json.dumps({"since": since_date.isoformat(), "until": until_date.isoformat()}),
-        "time_increment": 1,
-        "limit": 500,
-        # CRITICAL: This makes Meta return conversion events using the ad set's attribution
-        # window — without this, custom conversion events (like SUBMIT_APPLICATION) get
-        # filtered out of the actions array.
-        "use_unified_attribution_setting": "true",
-    }
-    return fetch(f"act_{AD_ACCOUNT_ID}/insights", params)
+    """
+    Fetch daily insights, chunked into time windows to avoid Meta's
+    'reduce the amount of data' (HTTP 500) error on large accounts.
+
+    Ad-level requests are the biggest (many ads x many days), so they use
+    the smallest window. Account/campaign levels are small and use larger windows.
+    """
+    # Window size in days, tuned by level. Smaller = safer against the size limit.
+    window_days = {
+        "ad": 30,        # ad-level is the heaviest - keep windows tight
+        "campaign": 120,
+        "account": 365,
+    }.get(level, 60)
+
+    all_rows = []
+    chunk_start = since_date
+    chunk_num = 0
+    while chunk_start <= until_date:
+        chunk_end = min(chunk_start + timedelta(days=window_days - 1), until_date)
+        chunk_num += 1
+        params = {
+            "level": level,
+            "fields": ",".join(INSIGHT_FIELDS),
+            "time_range": json.dumps({"since": chunk_start.isoformat(), "until": chunk_end.isoformat()}),
+            "time_increment": 1,
+            "limit": 500,
+            # CRITICAL: This makes Meta return conversion events using the ad set's attribution
+            # window — without this, custom conversion events (like SUBMIT_APPLICATION) get
+            # filtered out of the actions array.
+            "use_unified_attribution_setting": "true",
+        }
+        rows = fetch(f"act_{AD_ACCOUNT_ID}/insights", params)
+        all_rows.extend(rows)
+        log(f"    {level} chunk {chunk_num}: {chunk_start} -> {chunk_end} ({len(rows)} rows)")
+        # Small pause between chunks to stay under the app-level request rate limit
+        if chunk_end < until_date:
+            time.sleep(2)
+        chunk_start = chunk_end + timedelta(days=1)
+    return all_rows
 
 
 def get_ad_creatives(ad_ids):
