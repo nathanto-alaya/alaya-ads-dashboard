@@ -400,6 +400,7 @@ def get_daily_insights(level, since_date, until_date):
     # Window size in days, tuned by level. Smaller = safer against the size limit.
     window_days = {
         "ad": 30,        # ad-level is the heaviest - keep windows tight
+        "adset": 60,     # ad sets sit between campaign and ad in row count
         "campaign": 120,
         "account": 365,
     }.get(level, 60)
@@ -508,7 +509,7 @@ def main():
     # ad set's canonical result type (matches what Ads Manager shows in 'Results' col)
     log("Fetching ad set metadata for result-type mapping...")
     adsets_meta = fetch(f"act_{AD_ACCOUNT_ID}/adsets", {
-        "fields": "id,name,campaign_id,optimization_goal,promoted_object,destination_type,billing_event,effective_status",
+        "fields": "id,name,campaign_id,optimization_goal,promoted_object,destination_type,billing_event,effective_status,daily_budget,lifetime_budget",
         "limit": 500,
     })
     adsets_meta = [a for a in adsets_meta if a.get("effective_status") != "DELETED"]
@@ -518,6 +519,22 @@ def main():
     adset_event_lookup = {}
     for aset in adsets_meta:
         adset_event_lookup[aset["id"]] = derive_canonical_event(aset)
+
+    # Ad set output rows. The funnel boundary in this account is the ad set,
+    # so every ad set needs a name, its campaign and its own result type.
+    adsets = []
+    for aset in adsets_meta:
+        aset_event, aset_label = adset_event_lookup.get(aset["id"], (None, None))
+        adsets.append({
+            "id": aset["id"],
+            "name": aset.get("name", ""),
+            "campaign_id": aset.get("campaign_id", ""),
+            "status": aset.get("effective_status", "UNKNOWN"),
+            "optimization_goal": aset.get("optimization_goal", ""),
+            "daily_budget": safe_float(aset.get("daily_budget", 0)) / 100,
+            "lifetime_budget": safe_float(aset.get("lifetime_budget", 0)) / 100,
+            "result_type": aset_label or "Results",
+        })
 
     # Build ad_id -> canonical event by going through the ad set
     ad_event_lookup = {}
@@ -624,6 +641,31 @@ def main():
         campaign_daily.setdefault(cid, []).append(row)
     log(f"  -> rows for {len(campaign_daily)} campaigns")
 
+    log("Fetching adset-level daily rows (365 days)...")
+    adset_daily_raw = get_daily_insights("adset", start_date, yesterday)
+    adset_daily = {}
+    for r in adset_daily_raw:
+        asid = r.get("adset_id")
+        if not asid:
+            continue
+        as_hint_event, as_hint_label = adset_event_lookup.get(asid, (None, None))
+        results, result_label, cpr = extract_results(r, hint_event=as_hint_event, hint_label=as_hint_label)
+        row = {
+            "date": r.get("date_start"),
+            "spend": round(safe_float(r.get("spend")), 2),
+            "impressions": int(safe_float(r.get("impressions"))),
+            "clicks": int(safe_float(r.get("clicks"))),
+            "link_clicks": int(safe_float(r.get("inline_link_clicks"))),
+            "ctr": round(safe_float(r.get("ctr")), 3),
+            "link_ctr": round(safe_float(r.get("inline_link_click_ctr")), 3),
+            "cpm": round(safe_float(r.get("cpm")), 2),
+            "results": int(results),
+            "result_type": result_label,
+            "cost_per_result": round(cpr, 2),
+        }
+        adset_daily.setdefault(asid, []).append(row)
+    log(f"  -> rows for {len(adset_daily)} ad sets")
+
     log("Fetching ad-level daily rows (365 days)...")
     ad_daily_raw = get_daily_insights("ad", start_date, yesterday)
     ad_daily = {}
@@ -659,10 +701,12 @@ def main():
             "is_placeholder": False,
         },
         "campaigns": campaigns,
+        "adsets": adsets,
         "ads": ads,
         "daily_rows": {
             "account": account_daily,
             "campaign": campaign_daily,
+            "adset": adset_daily,
             "ad": ad_daily,
         },
     }
@@ -671,7 +715,7 @@ def main():
     out_path.write_text(json.dumps(output, separators=(",", ":")))
     size_kb = out_path.stat().st_size / 1024
     log(f"Wrote {out_path} ({size_kb:,.1f} KB)")
-    log(f"  Campaigns: {len(campaigns)}, Ads: {len(ads)}")
+    log(f"  Campaigns: {len(campaigns)}, Ad sets: {len(adsets)}, Ads: {len(ads)}")
     log("Done.")
 
 
