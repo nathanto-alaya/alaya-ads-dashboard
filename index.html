@@ -680,6 +680,28 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
                font-size: 12.5px; color: var(--fg-3); }
 .fn-item .ev b { color: var(--fg-2); font-weight: 600; }
 
+/* ---- people: who moved, who is stuck ---- */
+.fn-person { display: grid; grid-template-columns: minmax(140px, 1.1fr) minmax(150px, 1.2fr) minmax(110px, .8fr) auto;
+             gap: 14px; align-items: baseline;
+             padding: 12px 17px; background: var(--s1); border-bottom: 1px solid var(--hair); }
+.fn-person:last-child { border-bottom: 0; }
+.fn-person .who { font-size: 14.5px; font-weight: 600; color: var(--fg); }
+.fn-person .stg { font-size: 13.5px; color: var(--fg-2); }
+.fn-person .fnl { font-size: 13px; color: var(--fg-3); }
+.fn-person .fnl em { font-style: normal; color: var(--accent); font-weight: 600; }
+.fn-person .age { font-family: var(--fig); font-variant-numeric: tabular-nums;
+                  font-size: 13.5px; font-weight: 600; color: var(--fg-2);
+                  text-align: right; white-space: nowrap; }
+.fn-person .age.hot { color: var(--crit); }
+.fn-person .age.warm { color: var(--warn); }
+.fn-grp { padding: 9px 17px; background: var(--s2); border-bottom: 1px solid var(--hair);
+          font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+          color: var(--fg-3); }
+@media (max-width: 760px) {
+  .fn-person { grid-template-columns: 1fr 1fr; gap: 5px 12px; }
+  .fn-person .age { text-align: left; }
+}
+
 /* ---- buyers ---- */
 .fn-buyer { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto;
             gap: 14px; align-items: baseline;
@@ -1746,6 +1768,40 @@ function fnMeasure(funnelKey, period, maturedEnd) {
   };
 }
 
+/* GoHighLevel keeps no stage history. The one movement fact it does give is
+   when the CURRENT stage was reached, so that is what these read. It means a
+   lead that moved twice in a week shows only its final stage, and nothing can
+   be said about the stages it passed through. */
+
+function fnMovedIn(period) {
+  const out = ((FUNNEL && FUNNEL.leads) || []).filter(r =>
+    r.mv && r.mv >= period.start && r.mv <= period.end && r.x >= FN_DEPTH.discovery);
+  return out.sort((a, b) => (b.x - a.x) || b.mv.localeCompare(a.mv));
+}
+
+function fnStalledNow(minDays) {
+  const today = fnISO(new Date());
+  const t = fnParse(today);
+  return ((FUNNEL && FUNNEL.leads) || []).filter(r => {
+    if (r.x < FN_DEPTH.discovery || r.x >= FN_DEPTH.won) return false;
+    if (r.st === "lost" || r.st === "abandoned") return false;
+    const base = r.mv || r.d;
+    return Math.round((t - fnParse(base)) / 86400000) >= minDays;
+  }).map(r => ({ ...r, days: Math.round((t - fnParse(r.mv || r.d)) / 86400000) }))
+    .sort((a, b) => b.days - a.days);
+}
+
+function fnPersonRow(r, right, rightCls) {
+  const f = r.f && FUNNEL.funnels[r.f] ? `<em>${escapeHtml(FUNNEL.funnels[r.f].name)}</em>`
+          : r.src ? escapeHtml(r.src) : `<span style="color:var(--warn)">no source</span>`;
+  return `<div class="fn-person">
+    <span class="who">${escapeHtml(r.n || "Name not recorded")}</span>
+    <span class="stg">${escapeHtml(r.s || "")}</span>
+    <span class="fnl">${f}</span>
+    <span class="age ${rightCls || ""}">${right}</span>
+  </div>`;
+}
+
 function fnBuyersIn(period) {
   return ((FUNNEL && FUNNEL.buyers) || [])
     .filter(b => b.signed_date && b.signed_date >= period.start && b.signed_date <= period.end)
@@ -2216,6 +2272,27 @@ function renderFunnel() {
     count.textContent = `${fmt.num(totalLeads)} lead${totalLeads === 1 ? "" : "s"} in ${period.label.toLowerCase()}`;
   }
 
+  const moved = fnMovedIn(period);
+  const stuck = fnStalledNow(15);
+
+  // several people frozen at the same stage is a process problem, not a lead
+  // problem, and it is worth saying so rather than listing ten near-identical rows
+  const byStage = {};
+  stuck.forEach(r => {
+    const k = (r.s || "").toLowerCase();
+    byStage[k] = byStage[k] || { label: r.s, n: 0, lo: Infinity, hi: 0 };
+    byStage[k].n++;
+    byStage[k].lo = Math.min(byStage[k].lo, r.days);
+    byStage[k].hi = Math.max(byStage[k].hi, r.days);
+  });
+  const clusters = Object.values(byStage).filter(c => c.n >= 3)
+                         .sort((a, b) => b.n - a.n).slice(0, 2);
+  const stuckClusters = clusters.length ? `<div class="fn-item warn">
+      <span class="mk"></span><div class="bd"><span class="tx">
+      ${clusters.map(c => `<b>${c.n}</b> of them are sitting at
+        <b>${escapeHtml(c.label)}</b>, between ${c.lo} and ${c.hi} days`).join(". ")}.
+      A group frozen at one stage points at the process, not the leads.</span></div></div>` : "";
+
   const spendTo = fnSpendThrough();
   const spendLag = spendTo && period.end > spendTo
     ? Math.round((fnParse(period.end) - fnParse(spendTo)) / 86400000) : 0;
@@ -2273,6 +2350,37 @@ function renderFunnel() {
     ${fnPanel("What to do next", "each one carries the figure it rests on",
               fnActions(paid, unatt, period),
               "No action worth taking on this period's numbers.")}
+
+    <div class="fn-panel">
+      <div class="fn-panel-h"><span class="h">Who moved</span>
+        <span class="sub">${moved.length
+          ? `${moved.length} ${moved.length === 1 ? "person" : "people"} reached a new stage ${escapeHtml(period.sub.toLowerCase())}`
+          : "nobody progressed past a first stage in this period"}</span></div>
+      ${moved.length ? ["won", "consult", "discovery"].map(k => {
+          const g = moved.filter(r => r.x === FN_DEPTH[k]);
+          if (!g.length) return "";
+          const label = k === "won" ? "Signed" : k === "consult" ? "Reached consultation" : "Reached discovery";
+          return `<div class="fn-grp">${label} &middot; ${g.length}</div>`
+            + g.map(r => {
+                const days = Math.round((fnParse(r.mv) - fnParse(r.d)) / 86400000);
+                const when = days <= 0 ? "same day" : `${days} day${days === 1 ? "" : "s"} after first contact`;
+                return fnPersonRow(r, when);
+              }).join("");
+        }).join("")
+        : `<div class="fn-item"><span class="mk"></span><div class="bd"><span class="tx">
+             No lead reached a new stage in this period. Where that keeps happening it is
+             a follow-up problem, not an advertising one.</span></div></div>`}
+    </div>
+
+    ${stuck.length ? `<div class="fn-panel">
+      <div class="fn-panel-h"><span class="h">Stuck</span>
+        <span class="sub">${stuck.length} past a first stage with no movement in 15+ days, as of today,
+          whichever period is selected above</span></div>
+      ${stuckClusters}
+      ${stuck.slice(0, 10).map(r => fnPersonRow(r, `${r.days} days`,
+          r.days >= 60 ? "hot" : r.days >= 30 ? "warm" : "")).join("")}
+      ${stuck.length > 10 ? `<div class="fn-grp">and ${stuck.length - 10} more</div>` : ""}
+    </div>` : ""}
 
     <div class="fn-panel">
       <div class="fn-panel-h"><span class="h">The buyers</span>

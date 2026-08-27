@@ -518,14 +518,27 @@ def build(opps, stages, custom_fields, users, meta, names=None):
         if adid:
             coverage["with_ad"] += 1
 
-        depth = classify(stages.get(o.get("pipelineStageId")))
+        stage_info = stages.get(o.get("pipelineStageId")) or {}
+        depth = classify(stage_info)
         value = float(o.get("monetaryValue") or 0)
+
+        # When this person last actually moved. GoHighLevel keeps no stage
+        # history, so this is the only movement timestamp there is: it says when
+        # the CURRENT stage was reached, and nothing about the stages before it.
+        moved = parse_dt(o.get("lastStageChangeAt") or o.get("lastStatusChangeAt"))
         row = {
             "d": created.date().isoformat(),
             "f": adset_funnel.get(asid) if asid else None,
             "a": asid, "c": cid, "ad": adid,
             "x": DEPTH_ORDER[depth],
             "v": round(value, 2),
+            "n": names.get(o.get("contactId")) or contact_name(o),
+            "s": stage_info.get("stage", ""),
+            "p": stage_info.get("pipeline", ""),
+            "mv": moved.date().isoformat() if moved else None,
+            "st": (o.get("status") or "").lower(),
+            "src": (o.get("source") or "").strip() or None,
+            "dl": max(o.get("_won_count") or 0, 0),
         }
         if o.get("_merged_from"):
             row["m"] = o["_merged_from"]
@@ -638,6 +651,197 @@ def append_snapshot(funnel):
 
 # --------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------
+# weekly.json: the Monday review, small enough to be read over the wire
+# --------------------------------------------------------------------------
+# funnel.json is 60 KB and data.json is over a megabyte. Nothing downstream can
+# reliably read either one across the network, so this writes the one week that
+# matters, with the spend already joined, in a few kilobytes.
+
+def _sum_spend(daily_adset, adset_ids, start, end):
+    t = 0.0
+    for aid in adset_ids or []:
+        for row in daily_adset.get(aid, []):
+            if start <= row.get("date", "") <= end:
+                t += float(row.get("spend") or 0)
+    return round(t, 2)
+
+
+def _week_bounds(today, back=0):
+    """The Monday-to-Sunday week that finished most recently, then earlier ones."""
+    last_sunday = today - timedelta(days=(today.weekday() + 1) % 7 or 7)
+    end = last_sunday - timedelta(days=7 * back)
+    return (end - timedelta(days=6)).isoformat(), end.isoformat()
+
+
+def weekly_review(funnel, data):
+    daily_adset = ((data or {}).get("daily_rows") or {}).get("adset") or {}
+    adset_names = {a["id"]: a.get("name", a["id"]) for a in (data or {}).get("adsets", [])}
+    spend_through = ""
+    for rows in daily_adset.values():
+        for r in rows:
+            if r.get("date", "") > spend_through:
+                spend_through = r["date"]
+
+    today = datetime.now(SYDNEY).date()
+    matured_end = (today - timedelta(days=MATURITY_DAYS)).isoformat()
+    order = funnel["meta"]["depth_order"]
+    won_i = order.index("won")
+
+    def cut(start, end):
+        rows = [r for r in funnel["leads"] if start <= r["d"] <= end]
+        mat = [r for r in rows if r["d"] <= matured_end]
+        cost_end = min(end, matured_end)
+
+        def one(key):
+            defn = funnel["funnels"].get(key) if key else None
+            mine = [r for r in rows if (r.get("f") or None) == key]
+            mmine = [r for r in mat if (r.get("f") or None) == key]
+            at = lambda n: sum(1 for r in mmine if r["x"] >= n)
+            ids = defn["adsets"] if defn else []
+            spend = _sum_spend(daily_adset, ids, start, end) if defn else None
+            spend_cost = _sum_spend(daily_adset, ids, start, cost_end) if defn else None
+            signed = sum(b["deals"] for b in funnel["buyers"]
+                         if start <= (b.get("signed_date") or "") <= end
+                         and (b.get("funnel") or None) == key)
+            return {
+                "name": defn["name"] if defn else "No attribution recorded",
+                "badge": defn["badge"] if defn else "Unknown",
+                "leads": len(mine), "matured": len(mmine),
+                "appointments": at(order.index("discovery")),
+                "consultations": at(order.index("consult")),
+                "signed": signed,
+                "spend": spend,
+                "cost_per_lead": round(spend / len(mine), 2) if spend and mine else None,
+                "cost_per_appointment": (round(spend_cost / at(order.index("discovery")), 2)
+                                         if spend_cost and at(order.index("discovery")) else None),
+                # below this many matured leads a rate is noise, so say so in the file
+                "rate_is_meaningful": len(mmine) >= 10,
+            }
+
+        keys = list(funnel["funnels"].keys())
+        return {
+            "start": start, "end": end,
+            "total_spend": _sum_spend(daily_adset, list(daily_adset.keys()), start, end),
+            "total_leads": len(rows),
+            "total_appointments": sum(1 for r in mat if r["x"] >= order.index("discovery")),
+            "deals_signed": sum(b["deals"] for b in funnel["buyers"]
+                                if start <= (b.get("signed_date") or "") <= end),
+            "funnels": [one(k) for k in keys],
+            "unattributed": one(None),
+        }
+
+    ws, we = _week_bounds(today, 0)
+    ps, pe = _week_bounds(today, 1)
+    this_week, last_week = cut(ws, we), cut(ps, pe)
+
+    # The window a rate can honestly be quoted from ENDS at the maturity cutoff,
+    # not at the end of the week. A 28-day window ending last Sunday is mostly
+    # leads too young to have booked anything, which is how a real-looking
+    # percentage gets built out of nothing.
+    m_end = datetime.strptime(matured_end, "%Y-%m-%d").date()
+    rolling = cut((m_end - timedelta(days=27)).isoformat(), matured_end)
+    prev_rolling = cut((m_end - timedelta(days=55)).isoformat(),
+                       (m_end - timedelta(days=28)).isoformat())
+
+    # ---------------------------------------------------------------
+    # Who moved, and who is stuck
+    # ---------------------------------------------------------------
+    # Measured over 12 weeks of this account: a lead created in a given week is
+    # only 1 to 8 days old when the Monday review runs, and the maturity rule is
+    # 14 days, so a weekly COHORT can never carry a conversion rate. Movement
+    # can: dated by when a stage was reached, this account produced a median of
+    # 6 real progressions a week and 12 to 20 in recent weeks. So the weekly
+    # message is built on movement, and rates come off a matured window instead.
+    DEEP = order.index("discovery")
+
+    def movements(start, end):
+        out = []
+        for r in funnel["leads"]:
+            mv = r.get("mv")
+            if not mv or not (start <= mv <= end):
+                continue
+            if r["x"] < DEEP:
+                continue                      # still at a first stage, not news
+            out.append({
+                "name": r.get("n") or "Name not recorded",
+                "stage": r.get("s") or "",
+                "reached": order[r["x"]],
+                "moved_on": mv,
+                "funnel": (funnel["funnels"].get(r["f"]) or {}).get("name") if r.get("f") else None,
+                "source": r.get("src"),
+                "days_from_lead": (datetime.strptime(mv, "%Y-%m-%d").date()
+                                   - datetime.strptime(r["d"], "%Y-%m-%d").date()).days,
+                "deals": r.get("dl") or 0,
+                "value": r.get("v") or 0,
+            })
+        rank = {"won": 0, "consult": 1, "discovery": 2}
+        out.sort(key=lambda m: (rank.get(m["reached"], 9), m["moved_on"]))
+        return out[:30]
+
+    def _by_depth(rows):
+        c = {"discovery": 0, "consult": 0, "won": 0}
+        for r in rows:
+            if r["reached"] in c:
+                c[r["reached"]] += 1
+        c["total"] = len(rows)
+        return c
+
+    def stalled(as_of, min_days=15, limit=10):
+        """
+        Open, already past a first stage, and not moved in a while. This is the
+        other half of a weekly review: the people the funnel already paid for
+        who are sitting still.
+        """
+        out = []
+        for r in funnel["leads"]:
+            if r["x"] >= order.index("won"):
+                continue
+            if r.get("st") in ("lost", "abandoned"):
+                continue
+            if r["x"] < DEEP:
+                continue
+            base = r.get("mv") or r["d"]
+            days = (as_of - datetime.strptime(base, "%Y-%m-%d").date()).days
+            if days < min_days:
+                continue
+            out.append({
+                "name": r.get("n") or "Name not recorded",
+                "stage": r.get("s") or "",
+                "days_in_stage": days,
+                "funnel": (funnel["funnels"].get(r["f"]) or {}).get("name") if r.get("f") else None,
+            })
+        out.sort(key=lambda x: -x["days_in_stage"])
+        return {"total": len(out), "worst": out[:limit]}
+
+    buyers = [{"name": b["name"], "deals": b["deals"], "value": b["value"],
+               "days_to_sign": b.get("days_to_sign"),
+               "funnel": (funnel["funnels"].get(b["funnel"]) or {}).get("name") if b.get("funnel") else None,
+               "sources": b.get("sources") or []}
+              for b in funnel["buyers"] if ws <= (b.get("signed_date") or "") <= we]
+
+    return {
+        "generated": datetime.now(SYDNEY).isoformat(),
+        "spend_reported_through": spend_through,
+        "maturity_days": MATURITY_DAYS,
+        "matured_cutoff": matured_end,
+        "note": ("Every rate here is where a lead stands today, not a conversion rate "
+                 "measured at the time. Leads newer than the maturity window are counted "
+                 "for volume and cost per lead only. rate_is_meaningful is false when "
+                 "there are too few matured leads for a percentage to mean anything."),
+        "this_week": this_week,
+        "last_week": last_week,
+        # named to make it obvious these do not end today
+        "matured_28_days": rolling,
+        "previous_matured_28_days": prev_rolling,
+        "moved_this_week": movements(ws, we),
+        "moved_last_week_counts": _by_depth(movements(ps, pe)),
+        "stalled": stalled(today),
+        "buyers_this_week": buyers,
+        "coverage": funnel["coverage"],
+    }
+
+
 def probe(api):
     """Check the token and report what it can see. Writes nothing."""
     log("PROBE MODE, no files will be written")
@@ -672,13 +876,14 @@ def main():
         die("GHL_API_KEY is not set. Add it under Settings, Secrets and "
             "variables, Actions.")
 
-    meta = {}
+    meta, dash = {}, {}
     data_path = HERE / "data.json"
     if data_path.exists():
         try:
-            meta = json.loads(data_path.read_text()).get("meta", {})
+            dash = json.loads(data_path.read_text())
+            meta = dash.get("meta", {})
         except ValueError:
-            log("data.json is unreadable, continuing without its stamp")
+            log("data.json is unreadable, continuing without spend")
 
     api = Ghl(token)
     since = datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)
@@ -716,6 +921,24 @@ def main():
             + ("" if f["unanimous"] else ", leads split across pages"))
     log(f"  buyers: {len(funnel['buyers'])}, "
         f"{sum(1 for b in funnel['buyers'] if b['attributed'])} tied to a funnel")
+
+    try:
+        weekly = weekly_review(funnel, dash)
+        (HERE / "weekly.json").write_text(json.dumps(weekly, separators=(",", ":")))
+        tw, lw = weekly["this_week"], weekly["last_week"]
+        rl = weekly["matured_28_days"]
+        log(f"wrote weekly.json: week {tw['start']} to {tw['end']}, "
+            f"{tw['total_leads']} leads off ${tw['total_spend']:,.0f} "
+            f"(previous week {lw['total_leads']} off ${lw['total_spend']:,.0f}); "
+            f"matured 28 days {rl['total_leads']} leads, "
+            f"{rl['total_appointments']} appointments; "
+            f"{len(weekly['moved_this_week'])} people moved, "
+            f"{weekly['stalled']['total']} stalled")
+        if not dash:
+            log("::warning::no data.json, so weekly.json carries no spend figures")
+    except Exception as e:
+        # the dashboard must not be held hostage by the weekly summary
+        log(f"::warning::weekly.json could not be written: {e}")
 
     append_snapshot(funnel)
     log("done.")
