@@ -195,6 +195,24 @@ html, body {
 .status-dot.paused { background: var(--fg-3); }
 
 /* segmented time control */
+.date-range {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  margin-top: 10px; padding: 11px 14px;
+  background: var(--s2); border: 1px solid var(--hair); border-radius: var(--r-lg);
+}
+.date-range label {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 13.5px; color: var(--fg-2);
+}
+.date-range input[type="date"] {
+  font-family: var(--fig); font-size: 14.5px; font-weight: 600; color: var(--fg);
+  background: var(--s1); border: 1px solid var(--hair-2); border-radius: var(--r);
+  padding: 6px 9px;
+}
+.date-range input[type="date"]:focus-visible { outline: 2px solid var(--royal); outline-offset: 1px; }
+.date-range .dr-note { font-size: 13px; color: var(--fg-3); }
+.date-range .dr-note.bad { color: var(--crit); font-weight: 600; }
+
 .time-pills {
   display: flex; gap: 2px; flex-wrap: wrap;
   background: var(--s2); border: 1px solid var(--hair);
@@ -896,6 +914,12 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
         <button class="time-pill" data-period="45d">45 days</button>
         <button class="time-pill" data-period="60d">60 days</button>
         <button class="time-pill" data-period="lifetime">12 months</button>
+        <button class="time-pill" data-period="custom">Custom</button>
+          </div>
+      <div class="date-range" id="date-range" hidden>
+        <label>From <input type="date" id="date-from"></label>
+        <label>To <input type="date" id="date-to"></label>
+        <span class="dr-note" id="dr-note"></span>
       </div>
     </div>
   </section>
@@ -1223,6 +1247,8 @@ const SLACK_WEBHOOK = "https://hooks.slack.com/services/T07SCAZCLAY/B0B1SE4UZUZ/
 
 let DATA = null;
 let currentPeriod = "week";
+let customFrom = "";     // shared by the Meta tabs and the funnel review
+let customTo = "";
 let currentCampaignId = "all";
 let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
@@ -1265,17 +1291,28 @@ function dateInPeriod(dateStr, period, today) {
     case "45d":      return diffDays >= 1 && diffDays <= 45;
     case "60d":      return diffDays >= 1 && diffDays <= 60;
     case "lifetime": return diffDays >= 1 && diffDays <= 365;
+    // A literal range, not an offset from today. No exclusion of today either:
+    // if the user asks for a date the data does not cover, the answer is simply
+    // that there are no rows, which is honest.
+    case "custom":   return customFrom && customTo
+                              && dateStr >= customFrom && dateStr <= customTo;
     default:         return false;
   }
 }
 
 function periodLabel(period) {
+  if (period === "custom") {
+    return customFrom && customTo
+      ? `${fnShort(customFrom)} TO ${fnShort(customTo)}`.toUpperCase()
+      : "PICK TWO DATES";
+  }
   return {
     today: "YESTERDAY",
     week: "LAST 7 DAYS",
     "14d": "LAST 14 DAYS",
     "30d": "LAST 30 DAYS",
     "45d": "LAST 45 DAYS",
+    custom: "CUSTOM RANGE",
     "60d": "LAST 60 DAYS",
     lifetime: "LAST 12 MONTHS",
   }[period] || period.toUpperCase();
@@ -1655,6 +1692,7 @@ const FN_GRAINS = [
   { key: "month",   label: "Month" },
   { key: "quarter", label: "Quarter" },
   { key: "all",     label: "All 120 days" },
+  { key: "custom",  label: "Custom" },
 ];
 // Matches update_funnel.py exactly. "booked" and "held" are separate because
 // getting the call booked is the advertising's job and holding it is not.
@@ -1692,6 +1730,13 @@ function fnPeriods(grain) {
   if (grain === "all") {
     return [{ key: "all", label: "All 120 days", start: span.lo, end: span.hi,
               sub: `${fnShort(span.lo)} to ${fnShort(span.hi)}` }];
+  }
+  if (grain === "custom") {
+    // The same two dates the Meta tabs use, so a range is typed once and both
+    // halves of the dashboard answer for exactly the same days.
+    if (!customFrom || !customTo) return [];
+    return [{ key: "custom", label: "Custom range", start: customFrom, end: customTo,
+              sub: `${fnShort(customFrom)} to ${fnShort(customTo)}`, custom: true }];
   }
   const out = [];
   if (grain === "week") {
@@ -1782,6 +1827,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
   const spendCost = def ? fnAdsetSpend(adsets, period.start, costEnd) : null;
 
   const appt = at(FN_DEPTH.booked), held = at(FN_DEPTH.held), cons = at(FN_DEPTH.consult);
+  const subs = (FUNNEL.submissions && funnelKey) ? fnSubsIn(period, funnelKey) : null;
   return {
     key: funnelKey, def,
     name: def ? def.name : "No attribution recorded",
@@ -1789,7 +1835,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
     mechanic: def ? def.mechanic
                   : "Created in the CRM by hand, or arrived with no tracking",
     adsets,
-    leads: rows.length, matured: matured.length,
+    leads: rows.length, matured: matured.length, subs,
     appt, held, cons, signed,
     unreached: rows.filter(r => r.ur).length,
     unplaceable: rows.filter(r => r.up).length,
@@ -1841,6 +1887,33 @@ function fnPersonRow(r, right, rightCls) {
     <span class="fnl">${f}</span>
     <span class="age ${rightCls || ""}">${right}</span>
   </div>`;
+}
+
+function fnSubsIn(period, funnelKey) {
+  // Meta's Results column counts form submissions, not people. Showing both
+  // stops the two tools looking like they disagree when they are just counting
+  // different things.
+  return ((FUNNEL && FUNNEL.submissions) || []).filter(r =>
+    r.d >= period.start && r.d <= period.end &&
+    (funnelKey === undefined || (r.f || null) === (funnelKey || null))).length;
+}
+
+function fnAdsetsWithSpendNoFunnel(period) {
+  const daily = (DATA.daily_rows && DATA.daily_rows.adset) || {};
+  const claimed = new Set();
+  Object.values((FUNNEL && FUNNEL.funnels) || {}).forEach(f =>
+    (f.adsets || []).forEach(a => claimed.add(a)));
+  const names = new Map((DATA.adsets || []).map(a => [a.id, a.name]));
+  const out = [];
+  Object.keys(daily).forEach(aid => {
+    if (claimed.has(aid)) return;
+    let sp = 0;
+    (daily[aid] || []).forEach(d => {
+      if (d.date >= period.start && d.date <= period.end) sp += Number(d.spend) || 0;
+    });
+    if (sp > 0) out.push({ id: aid, name: names.get(aid) || aid, spend: sp });
+  });
+  return out.sort((a, b) => b.spend - a.spend);
 }
 
 function fnBuyersIn(period) {
@@ -2178,7 +2251,14 @@ function fnCard(f, isBest, isWorst) {
     ${hero}
     <div class="fn-rows">
       ${row("Spend", f.spend === null ? "&mdash;" : money(f.spend), "hi")}
-      ${row("Leads", fmt.num(f.leads), "hi")}
+      ${row("Leads, people", fmt.num(f.leads), "hi")}
+      ${/* only worth a row when there were MORE fills than people, which is the
+             informative case. Fewer means the intake record sits in a pipeline
+             this count does not treat as intake, which tells a reader nothing. */
+        f.subs !== null && f.subs > f.leads
+        ? row("Form fills reaching the CRM", fmt.num(f.subs)
+            + `<span class="sub" style="color:var(--fg-3)">compare to Meta</span>`)
+        : ""}
       ${row("Cost per lead", money(f.cpl))}
       ${row("Call booked", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
             f.quotable ? "" : "dim")}
@@ -2272,6 +2352,14 @@ function renderFunnel() {
 
   const meta = FUNNEL.meta || {};
   const periods = fnPeriods(fnGrain);
+  if (fnGrain === "custom" && !periods.length) {
+    if (count) count.textContent = "no dates set";
+    host.innerHTML = `<div class="fn-missing">
+      <span class="h">Pick two dates</span>
+      <p>Set a From and a To date in the custom range at the top of the page and
+         this view will follow them.</p></div>`;
+    return;
+  }
   if (!periods.length) {
     host.innerHTML = `<div class="fn-missing">
       <span class="h">funnel.json has no lead rows in it</span>
@@ -2283,7 +2371,8 @@ function renderFunnel() {
     </div>`;
     return;
   }
-  periods.forEach(pd => {
+  // a custom range is literal, never relabelled as "so far"
+  if (fnGrain !== "custom") periods.forEach(pd => {
     const t = fnISO(new Date());
     if (pd.end > t) pd.sub = `${fnShort(pd.start)} to ${fnShort(t)}, so far`;
   });
@@ -2356,6 +2445,9 @@ function renderFunnel() {
         <b>${escapeHtml(c.label)}</b>, between ${c.lo} and ${c.hi} days`).join(". ")}.
       A group frozen at one stage points at the process, not the leads.</span></div></div>` : "";
 
+  const orphans = fnAdsetsWithSpendNoFunnel(period);
+  const orphanSpend = orphans.reduce((t, o) => t + o.spend, 0);
+
   const spendTo = fnSpendThrough();
   const spendLag = spendTo && period.end > spendTo
     ? Math.round((fnParse(period.end) - fnParse(spendTo)) / 86400000) : 0;
@@ -2372,7 +2464,7 @@ function renderFunnel() {
             class="${g.key === fnGrain ? "active" : ""}"
             aria-pressed="${g.key === fnGrain}">${g.label}</button>`).join("")}
       </div>
-      ${fnGrain === "all" ? "" : `<div class="fn-pick">
+      ${(fnGrain === "all" || fnGrain === "custom") ? "" : `<div class="fn-pick">
         <button type="button" data-fnstep="1" ${fnIndex >= periods.length - 1 ? "disabled" : ""}
           aria-label="Earlier period">&#8249;</button>
         <span class="lbl">${escapeHtml(period.label)}</span>
@@ -2390,7 +2482,9 @@ function renderFunnel() {
         <b>${escapeHtml(spendTo)}</b></span>` : ""}
       ${idle.length ? `<span class="fn-note">Not running this period:
         ${escapeHtml(idle.map(f => f.name).join(", "))}</span>` : ""}
-      <span class="fn-note">The time filter at the top of the page does not apply here.</span>
+      <span class="fn-note">${period.custom
+        ? "Following the custom dates set at the top of the page."
+        : "The time filter at the top of the page does not apply here."}</span>
     </div>
 
     <div class="fn-top">
@@ -2405,6 +2499,24 @@ function renderFunnel() {
       ${paid.map(f => fnCard(f, bestRate && f.key === bestRate.key,
                               worstRate && f.key === worstRate.key)).join("")}
       ${unatt.leads ? fnCard(unatt, false, false) : ""}
+      ${orphanSpend > 0 ? `<div class="fn-card">
+        <div class="fn-card-h">
+          <span class="nm">Spent, nothing traced back</span>
+          <span class="fn-badge off">No lead</span>
+          <span class="mech">Ad sets that spent in this period with no lead carrying
+            their id, so they belong to no funnel above</span>
+        </div>
+        <div class="fn-hero">
+          <span class="hv" style="color:var(--crit)">${fmt.aud(orphanSpend)}</span>
+          <span class="hl">spent with nothing to show for it</span>
+        </div>
+        <div class="fn-rows">
+          ${orphans.map(o => `<div class="fn-row"><span class="k">${escapeHtml(o.name)}</span>
+            <span class="v">${fmt.aud(o.spend)}</span></div>`).join("")}
+        </div>
+        <div class="fn-card-foot">This is why the funnel spends above do not add
+          up to the total on their own.</div>
+      </div>` : ""}
     </div>
 
     ${fnPanel("What this means", "",
@@ -2492,6 +2604,13 @@ function renderFunnel() {
     <div class="fn-caveats">
       <span class="h">What these numbers are, and are not</span>
       <ul>${(meta.caveats || []).map(c => `<li>${escapeHtml(c)}</li>`).join("")}
+        <li>Leads counts people. One person can fill the form more than once, so
+        compare Meta's Results column against the form fills row, never against
+        leads. Expect that row to sit a little under Meta too: Meta counts a
+        pixel event on the site while this counts a record that actually reached
+        the CRM, and Meta's 7-day click window can place a conversion in a
+        different month. Measured on August 2026, Meta reported 34 for the VSL
+        ad set, 31 records reached the CRM, and those were 27 distinct people.</li>
         ${spendLag > 1 ? `<li>Meta has reported spend only up to ${escapeHtml(spendTo)},
           ${spendLag} days short of the end of this period, so cost figures here are
           slightly low until the next data refresh.</li>` : ""}
@@ -2503,6 +2622,10 @@ function renderFunnel() {
       if (btn.dataset.fngrain === fnGrain) return;
       fnGrain = btn.dataset.fngrain;
       fnIndex = 0;
+      if (fnGrain === "custom") {
+        const el = document.getElementById("date-range");
+        if (el) el.hidden = false;
+      }
       renderFunnel();
     });
   });
@@ -3003,9 +3126,70 @@ function escapeHtml(s) {
 function escapeAttr(s) { return escapeHtml(s); }
 
 function setupEvents() {
+  // Bound the pickers to what the data actually covers, so a range can never be
+  // chosen that silently returns nothing.
+  const dataBounds = () => {
+    let lo = "", hi = "";
+    const scan = rows => (rows || []).forEach(r => {
+      if (!lo || r.date < lo) lo = r.date;
+      if (r.date > hi) hi = r.date;
+    });
+    scan(DATA.daily_rows.account);
+    Object.values(DATA.daily_rows.campaign || {}).forEach(scan);
+    return { lo, hi };
+  };
+
+  const dr = document.getElementById("date-range");
+  const dFrom = document.getElementById("date-from");
+  const dTo = document.getElementById("date-to");
+  const dNote = document.getElementById("dr-note");
+  let drBounds = { lo: "", hi: "" };
+
+  const syncRange = () => {
+    if (!dFrom || !dTo) return false;
+    let a = dFrom.value, b = dTo.value;
+    if (!a || !b) {
+      dNote.textContent = "Pick both dates.";
+      dNote.className = "dr-note bad";
+      return false;
+    }
+    if (a > b) {                        // swap rather than refuse
+      [a, b] = [b, a];
+      dFrom.value = a; dTo.value = b;
+    }
+    customFrom = a; customTo = b;
+    const days = Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
+    dNote.textContent = `${days} day${days === 1 ? "" : "s"} selected, `
+      + `data runs ${drBounds.lo} to ${drBounds.hi}`;
+    dNote.className = "dr-note";
+    return true;
+  };
+
+  if (dr && dFrom && dTo) {
+    drBounds = dataBounds();
+    [dFrom, dTo].forEach(i => { i.min = drBounds.lo; i.max = drBounds.hi; });
+    // default to the last 30 days of data held, not of the calendar
+    const start = new Date(drBounds.hi + "T00:00:00");
+    start.setDate(start.getDate() - 29);
+    const iso = fnISO(start);
+    dFrom.value = iso < drBounds.lo ? drBounds.lo : iso;
+    dTo.value = drBounds.hi;
+    syncRange();
+    [dFrom, dTo].forEach(i => i.addEventListener("change", () => {
+      if (!syncRange()) return;
+      if (currentPeriod !== "custom") {
+        currentPeriod = "custom";
+        document.querySelectorAll(".time-pill").forEach(x =>
+          x.classList.toggle("active", x.dataset.period === "custom"));
+      }
+      applyFilters();
+    }));
+  }
+
   document.querySelectorAll(".time-pill").forEach(pill => {
     pill.addEventListener("click", () => {
       document.querySelectorAll(".time-pill").forEach(p => p.classList.remove("active"));
+      if (dr) dr.hidden = pill.dataset.period !== "custom";
       pill.classList.add("active");
       currentPeriod = pill.dataset.period;
       applyFilters();

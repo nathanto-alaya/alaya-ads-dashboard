@@ -521,7 +521,7 @@ def contact_name(opp):
     return " ".join(p for p in parts if p) or "Name not recorded"
 
 
-def build(opps, stages, custom_fields, users, meta, names=None):
+def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
     """
     Emit one row per lead, not pre-baked totals.
 
@@ -538,6 +538,32 @@ def build(opps, stages, custom_fields, users, meta, names=None):
     now = datetime.now(timezone.utc)
     names = names or {}
     adset_funnel, funnels = assign_funnels(opps)
+
+    # Meta counts form submissions. This dashboard counts people, because one
+    # person filling the form twice is one lead, not two. Both are correct and
+    # they will never match, so carry the submission count as well and let the
+    # page show the two side by side rather than leaving a reader to wonder
+    # which number is broken. Measured on Aug 2026: the VSL ad set had 34
+    # submissions from 27 people, and Meta reported exactly 34.
+    submissions = []
+    for o in (raw if raw is not None else opps):
+        created = parse_dt(o.get("createdAt"))
+        if not created:
+            continue
+        _, asid, _, _, _ = read_attribution(o)
+        if not asid:
+            continue
+        # Only count records created by the intake itself. When a lead is moved
+        # on, a second opportunity is created in the Sales pipeline carrying the
+        # same attribution, and counting that would inflate submissions: on the
+        # VSL ad set in August it added 3 phantom fills and made the total look
+        # like an exact match with Meta when it was not.
+        pipeline = ((stages.get(o.get("pipelineStageId")) or {}).get("pipeline") or "").lower()
+        if "ads" not in pipeline:
+            continue
+        submissions.append({"d": created.date().isoformat(),
+                            "a": asid,
+                            "f": adset_funnel.get(asid)})
 
     leads = []
     coverage = {"total": 0, "with_attr": 0, "with_adset": 0, "with_ad": 0}
@@ -657,6 +683,14 @@ def build(opps, stages, custom_fields, users, meta, names=None):
         },
         "funnels": out_funnels,
         "adset_funnel": adset_funnel,
+        "submissions": submissions,
+        "unit_note": ("leads counts people; submissions counts intake records, "
+                      "which is the closest thing in the CRM to a form fill. "
+                      "Compare Meta's Results column to submissions rather than "
+                      "to leads, and expect a small residual gap: Meta counts a "
+                      "pixel event on the site, this counts a record that "
+                      "reached the CRM, and its 7-day click window can put a "
+                      "conversion in a different month."),
         "leads": leads,
         "buyers": buyers,
         "custom_fields": custom_fields,
@@ -721,6 +755,27 @@ def _week_bounds(today, back=0):
     last_sunday = today - timedelta(days=(today.weekday() + 1) % 7 or 7)
     end = last_sunday - timedelta(days=7 * back)
     return (end - timedelta(days=6)).isoformat(), end.isoformat()
+
+
+def spending_adsets(funnel, data):
+    """
+    Every ad set that spent anything, whether or not a lead can be traced to it.
+
+    Without this, an ad set that burns money and produces no attributable lead
+    never becomes a funnel and so disappears from the page entirely, and the
+    funnel spends quietly stop adding up to the total. Found on the live account:
+    the calculator ad set spent $73 in August with no attributed lead at all.
+    """
+    daily = ((data or {}).get("daily_rows") or {}).get("adset") or {}
+    names = {a["id"]: a.get("name", a["id"]) for a in (data or {}).get("adsets", [])}
+    claimed = {a for f in funnel["funnels"].values() for a in f["adsets"]}
+    out = {}
+    for aid, rows in daily.items():
+        total = sum(float(r.get("spend") or 0) for r in rows)
+        if total <= 0:
+            continue
+        out[aid] = {"name": names.get(aid, aid), "in_a_funnel": aid in claimed}
+    return out
 
 
 def weekly_review(funnel, data):
@@ -958,6 +1013,7 @@ def main():
     log(f"opportunities: {len(opps)}")
 
     verify_shape(opps)
+    raw = opps
     opps = dedupe_by_contact(opps, stages)
 
     custom_fields = fetch_lookup(api, f"/locations/{LOCATION_ID}/customFields",
@@ -966,7 +1022,7 @@ def main():
     users = fetch_lookup(api, "/users/", {"locationId": LOCATION_ID}, "users")
     log(f"users: {len(users)}")
 
-    funnel = build(opps, stages, custom_fields, users, meta)
+    funnel = build(opps, stages, custom_fields, users, meta, raw=raw)
     (HERE / "funnel.json").write_text(json.dumps(funnel, separators=(",", ":")))
 
     c = funnel["coverage"]
