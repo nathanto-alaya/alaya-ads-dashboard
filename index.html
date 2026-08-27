@@ -569,12 +569,37 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 
 /* This view runs on GoHighLevel's own window, not the time pills above, so it
    says so rather than letting the pills silently mean nothing. */
-.fn-wrap { display: flex; flex-direction: column; gap: 18px; }
+.fn-wrap { display: flex; flex-direction: column; gap: 20px; }
+
+/* ---- period control ---- */
+.fn-period { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fn-seg { display: inline-flex; gap: 2px; background: var(--s2); border: 1px solid var(--hair);
+          border-radius: var(--r-lg); padding: 3px; }
+.fn-seg button {
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  padding: 7px 15px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--fg-3); cursor: pointer; white-space: nowrap;
+}
+.fn-seg button:hover { color: var(--fg); }
+.fn-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fn-seg button.active { background: var(--s3); color: var(--fg); box-shadow: inset 0 0 0 1px var(--hair-2); }
+.fn-pick { display: inline-flex; align-items: center; gap: 2px; background: var(--s2);
+           border: 1px solid var(--hair); border-radius: var(--r-lg); padding: 3px; }
+.fn-pick button {
+  font-family: var(--sans); font-size: 15px; font-weight: 600; line-height: 1;
+  width: 30px; height: 30px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--fg-2); cursor: pointer;
+}
+.fn-pick button:hover:not(:disabled) { background: var(--s3); color: var(--fg); }
+.fn-pick button:disabled { color: var(--hair-2); cursor: default; }
+.fn-pick .lbl { font-size: 14.5px; font-weight: 600; color: var(--fg);
+                padding: 0 12px; min-width: 168px; text-align: center;
+                font-variant-numeric: tabular-nums; }
 
 .fn-banner {
-  display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
-  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
-  padding: 13px 16px; font-size: 13.5px; color: var(--fg-2);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px;
+  padding: 12px 16px; background: var(--s1);
+  border: 1px solid var(--hair); border-radius: var(--r-lg); font-size: 13.5px; color: var(--fg-2);
 }
 .fn-banner .fn-b { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 .fn-banner .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none; }
@@ -582,51 +607,110 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 .fn-banner b { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--fg); }
 .fn-banner .fn-note { color: var(--fg-3); font-size: 13px; }
 
-.fn-cov { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
-          background: var(--hair); border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
-.fn-cov .c { background: var(--s1); padding: 13px 16px; display: flex; flex-direction: column; gap: 5px; }
-.fn-cov .cl { font-size: 12.5px; color: var(--fg-2); }
-.fn-cov .cv { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.fn-cov .cd { font-size: 12px; color: var(--fg-3); }
-/* Named fn-bar, not bar: the chart bars above already own .bar and cap it at
-   34px wide, which silently clipped these to a stub. */
-.fn-cov .fn-bar { width: 100%; height: 4px; background: var(--s3);
-                  border-radius: 999px; overflow: hidden; }
-.fn-cov .fn-bar i { display: block; height: 4px; border-radius: 999px; }
+/* ---- headline row ---- */
+.fn-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px;
+          background: var(--hair); border: 1px solid var(--hair);
+          border-radius: var(--r-lg); overflow: hidden; }
+.fn-top .t { background: var(--s1); padding: 15px 17px; display: flex; flex-direction: column; gap: 4px; }
+.fn-top .tl { font-size: 12.5px; color: var(--fg-2); }
+.fn-top .tv { font-family: var(--fig); font-variant-numeric: tabular-nums;
+              font-size: clamp(24px, 2.3vw, 30px); font-weight: 700;
+              letter-spacing: -.025em; color: var(--fg); line-height: 1.05; }
+.fn-top .td { font-size: 12px; color: var(--fg-3); }
 
-.fn-levels { display: inline-flex; gap: 2px; background: var(--s2); border: 1px solid var(--hair);
-             border-radius: var(--r-lg); padding: 3px; align-self: flex-start; }
-.fn-level {
-  font-family: var(--sans); font-size: 14px; font-weight: 600;
-  padding: 8px 15px; border: 0; border-radius: 5px;
-  background: transparent; color: var(--fg-3); cursor: pointer; white-space: nowrap;
+/* ---- funnel cards ---- */
+.fn-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 14px; }
+.fn-card {
+  display: flex; flex-direction: column; gap: 0;
+  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
+  overflow: hidden;
 }
-.fn-level:hover { color: var(--fg); }
-.fn-level:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.fn-level.active { background: var(--s3); color: var(--fg); box-shadow: inset 0 0 0 1px var(--hair-2); }
-
-.fn-trust {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  margin-right: 9px; vertical-align: middle; flex: none;
+.fn-card.lead { border-color: var(--accent-2); }
+.fn-card-h { padding: 16px 17px 14px; display: flex; flex-direction: column; gap: 9px; }
+.fn-card-h .nm { font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--fg); }
+.fn-badge {
+  align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
+  border: 1px solid var(--hair-2); color: var(--fg-2); background: var(--s2);
 }
-.fn-trust.ok   { background: var(--good); }
-.fn-trust.thin { background: var(--warn); }
-.fn-trust.bad  { background: var(--crit); }
+.fn-badge.book { color: #8fa9ff; border-color: #2d3a6b; background: var(--accent-bg); }
+.fn-badge.magnet { color: #f0879a; border-color: #5a2733; background: #2a1620; }
+.fn-badge.off { color: var(--fg-3); }
+.fn-card-h .mech { font-size: 13px; color: var(--fg-3); line-height: 1.45; }
 
-tr.fn-unattributed td { background: var(--warn-bg); }
-tr.fn-unattributed td strong { color: var(--warn); }
+.fn-hero { padding: 4px 17px 16px; display: flex; flex-direction: column; gap: 3px; }
+.fn-hero .hv { font-family: var(--fig); font-variant-numeric: tabular-nums;
+               font-size: 46px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+.fn-hero .hv small { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.fn-hero .hl { font-size: 11.5px; font-weight: 700; letter-spacing: .07em;
+               text-transform: uppercase; color: var(--fg-2); line-height: 1.45; }
+.fn-hero.muted .hv { font-size: 22px; font-weight: 700; color: var(--fg-2); letter-spacing: -.01em; }
+
+.fn-rows { border-top: 1px solid var(--hair); }
+.fn-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+          padding: 11px 17px; border-bottom: 1px solid var(--hair); }
+.fn-row:last-child { border-bottom: 0; }
+.fn-row .k { font-size: 13.5px; color: var(--fg-2); }
+.fn-row .v { font-family: var(--fig); font-variant-numeric: tabular-nums;
+             font-size: 15px; font-weight: 600; color: var(--fg); white-space: nowrap; }
+.fn-row .v .sub { font-weight: 600; font-size: 13.5px; margin-left: 5px; }
+.fn-row.dim .k, .fn-row.dim .v { color: var(--fg-3); }
+.fn-row.hi .v { color: var(--fg); }
+.fn-card-foot { padding: 11px 17px; font-size: 12.5px; color: var(--fg-3);
+                border-top: 1px solid var(--hair); background: var(--s2); }
+
+/* ---- insights and recommendations ---- */
+.fn-panel { display: flex; flex-direction: column; gap: 0;
+            border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
+.fn-panel-h { padding: 14px 17px; background: var(--s2); border-bottom: 1px solid var(--hair);
+              display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.fn-panel-h .h { font-size: 15.5px; font-weight: 700; color: var(--fg); }
+.fn-panel-h .sub { font-size: 12.5px; color: var(--fg-3); }
+.fn-item { display: flex; gap: 13px; padding: 15px 17px; background: var(--s1);
+           border-bottom: 1px solid var(--hair); }
+.fn-item:last-child { border-bottom: 0; }
+.fn-item .mk { flex: none; width: 4px; border-radius: 999px; background: var(--hair-2); }
+.fn-item.good .mk { background: var(--good); }
+.fn-item.warn .mk { background: var(--warn); }
+.fn-item.crit .mk { background: var(--crit); }
+.fn-item .bd { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.fn-item .ti { font-size: 15px; font-weight: 650; color: var(--fg); line-height: 1.4; }
+.fn-item .tx { font-size: 13.5px; color: var(--fg-2); line-height: 1.55; max-width: 88ch; }
+.fn-item .ev { font-family: var(--fig); font-variant-numeric: tabular-nums;
+               font-size: 12.5px; color: var(--fg-3); }
+.fn-item .ev b { color: var(--fg-2); font-weight: 600; }
+
+/* ---- buyers ---- */
+.fn-buyer { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto;
+            gap: 14px; align-items: baseline;
+            padding: 14px 17px; background: var(--s1); border-bottom: 1px solid var(--hair); }
+.fn-buyer:last-child { border-bottom: 0; }
+.fn-buyer .who { font-size: 15px; font-weight: 650; color: var(--fg); }
+.fn-buyer .deals { font-size: 12.5px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.fn-buyer .path { font-size: 13.5px; color: var(--fg-2); line-height: 1.5; }
+.fn-buyer .path em { font-style: normal; color: var(--accent); font-weight: 600; }
+.fn-buyer .path .none { color: var(--warn); }
+.fn-buyer .amt { font-family: var(--fig); font-variant-numeric: tabular-nums;
+                 font-size: 14px; font-weight: 600; color: var(--fg-2); text-align: right;
+                 white-space: nowrap; }
+@media (max-width: 700px) {
+  .fn-buyer { grid-template-columns: 1fr; gap: 6px; }
+  .fn-buyer .amt { text-align: left; }
+}
 
 .fn-caveats {
-  background: var(--s1); border: 1px solid var(--hair); border-left: 3px solid var(--warn);
-  border-radius: var(--r-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; gap: 9px;
+  padding: 15px 17px; background: var(--s1);
+  border: 1px solid var(--hair); border-left: 2px solid var(--warn); border-radius: var(--r-lg);
 }
 .fn-caveats .h { font-size: 14.5px; font-weight: 600; color: var(--fg); }
 .fn-caveats ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
-.fn-caveats li { font-size: 13.5px; color: var(--fg-2); }
+.fn-caveats li { font-size: 13.5px; color: var(--fg-2); line-height: 1.55; }
 
 .fn-missing {
-  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
-  padding: 30px 24px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+  display: flex; flex-direction: column; gap: 13px;
+  padding: 22px; background: var(--s1);
+  border: 1px solid var(--hair); border-radius: var(--r-lg);
 }
 .fn-missing .h { font-size: 17px; font-weight: 700; }
 .fn-missing p { font-size: 14.5px; color: var(--fg-2); max-width: 68ch; }
@@ -779,7 +863,7 @@ tr.fn-unattributed td strong { color: var(--warn); }
       </button>
       <button class="view-tab" data-view="funnel" role="tab" aria-selected="false">
         <span class="view-tab-num">D.</span>
-        <span class="view-tab-label">Funnel Health</span>
+        <span class="view-tab-label">Funnel Review</span>
       </button>
     </nav>
 
@@ -1037,7 +1121,7 @@ tr.fn-unattributed td strong { color: var(--warn); }
     <div id="view-funnel" class="view-pane">
       <section class="section">
         <div class="section-head">
-          <div><h2>Funnel health</h2></div>
+          <div><h2>Funnel review</h2></div>
           <div class="meta" id="fn-count">&mdash;</div>
         </div>
         <div class="fn-wrap" id="fn-body"></div>
@@ -1087,8 +1171,8 @@ let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
 let currentAdsetSort = { col: "spend", dir: "desc" };
 let FUNNEL = null;                       // funnel.json, or null until it exists
-let fnLevel = "adset";                   // the ad set is the funnel, so start there
-let fnSort = { col: "spend", dir: "desc" };
+let fnGrain = "month";                   // week | month | quarter | all
+let fnIndex = 0;                         // 0 is the most recent period
 let currentView = "campaigns";          // "campaigns" or "creatives"
 let cvSort = "score";                    // creative view sort key
 let cvGroup = "flat";                    // creative view grouping: "flat" or "campaign"
@@ -1504,16 +1588,88 @@ function renderAdsets(today) {
    apply here. Spend is summed over the same window rather than the selected
    period, otherwise the two halves of every ratio would disagree. */
 
-function fnWindow() {
-  const m = FUNNEL.meta || {};
-  const end = new Date(m.generated || Date.now());
-  const days = m.window_days || 120;
-  const mature = m.maturity_days || 14;
-  const start = new Date(end); start.setDate(start.getDate() - days);
-  const maturedEnd = new Date(end); maturedEnd.setDate(maturedEnd.getDate() - mature);
-  const iso = d => d.toISOString().slice(0, 10);
-  return { start: iso(start), end: iso(end), maturedEnd: iso(maturedEnd), days, mature };
+/* ============== FUNNEL REVIEW ==============
+   Written to be read by someone who does not look at ad accounts. Every figure
+   on screen is a fact from GoHighLevel joined to Meta spend over the same dates,
+   and anything the numbers cannot support is withheld rather than estimated. */
+
+const FN_GRAINS = [
+  { key: "week",    label: "Week" },
+  { key: "month",   label: "Month" },
+  { key: "quarter", label: "Quarter" },
+  { key: "all",     label: "All 120 days" },
+];
+const FN_DEPTH = { lead: 0, discovery: 1, consult: 2, won: 3 };
+const FN_MIN_QUOTE = 10;   // matured leads before a rate is worth printing
+const FN_MIN_TRUST = 15;   // matured leads before a recommendation is worth acting on
+
+function fnISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+function fnParse(s) { const p = String(s).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function fnAddDays(s, n) { const d = fnParse(s); d.setDate(d.getDate() + n); return fnISO(d); }
+function fnMonthName(m) {
+  return ["January","February","March","April","May","June","July","August",
+          "September","October","November","December"][m];
+}
+function fnShort(s) {
+  const d = fnParse(s);
+  return `${d.getDate()} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]}`;
+}
+
+/* ---------- the period list ---------- */
+
+function fnLeadDates() {
+  const rows = (FUNNEL && FUNNEL.leads) || [];
+  if (!rows.length) return null;
+  let lo = rows[0].d, hi = rows[0].d;
+  rows.forEach(r => { if (r.d < lo) lo = r.d; if (r.d > hi) hi = r.d; });
+  return { lo, hi };
+}
+
+function fnPeriods(grain) {
+  const span = fnLeadDates();
+  if (!span) return [];
+  if (grain === "all") {
+    return [{ key: "all", label: "All 120 days", start: span.lo, end: span.hi,
+              sub: `${fnShort(span.lo)} to ${fnShort(span.hi)}` }];
+  }
+  const out = [];
+  if (grain === "week") {
+    // Monday to Sunday, the way a weekly review is actually run
+    const first = fnParse(span.lo);
+    first.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+    for (let d = new Date(first); fnISO(d) <= span.hi; d.setDate(d.getDate() + 7)) {
+      const start = fnISO(d), end = fnAddDays(start, 6);
+      out.push({ key: start, label: `Week of ${fnShort(start)}`,
+                 start, end, sub: `${fnShort(start)} to ${fnShort(end)}` });
+    }
+  } else if (grain === "month") {
+    const a = fnParse(span.lo), b = fnParse(span.hi);
+    for (let y = a.getFullYear(), m = a.getMonth();
+         y < b.getFullYear() || (y === b.getFullYear() && m <= b.getMonth());
+         m === 11 ? (m = 0, y++) : m++) {
+      const start = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      const end = fnISO(new Date(y, m + 1, 0));
+      out.push({ key: start, label: `${fnMonthName(m)} ${y}`,
+                 start, end, sub: `${fnShort(start)} to ${fnShort(end)}` });
+    }
+  } else {
+    const a = fnParse(span.lo), b = fnParse(span.hi);
+    for (let y = a.getFullYear(), q = Math.floor(a.getMonth() / 3);
+         y < b.getFullYear() || (y === b.getFullYear() && q <= Math.floor(b.getMonth() / 3));
+         q === 3 ? (q = 0, y++) : q++) {
+      const m = q * 3;
+      const start = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      const end = fnISO(new Date(y, m + 3, 0));
+      out.push({ key: start, label: `Q${q + 1} ${y}`,
+                 start, end, sub: `${fnShort(start)} to ${fnShort(end)}` });
+    }
+  }
+  return out.reverse();   // newest first
+}
+
+/* ---------- spend, always over the same dates as the leads ---------- */
 
 function fnSpendThrough() {
   // Meta insights lag the CRM by a day or two, so the spend side of every ratio
@@ -1525,68 +1681,467 @@ function fnSpendThrough() {
   return last;
 }
 
-function fnSumSpend(rows, from, to) {
-  let spend = 0;
-  for (const r of rows || []) {
-    if (r.date >= from && r.date <= to) spend += r.spend || 0;
-  }
-  return spend;
+function fnAdsetSpend(adsetIds, from, to) {
+  const src = (DATA.daily_rows && DATA.daily_rows.adset) || {};
+  let t = 0;
+  (adsetIds || []).forEach(id => (src[id] || []).forEach(d => {
+    if (d.date >= from && d.date <= to) t += Number(d.spend) || 0;
+  }));
+  return t;
 }
 
-function fnLevelSource(level) {
-  if (level === "campaign") return { rows: DATA.daily_rows.campaign || {},
-    names: new Map((DATA.campaigns || []).map(c => [c.id, campaignDisplayName(c.name)])) };
-  if (level === "adset") return { rows: DATA.daily_rows.adset || {},
-    names: new Map((DATA.adsets || []).map(a => [a.id, a.name])) };
-  return { rows: DATA.daily_rows.ad || {},
-    names: new Map((DATA.ads || []).map(a => [a.id, a.name])) };
+function fnAllAdsetSpend(from, to) {
+  const src = (DATA.daily_rows && DATA.daily_rows.adset) || {};
+  let t = 0;
+  Object.keys(src).forEach(id => (src[id] || []).forEach(d => {
+    if (d.date >= from && d.date <= to) t += Number(d.spend) || 0;
+  }));
+  return t;
 }
 
-function fnTrust(matured) {
-  /* Same gate as the suggestion rules: nothing is quotable below 15 matured
-     leads, and below 5 it is noise. The dot says which, the number says why. */
-  if (matured >= 15) return ["ok", "Enough matured leads to quote"];
-  if (matured >= 5) return ["thin", "Thin sample, treat as indicative"];
-  return ["bad", "Too few matured leads to mean anything"];
+/* ---------- one funnel, one period ---------- */
+
+function fnMeasure(funnelKey, period, maturedEnd) {
+  const def = funnelKey ? (FUNNEL.funnels || {})[funnelKey] : null;
+  const rows = (FUNNEL.leads || []).filter(r =>
+    r.d >= period.start && r.d <= period.end && (r.f || null) === (funnelKey || null));
+
+  const matured = rows.filter(r => r.d <= maturedEnd);
+  const at = n => matured.filter(r => r.x >= n).length;
+  // Signed counts deals SIGNED in this period, not leads that arrived in it and
+  // have since signed. Otherwise this number and the buyers list below it would
+  // disagree, and the buyers list is the one a reader trusts.
+  const signed = fnBuyersIn(period)
+    .filter(b => (b.funnel || null) === (funnelKey || null))
+    .reduce((t, b) => t + b.deals, 0);
+
+  // spend for cost-per-outcome stops where the matured cohort stops, so both
+  // halves of every ratio cover the same days
+  const costEnd = period.end < maturedEnd ? period.end : maturedEnd;
+  const adsets = def ? def.adsets : [];
+  const spend = def ? fnAdsetSpend(adsets, period.start, period.end) : null;
+  const spendCost = def ? fnAdsetSpend(adsets, period.start, costEnd) : null;
+
+  const appt = at(FN_DEPTH.discovery), cons = at(FN_DEPTH.consult);
+  return {
+    key: funnelKey, def,
+    name: def ? def.name : "No attribution recorded",
+    badge: def ? def.badge : "Unknown",
+    mechanic: def ? def.mechanic
+                  : "Created in the CRM by hand, or arrived with no tracking",
+    adsets,
+    leads: rows.length, matured: matured.length,
+    appt, cons, signed,
+    apptPct: matured.length ? appt / matured.length * 100 : null,
+    consPct: matured.length ? cons / matured.length * 100 : null,
+    spend, spendCost,
+    cpl: spend && rows.length ? spend / rows.length : null,
+    cpa: spendCost !== null && appt ? spendCost / appt : null,
+    cpc: spendCost !== null && cons ? spendCost / cons : null,
+    quotable: matured.length >= FN_MIN_QUOTE,
+    trusted: matured.length >= FN_MIN_TRUST,
+    // two different reasons a rate cannot be quoted, and they need different words
+    reason: matured.length >= FN_MIN_QUOTE ? null
+          : (rows.length >= FN_MIN_QUOTE ? "young" : "small"),
+  };
 }
 
-function fnRows(level) {
-  const w = fnWindow();
-  const src = fnLevelSource(level);
-  const buckets = (FUNNEL.levels || {})[level] || {};
+function fnBuyersIn(period) {
+  return ((FUNNEL && FUNNEL.buyers) || [])
+    .filter(b => b.signed_date && b.signed_date >= period.start && b.signed_date <= period.end)
+    .sort((a, b) => (b.deals - a.deals) || a.signed_date.localeCompare(b.signed_date));
+}
+
+/* ---------- what the numbers mean ---------- */
+
+function fnInsights(paid, unatt, period, maturedEnd, prev) {
   const out = [];
-  for (const [id, b] of Object.entries(buckets)) {
-    const daily = src.rows[id] || [];
-    const spend = fnSumSpend(daily, w.start, w.end);
-    const spendMatured = fnSumSpend(daily, w.start, w.maturedEnd);
-    const past = b.at_or_past || {};
-    const mpast = b.matured_at_or_past || {};
+
+  // Movement against the period before. Volume and cost are trustworthy over any
+  // length of period, so this is the one thing a weekly review can always read.
+  if (prev) {
+    const prevPaid = Object.keys(FUNNEL.funnels || {})
+      .map(k => fnMeasure(k, prev, maturedEnd));
+    const prevLeads = prevPaid.reduce((t, f) => t + f.leads, 0)
+                    + fnMeasure(null, prev, maturedEnd).leads;
+    const nowLeads = paid.reduce((t, f) => t + f.leads, 0) + unatt.leads;
+    const prevSpend = fnAllAdsetSpend(prev.start, prev.end);
+    const nowSpend = fnAllAdsetSpend(period.start, period.end);
+    const prevCpl = prevLeads ? prevSpend / prevLeads : null;
+    const nowCpl = nowLeads ? nowSpend / nowLeads : null;
+
+    if (prevLeads > 0 || nowLeads > 0) {
+      const dLeads = prevLeads ? (nowLeads - prevLeads) / prevLeads * 100 : null;
+      const dCpl = prevCpl && nowCpl ? (nowCpl - prevCpl) / prevCpl * 100 : null;
+      const word = d => d === null ? "flat" : d > 0 ? "up" : d < 0 ? "down" : "flat";
+      const mag = d => d === null ? "" : `${fmt.pct(Math.abs(d), 0)} `;
+      // cheaper leads at the same volume is the good case; the bad case is fewer
+      // leads costing more, and both need saying plainly
+      const tone = dCpl === null ? "warn"
+                 : (dCpl <= 0 && (dLeads === null || dLeads >= -5)) ? "good"
+                 : (dCpl > 15 && dLeads !== null && dLeads < 0) ? "crit" : "warn";
+      out.push({
+        tone,
+        title: `Against the period before: leads ${mag(dLeads)}${word(dLeads)}, `
+             + `cost per lead ${mag(dCpl)}${word(dCpl)}`,
+        text: `${fmt.num(nowLeads)} leads off ${fmt.aud(nowSpend)}, against `
+            + `${fmt.num(prevLeads)} off ${fmt.aud(prevSpend)} in ${prev.label.toLowerCase()}. `
+            + (nowCpl && prevCpl
+                ? `That moves cost per lead from ${fmt.aud(prevCpl)} to ${fmt.aud(nowCpl)}. `
+                : ``)
+            + `Volume and cost are safe to read over a short period. Booking and `
+            + `signing rates are not, because the leads have not aged yet.`,
+        ev: `${prev.label}: <b>${fmt.num(prevLeads)}</b> leads, <b>${fmt.aud(prevSpend)}</b>. `
+          + `${period.label}: <b>${fmt.num(nowLeads)}</b> leads, <b>${fmt.aud(nowSpend)}</b>.`,
+      });
+    }
+  }
+  const judged = paid.filter(f => f.quotable);
+  const spending = paid.filter(f => f.spend > 0);
+
+  // 1. the trap: cheap leads that do not convert
+  const withCpa = paid.filter(f => f.trusted && f.cpa !== null && f.cpl !== null);
+  if (withCpa.length >= 2) {
+    const byCpl = [...withCpa].sort((a, b) => a.cpl - b.cpl);
+    const cheap = byCpl[0];
+    const better = withCpa.filter(f => f !== cheap && f.cpa < cheap.cpa)
+                          .sort((a, b) => a.cpa - b.cpa)[0];
+    if (better) {
+      out.push({
+        tone: "crit",
+        title: `${cheap.name} buys the cheapest leads and the most expensive appointments`,
+        text: `A lead from ${cheap.name} costs ${fmt.aud(cheap.cpl)}, against `
+            + `${fmt.aud(better.cpl)} from ${better.name}. But only `
+            + `${fmt.pct(cheap.apptPct, 0)} of them reach an appointment against `
+            + `${fmt.pct(better.apptPct, 0)}, so an appointment ends up costing `
+            + `${fmt.aud(cheap.cpa)} instead of ${fmt.aud(better.cpa)}. `
+            + `Judging these two on cost per lead alone points the wrong way.`,
+        ev: `${cheap.name}: <b>${cheap.appt}</b> of <b>${cheap.matured}</b> matured leads `
+          + `reached an appointment. ${better.name}: <b>${better.appt}</b> of `
+          + `<b>${better.matured}</b>.`,
+      });
+    }
+  }
+
+  // 2. the one that works
+  const best = judged.filter(f => f.cpa !== null).sort((a, b) => a.cpa - b.cpa)[0];
+  if (best) {
     out.push({
-      id,
-      name: src.names.get(id) || id,
-      known: src.names.has(id),
-      leads: b.leads || 0,
-      matured: b.matured || 0,
-      discovery: mpast.discovery || 0,
-      consult: mpast.consult || 0,
-      won: mpast.won || 0,
-      spend, spendMatured,
-      cpl: b.leads ? spend / b.leads : 0,
-      cpd: mpast.discovery ? spendMatured / mpast.discovery : 0,
-      cpc: mpast.consult ? spendMatured / mpast.consult : 0,
+      tone: "good",
+      title: `${best.name} is the cheapest route to a conversation`,
+      text: `${fmt.aud(best.cpa)} per appointment and ${fmt.aud(best.cpl)} per lead, `
+          + `off ${fmt.aud(best.spend)} of spend. `
+          + (best.cons ? `${best.cons} of those got as far as a consultation, at `
+                       + `${fmt.aud(best.cpc)} each.` : `No consultation yet from this cohort.`),
+      ev: `<b>${best.leads}</b> leads, <b>${best.matured}</b> old enough to judge, `
+        + `<b>${best.appt}</b> reached an appointment.`,
     });
   }
+
+  // 3. money going nowhere
+  spending.forEach(f => {
+    if (f.leads === 0) {
+      out.push({
+        tone: "crit",
+        title: `${f.name} spent ${fmt.aud(f.spend)} in this period and produced no lead at all`,
+        text: `Not a slow funnel, an empty one. Either the ad set is running to a page `
+            + `that is not capturing, or the tracking on it has broken and the leads are `
+            + `landing in the untraced pile below. Both are worth checking today.`,
+        ev: `<b>${fmt.aud(f.spend)}</b> spent, <b>0</b> leads recorded against `
+          + `${f.adsets.length} ad set${f.adsets.length === 1 ? "" : "s"}.`,
+      });
+      return;
+    }
+    if (f.spend >= 500 && f.matured >= FN_MIN_QUOTE && f.appt === 0) {
+      out.push({
+        tone: "crit",
+        title: `${f.name} has spent ${fmt.aud(f.spend)} and produced no appointment`,
+        text: `${f.matured} leads from this funnel are old enough to have booked `
+            + `something and none has. That is long enough to stop guessing: `
+            + `either the follow-up is not happening or the leads are not buyers.`,
+        ev: `<b>${f.leads}</b> leads, <b>${f.matured}</b> matured, <b>0</b> appointments.`,
+      });
+    }
+  });
+
+  // 4. the attribution hole, and whether the money is sitting in it
+  if (unatt.leads > 0) {
+    const total = paid.reduce((s, f) => s + f.leads, 0) + unatt.leads;
+    const share = total ? unatt.leads / total * 100 : 0;
+    const paidSigned = paid.reduce((s, f) => s + f.signed, 0);
+    out.push({
+      tone: share > 25 ? "crit" : "warn",
+      title: `${fmt.pct(share, 0)} of leads cannot be traced to any ad`,
+      text: `${unatt.leads} of ${total} leads in this period carry no campaign, ad set `
+          + `or ad id, so no spend can be charged against them. `
+          + (unatt.signed > 0
+              ? `They are holding ${unatt.signed} of the ${unatt.signed + paidSigned} `
+                + `signed deals, which means most of the revenue cannot be credited to `
+                + `a specific ad. This is the single biggest gap in this report.`
+              : `No signed deal is sitting in this group for this period.`),
+      ev: `Opportunities created in the CRM by hand do not carry a source. `
+        + `<b>${unatt.leads}</b> untraceable, <b>${unatt.signed}</b> of them signed.`,
+    });
+  }
+
+  // 5. anything too thin to read
+  const thin = paid.filter(f => f.leads > 0 && !f.quotable);
+  if (thin.length) {
+    const young = thin.filter(f => f.reason === "young");
+    const small = thin.filter(f => f.reason === "small");
+    out.push({
+      tone: "warn",
+      title: young.length && !small.length
+        ? `The leads in this period are still too new to show a booking rate`
+        : small.length && !young.length
+        ? `This period is too small to show a booking rate`
+        : `No booking rate can be shown for ${thin.length} of these funnels`,
+      text: (young.length
+              ? `${fnList(young.map(f => f.name))} ${young.length === 1 ? "has" : "have"} `
+                + `leads that have not had two weeks to book anything yet. `
+              : ``)
+          + (small.length
+              ? `${fnList(small.map(f => f.name))} ${small.length === 1 ? "has" : "have"} `
+                + `fewer than ${FN_MIN_QUOTE} leads old enough to count, and at that size a `
+                + `single booking moves the rate by tens of %. `
+              : ``)
+          + `Spend, lead volume and cost per lead are still reliable here; the `
+          + `progression figures are not. A month or a quarter will read cleanly.`,
+      ev: thin.map(f => `${f.name}: <b>${f.leads}</b> leads, <b>${f.matured}</b> old enough`).join(" &nbsp;·&nbsp; "),
+    });
+  }
+
+  // 6. can we talk about money at all
+  const buyers = fnBuyersIn(period);
+  const withValue = buyers.filter(b => b.value > 0);
+  if (buyers.length) {
+    const days = buyers.filter(b => b.days_to_sign !== null && b.days_to_sign !== undefined)
+                       .map(b => b.days_to_sign).sort((a, b) => a - b);
+    const med = days.length ? days[Math.floor(days.length / 2)] : null;
+    out.push({
+      tone: withValue.length ? "warn" : "crit",
+      title: withValue.length
+        ? `Deal value is filled in on ${withValue.length} of ${buyers.length} signed deals`
+        : `None of the ${buyers.length} signed deals has a value recorded`,
+      text: (withValue.length
+              ? `Only ${fmt.aud(buyers.reduce((s, b) => s + b.value, 0))} of revenue is `
+                + `recorded against these deals, so return on ad spend cannot be calculated `
+                + `for the rest. `
+              : `Without a value on the record there is no way to work out what any funnel `
+                + `returned, only what it cost. `)
+          + (med !== null ? `Signing takes ${med} days from first contact, at the median.` : ``),
+      ev: `<b>${buyers.length}</b> signed`
+        + (med !== null ? `, median <b>${med}</b> days from lead to signature` : ``)
+        + `, <b>${buyers.length - withValue.length}</b> with no value recorded.`,
+    });
+  }
+
   return out;
 }
 
-function fnCoverageCard(label, pct, detail) {
-  const colour = pct >= 75 ? "var(--good)" : pct >= 40 ? "var(--warn)" : "var(--crit)";
-  return `<div class="c">
-    <span class="cl">${escapeHtml(label)}</span>
-    <span class="cv" style="color:${colour}">${fmt.pct(pct, 0)}</span>
-    <div class="fn-bar"><i style="width:${Math.max(Math.min(pct, 100), 1.5)}%;background:${colour}"></i></div>
-    <span class="cd">${escapeHtml(detail)}</span>
+/* ---------- what to do about it ---------- */
+
+function fnActions(paid, unatt, period) {
+  const out = [];
+  const judged = paid.filter(f => f.trusted && f.cpa !== null);
+  const best = judged.sort((a, b) => a.cpa - b.cpa)[0];
+  const worst = judged.length > 1 ? judged[judged.length - 1] : null;
+
+  if (best) {
+    const step = Math.round(best.spend * 0.3 / 50) * 50;
+    out.push({
+      tone: "good",
+      title: `Put more behind ${best.name}, in one step, and re-read this page in two weeks`,
+      text: `It is the cheapest appointment in the account at ${fmt.aud(best.cpa)} and it `
+          + `has ${best.matured} matured leads behind that number, which is enough to act on. `
+          + (step > 0 ? `Raising its budget by about ${fmt.aud(step)} over the period is a `
+                      + `move you can still read; doubling it changes the auction and the `
+                      + `answer at the same time.`
+                      : `Raise the budget in one modest step rather than doubling it.`),
+      ev: `Current spend <b>${fmt.aud(best.spend)}</b>, `
+        + `<b>${best.appt}</b> appointments, <b>${best.cons}</b> consultations, `
+        + `<b>${best.signed}</b> signed.`,
+    });
+  }
+
+  if (worst && best && worst !== best && worst.cpa > best.cpa * 1.5) {
+    out.push({
+      tone: "crit",
+      title: `Decide on ${worst.name}: fix the follow-up or move the money`,
+      text: `An appointment from it costs ${fmt.aud(worst.cpa)}, `
+          + `${(worst.cpa / best.cpa).toFixed(1)} times ${best.name}. `
+          + `Its leads are not cheaper in the end, they are just cheaper at the start. `
+          + `Either the calls are not being made fast enough or the offer is attracting the `
+          + `wrong people, and both are testable in a fortnight.`,
+      ev: `<b>${fmt.aud(worst.spend)}</b> spent, <b>${worst.appt}</b> appointments from `
+        + `<b>${worst.matured}</b> matured leads.`,
+    });
+  }
+
+  if (unatt.leads > 0) {
+    out.push({
+      tone: "crit",
+      title: `Make source a required field on any opportunity created by hand`,
+      text: `Until that changes, ${unatt.leads} lead${unatt.leads === 1 ? "" : "s"} `
+          + `in this period alone`
+          + (unatt.signed ? `, holding ${unatt.signed} signed deal${unatt.signed === 1 ? "" : "s"},` : ``)
+          + ` cannot be credited to anything, and every cost per outcome above is `
+          + `overstated because the wins are missing from the numerator. This is a `
+          + `GoHighLevel settings change, not an ads change.`,
+      ev: `<b>${unatt.leads}</b> untraceable leads`
+        + (unatt.signed ? `, <b>${unatt.signed}</b> of them signed` : ``) + `.`,
+    });
+  }
+
+  const buyers = fnBuyersIn(period);
+  const noValue = buyers.filter(b => !b.value);
+  if (noValue.length) {
+    out.push({
+      tone: "warn",
+      title: `Make deal value required before an opportunity can be marked signed`,
+      text: `${noValue.length} of ${buyers.length} deal${buyers.length === 1 ? "" : "s"} `
+          + `signed in this period ${noValue.length === 1 ? "has" : "have"} no value on the record. That single blank is the only `
+          + `thing stopping this page from reporting what the advertising earned rather than `
+          + `only what it cost.`,
+      ev: `<b>${noValue.length}</b> signed deal${noValue.length === 1 ? "" : "s"} with no value.`,
+    });
+  }
+
+  if (!best) {
+    out.push({
+      tone: "warn",
+      title: `Not enough matured leads in this period to justify a budget change`,
+      text: `No funnel has ${FN_MIN_TRUST} leads old enough to judge, so any move made on `
+          + `these numbers would be a guess wearing a percentage. Widen the period to a month `
+          + `or a quarter, or wait for the current leads to age.`,
+      ev: paid.map(f => `${f.name}: <b>${f.matured}</b> matured`).join(" &nbsp;·&nbsp; ") || "No paid leads.",
+    });
+  }
+
+  return out;
+}
+
+/* ---------- render ---------- */
+
+function fnCard(f, isBest) {
+  const badgeCls = /book/i.test(f.badge) ? "book"
+                 : /magnet/i.test(f.badge) ? "magnet"
+                 : f.def ? "" : "off";
+  const row = (k, v, cls) => `<div class="fn-row ${cls || ""}">
+      <span class="k">${k}</span><span class="v">${v}</span></div>`;
+  // "4" next to "27%" reads as 427%, so the share always goes in brackets
+  const cnt = (n, pct) => `${fmt.num(n)}${pct !== null && pct !== undefined
+      ? `<span class="sub" style="color:var(--fg-3)">(${fmt.pct(pct, 0)})</span>` : ""}`;
+
+  const hero = !f.def
+    ? `<div class="fn-hero muted">
+         <span class="hv">${f.quotable ? `${Math.round(f.apptPct)}% reach an appointment` : `${f.leads} leads`}</span>
+         <span class="hl">but no ad can be credited for any of them</span>
+       </div>`
+    : f.quotable
+    ? `<div class="fn-hero">
+         <span class="hv" style="color:${isBest ? "var(--accent)" : "var(--fg)"}">
+           ${Math.round(f.apptPct)}<small>%</small></span>
+         <span class="hl">of leads reach an appointment</span>
+       </div>`
+    : f.cpl !== null
+    // A short period cannot support a conversion rate, but spend, leads and cost
+    // per lead are solid over any period at all. Lead with one of those rather
+    // than with a blank.
+    ? `<div class="fn-hero">
+         <span class="hv">${fmt.aud(f.cpl)}</span>
+         <span class="hl">per lead${f.reason === "young"
+             ? `, too soon for a booking rate`
+             : `, too few leads for a booking rate`}</span>
+       </div>`
+    : f.leads > 0
+    ? `<div class="fn-hero muted">
+         <span class="hv">${f.leads} lead${f.leads === 1 ? "" : "s"}</span>
+         <span class="hl">no spend against them in this period</span>
+       </div>`
+    : f.spend > 0
+    ? `<div class="fn-hero">
+         <span class="hv" style="color:var(--crit)">${fmt.aud(f.spend)}</span>
+         <span class="hl">spent, and not one lead</span>
+       </div>`
+    : `<div class="fn-hero muted">
+         <span class="hv">Not running</span>
+         <span class="hl">no spend and no lead in this period</span>
+       </div>`;
+
+  const money = v => v === null || v === undefined ? "&mdash;" : fmt.aud(v);
+
+  return `<div class="fn-card ${isBest ? "lead" : ""}">
+    <div class="fn-card-h">
+      <span class="nm">${escapeHtml(f.name)}</span>
+      <span class="fn-badge ${badgeCls}">${escapeHtml(f.badge)}</span>
+      <span class="mech">${escapeHtml(f.mechanic)}</span>
+    </div>
+    ${hero}
+    <div class="fn-rows">
+      ${row("Spend", f.spend === null ? "&mdash;" : money(f.spend), "hi")}
+      ${row("Leads", fmt.num(f.leads), "hi")}
+      ${row("Cost per lead", money(f.cpl))}
+      ${row("Reached appointment", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
+            f.quotable ? "" : "dim")}
+      ${row("Cost per appointment", money(f.cpa), f.quotable ? "" : "dim")}
+      ${row("Reached consultation", f.quotable ? cnt(f.cons, f.consPct) : fmt.num(f.cons),
+            f.quotable ? "" : "dim")}
+      ${row("Cost per consultation", money(f.cpc), f.quotable ? "" : "dim")}
+      ${row("Deals signed this period", fmt.num(f.signed), f.signed ? "hi" : "dim")}
+    </div>
+    <div class="fn-card-foot">
+      ${f.def
+        ? `${f.adsets.length} ad set${f.adsets.length === 1 ? "" : "s"}: `
+          + f.adsets.map(id => escapeHtml(fnAdsetName(id))).join(", ")
+          + (f.def.unanimous ? "" : " &nbsp;·&nbsp; leads split across more than one page")
+        : "No ad set can be charged for these leads"}
+    </div>
   </div>`;
+}
+
+function fnAdsetName(id) {
+  const a = (DATA.adsets || []).find(x => x.id === id);
+  return a ? a.name : id;
+}
+
+function fnList(arr) {
+  if (arr.length <= 1) return arr.join("");
+  return arr.slice(0, -1).join(", ") + " and " + arr[arr.length - 1];
+}
+
+function fnPanel(title, sub, items, empty) {
+  if (!items.length && !empty) return "";
+  return `<div class="fn-panel">
+    <div class="fn-panel-h"><span class="h">${escapeHtml(title)}</span>
+      <span class="sub">${escapeHtml(sub)}</span></div>
+    ${items.length ? items.map(i => `<div class="fn-item ${i.tone}">
+        <span class="mk"></span>
+        <div class="bd">
+          <span class="ti">${i.title}</span>
+          <span class="tx">${i.text}</span>
+          ${i.ev ? `<span class="ev">${i.ev}</span>` : ""}
+        </div>
+      </div>`).join("")
+      : `<div class="fn-item"><span class="mk"></span><div class="bd">
+           <span class="tx">${escapeHtml(empty)}</span></div></div>`}
+  </div>`;
+}
+
+function fnBuyerPath(b) {
+  const bits = [];
+  if (b.funnel && FUNNEL.funnels[b.funnel]) bits.push(`<em>${escapeHtml(FUNNEL.funnels[b.funnel].name)}</em>`);
+  (b.sources || []).forEach(s => {
+    if (/^survey$/i.test(s)) return;                 // says nothing a human needs
+    bits.push(escapeHtml(s));
+  });
+  if (!bits.length) {
+    // the stage it ended in is not a path, and printing it alone would dress up
+    // a missing source as if something were known
+    return `<span class="none">No source recorded in the CRM</span>`;
+  }
+  (b.stages || []).slice(0, 1).forEach(st => bits.push(escapeHtml(st)));
+  return bits.join(" &rarr; ");
 }
 
 function renderFunnel() {
@@ -1595,131 +2150,167 @@ function renderFunnel() {
   if (!host) return;
 
   if (!FUNNEL) {
-    count.textContent = "not connected";
+    if (count) count.textContent = "not connected";
     host.innerHTML = `<div class="fn-missing">
       <span class="h">GoHighLevel is not connected yet</span>
-      <p>This view joins Meta spend to what actually happened to each lead. It needs
-      <code>funnel.json</code>, which the funnel workflow writes. Nothing here is broken,
-      the file just does not exist yet.</p>
+      <p>This page reads a file called <code>funnel.json</code>, which holds the leads
+         from GoHighLevel joined to the Meta spend already on this dashboard. That file
+         is not in the repository yet, so there is nothing to show.</p>
       <ol>
-        <li>Add <code>update_funnel.py</code> and <code>.github/workflows/funnel-refresh.yml</code> to the repo.</li>
-        <li>Run the workflow with <strong>Probe only</strong> ticked. It writes nothing and only checks the token.</li>
-        <li>When the log says the join works, run it again unticked. That writes <code>funnel.json</code> and this view fills in.</li>
+        <li>Upload <code>funnel.json</code> to the repository, or</li>
+        <li>Open the <b>Actions</b> tab and run <b>Funnel refresh (GoHighLevel)</b> with
+            <b>Probe only</b> ticked, to check the token first.</li>
+        <li>Run it again with <b>Probe only</b> unticked. It writes
+            <code>funnel.json</code> and commits it.</li>
       </ol>
+      <p>Everything else on this dashboard works without it.</p>
     </div>`;
     return;
   }
 
-  const w = fnWindow();
-  const cov = FUNNEL.coverage || {};
   const meta = FUNNEL.meta || {};
+  const periods = fnPeriods(fnGrain);
+  if (!periods.length) {
+    host.innerHTML = `<div class="fn-missing">
+      <span class="h">funnel.json has no lead rows in it</span>
+      <p>The file loaded and parsed, but it carries no per-lead rows, which is what
+         this page needs to cut the numbers by week, month or quarter. That usually
+         means it was written by an older version of <code>update_funnel.py</code>.</p>
+      <p>Upload the current <code>update_funnel.py</code> and run
+         <b>Funnel refresh (GoHighLevel)</b> again with <b>Probe only</b> unticked.</p>
+    </div>`;
+    return;
+  }
+  periods.forEach(pd => {
+    const t = fnISO(new Date());
+    if (pd.end > t) pd.sub = `${fnShort(pd.start)} to ${fnShort(t)}, so far`;
+  });
+  if (fnIndex >= periods.length) fnIndex = periods.length - 1;
+  if (fnIndex < 0) fnIndex = 0;
+  const period = periods[fnIndex];
 
-  /* A stale join is worse than no join, because the numbers look current. */
-  const ageDays = Math.floor((Date.now() - new Date(meta.generated || 0)) / 86400000);
-  const stale = !isFinite(ageDays) || ageDays > 2;
+  // a lead needs this many days before its outcome means anything
+  const mature = Number(meta.maturity_days) || 14;
+  const today = fnISO(new Date());
+  const maturedEnd = fnAddDays(today, -mature);
 
-  const rows = fnRows(fnLevel);
-  rows.sort((a, b) => sortFn(a, b, fnSort));
-  const un = FUNNEL.unattributed || {};
+  const keys = Object.keys(FUNNEL.funnels || {});
+  const paidAll = keys.map(k => fnMeasure(k, period, maturedEnd))
+                      .sort((a, b) => (b.spend || 0) - (a.spend || 0));
+  // a funnel with no spend and no lead simply was not running, and a card
+  // saying so three times over is noise on a weekly view
+  const paid = paidAll.filter(f => f.leads > 0 || f.spend > 0);
+  const idle = paidAll.filter(f => !f.leads && !f.spend);
+  const unatt = fnMeasure(null, period, maturedEnd);
 
-  count.textContent = `${rows.length} ${fnLevel === "adset" ? "ad sets" : fnLevel + "s"} with leads`;
+  const totalLeads = paid.reduce((s, f) => s + f.leads, 0) + unatt.leads;
+  const totalSpend = fnAllAdsetSpend(period.start, period.end);
+  const totalAppt = paid.reduce((s, f) => s + f.appt, 0) + unatt.appt;
+  const totalSigned = paid.reduce((s, f) => s + f.signed, 0) + unatt.signed;
+  const buyers = fnBuyersIn(period);
 
-  const levelBtn = (key, label) =>
-    `<button class="fn-level ${fnLevel === key ? "active" : ""}" data-fnlevel="${key}" type="button">${label}</button>`;
+  const judged = paid.filter(f => f.quotable && f.cpa !== null);
+  const best = judged.sort((a, b) => a.cpa - b.cpa)[0] || null;
 
-  const th = (col, label, num) =>
-    `<th class="sortable ${num ? "num" : ""} ${fnSort.col === col ? "sorted" : ""}" data-fnsort="${col}">${label} <span class="arrow">&#9660;</span></th>`;
-
-  const body = rows.map(r => {
-    const [tk, tTitle] = fnTrust(r.matured);
-    return `<tr title="${escapeAttr(tTitle)}">
-      <td><span class="fn-trust ${tk}"></span><strong>${escapeHtml(r.name)}</strong>${
-        r.known ? "" : ` <span class="muted">(not in Meta data)</span>`}</td>
-      <td class="num">${fmt.num(r.leads)}</td>
-      <td class="num">${fmt.num(r.matured)}</td>
-      <td class="num">${fmt.num(r.discovery)}</td>
-      <td class="num">${fmt.num(r.consult)}</td>
-      <td class="num">${fmt.num(r.won)}</td>
-      <td class="num">${fmt.aud(r.spend)}</td>
-      <td class="num">${r.cpl > 0 ? fmt.audPrecise(r.cpl) : "&mdash;"}</td>
-      <td class="num">${r.cpd > 0 ? fmt.aud(r.cpd) : "&mdash;"}</td>
-      <td class="num">${r.cpc > 0 ? fmt.aud(r.cpc) : "&mdash;"}</td>
-    </tr>`;
-  }).join("");
-
-  const unRow = (un.leads || 0) > 0 ? `
-    <tr class="fn-unattributed" title="These leads carry no Meta ids, so no spend can be credited to them">
-      <td><strong>No attribution</strong> <span class="muted">created in the CRM by hand</span></td>
-      <td class="num">${fmt.num(un.leads || 0)}</td>
-      <td class="num">${fmt.num(un.matured || 0)}</td>
-      <td class="num">${fmt.num((un.matured_at_or_past || {}).discovery || 0)}</td>
-      <td class="num">${fmt.num((un.matured_at_or_past || {}).consult || 0)}</td>
-      <td class="num">${fmt.num((un.matured_at_or_past || {}).won || 0)}</td>
-      <td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td>
-    </tr>` : "";
+  if (count) {
+    count.textContent = `${fmt.num(totalLeads)} lead${totalLeads === 1 ? "" : "s"} in ${period.label.toLowerCase()}`;
+  }
 
   const spendTo = fnSpendThrough();
-  const spendLag = spendTo
-    ? Math.round((new Date(w.end) - new Date(spendTo)) / 86400000) : 0;
+  const spendLag = spendTo && period.end > spendTo
+    ? Math.round((fnParse(period.end) - fnParse(spendTo)) / 86400000) : 0;
+  const genAge = meta.generated
+    ? Math.round((new Date() - new Date(meta.generated)) / 86400000) : 0;
+
+  const top = (l, v, d) => `<div class="t"><span class="tl">${l}</span>
+      <span class="tv">${v}</span><span class="td">${d}</span></div>`;
 
   host.innerHTML = `
+    <div class="fn-period">
+      <div class="fn-seg" role="group" aria-label="Review period">
+        ${FN_GRAINS.map(g => `<button type="button" data-fngrain="${g.key}"
+            class="${g.key === fnGrain ? "active" : ""}"
+            aria-pressed="${g.key === fnGrain}">${g.label}</button>`).join("")}
+      </div>
+      ${fnGrain === "all" ? "" : `<div class="fn-pick">
+        <button type="button" data-fnstep="1" ${fnIndex >= periods.length - 1 ? "disabled" : ""}
+          aria-label="Earlier period">&#8249;</button>
+        <span class="lbl">${escapeHtml(period.label)}</span>
+        <button type="button" data-fnstep="-1" ${fnIndex <= 0 ? "disabled" : ""}
+          aria-label="Later period">&#8250;</button>
+      </div>`}
+    </div>
+
     <div class="fn-banner">
-      <span class="fn-b"><span class="pip ${stale ? "stale" : ""}"></span>GoHighLevel
-        <b>${escapeHtml((meta.generated || "").slice(0, 10))}</b>${stale ? ` <span class="fn-note">${ageDays} days old</span>` : ""}</span>
-      <span class="fn-b">Window <b>${w.days}</b> days, to <b>${escapeHtml(w.end)}</b></span>
-      <span class="fn-b">Matured cohort <b>${w.mature}</b>+ days old</span>
-      ${spendTo ? `<span class="fn-b"><span class="pip ${spendLag > 1 ? "stale" : ""}"></span>Spend to
-        <b>${escapeHtml(spendTo)}</b>${spendLag > 1 ? ` <span class="fn-note">${spendLag} days behind leads</span>` : ""}</span>` : ""}
-      <span class="fn-note">The time filter above does not apply to this view.</span>
+      <span class="fn-b"><span class="pip ${genAge > 8 ? "stale" : ""}"></span>Leads created
+        <b>${escapeHtml(period.sub)}</b></span>
+      <span class="fn-b">Where they stand <b>today</b></span>
+      <span class="fn-b">Judged once <b>${mature}</b> days old</span>
+      ${spendLag > 1 ? `<span class="fn-b"><span class="pip stale"></span>Spend only to
+        <b>${escapeHtml(spendTo)}</b></span>` : ""}
+      ${idle.length ? `<span class="fn-note">Not running this period:
+        ${escapeHtml(idle.map(f => f.name).join(", "))}</span>` : ""}
+      <span class="fn-note">The time filter at the top of the page does not apply here.</span>
     </div>
 
-    <div class="fn-cov">
-      ${fnCoverageCard("Leads with a campaign id", cov.with_campaign_pct || 0, `of ${fmt.num(cov.records || 0)} records`)}
-      ${fnCoverageCard("Leads with an ad set id", cov.with_adset_pct || 0, "the level a funnel lives at")}
-      ${fnCoverageCard("Leads with an ad id", cov.with_ad_pct || 0, "needed to judge a creative")}
+    <div class="fn-top">
+      ${top("Spend", fmt.aud(totalSpend), "every ad set, this period")}
+      ${top("Leads", fmt.num(totalLeads), `${fmt.num(unatt.leads)} with no ad attached`)}
+      ${top("Reached an appointment", fmt.num(totalAppt), `of the leads old enough to count`)}
+      ${top("Deals signed", fmt.num(buyers.reduce((s, b) => s + b.deals, 0)),
+            `${buyers.length} buyer${buyers.length === 1 ? "" : "s"}`)}
     </div>
 
-    <div class="fn-levels">
-      ${levelBtn("campaign", "Campaign")}${levelBtn("adset", "Ad set")}${levelBtn("ad", "Ad")}
+    <div class="fn-cards">
+      ${paid.map(f => fnCard(f, best && f.key === best.key)).join("")}
+      ${unatt.leads ? fnCard(unatt, false) : ""}
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          ${th("name", "Name")}${th("leads", "Leads", 1)}${th("matured", "Matured", 1)}
-          ${th("discovery", "Disc+", 1)}${th("consult", "Consult+", 1)}${th("won", "Won", 1)}
-          ${th("spend", "Spend", 1)}${th("cpl", "Cost / lead", 1)}
-          ${th("cpd", "Cost / disc", 1)}${th("cpc", "Cost / consult", 1)}
-        </tr></thead>
-        <tbody>${body || `<tr><td colspan="10" class="empty">NO LEADS AT THIS LEVEL</td></tr>`}${unRow}</tbody>
-      </table>
+    ${fnPanel("What this means", "read from the numbers above, nothing added",
+              fnInsights(paid, unatt, period, maturedEnd, periods[fnIndex + 1] || null),
+              "Nothing in this period stands out either way.")}
+
+    ${fnPanel("What to do next", "each one carries the figure it rests on",
+              fnActions(paid, unatt, period),
+              "No action worth taking on this period's numbers.")}
+
+    <div class="fn-panel">
+      <div class="fn-panel-h"><span class="h">The buyers</span>
+        <span class="sub">${buyers.length
+          ? `signed ${escapeHtml(period.sub.toLowerCase())}` : "none in this period"}</span></div>
+      ${buyers.length ? buyers.map(b => `<div class="fn-buyer">
+          <div><div class="who">${escapeHtml(b.name)}</div>
+            <div class="deals">${b.deals} deal${b.deals === 1 ? "" : "s"}${
+              b.days_to_sign !== null && b.days_to_sign !== undefined
+                ? ` &middot; signed ${b.days_to_sign} day${b.days_to_sign === 1 ? "" : "s"} after first contact`
+                : ""}</div></div>
+          <div class="path">${fnBuyerPath(b)}</div>
+          <div class="amt">${b.value ? fmt.aud(b.value) : "no value recorded"}</div>
+        </div>`).join("")
+        : `<div class="fn-item"><span class="mk"></span><div class="bd"><span class="tx">
+             No deal was signed in this period.</span></div></div>`}
     </div>
 
     <div class="fn-caveats">
       <span class="h">What these numbers are, and are not</span>
       <ul>${(meta.caveats || []).map(c => `<li>${escapeHtml(c)}</li>`).join("")}
-        <li>Cost per lead divides the whole window's spend by all leads. Cost per
-        discovery and per consultation divide only the spend up to
-        ${escapeHtml(w.maturedEnd)} by the matured cohort, so both halves of the
-        ratio cover the same period.</li>
-        ${spendLag > 1 ? `<li>Meta has only reported spend up to
-        ${escapeHtml(spendTo)}, ${spendLag} days behind the last lead counted here,
-        so every cost figure is slightly low until the next data refresh.</li>` : ""}
+        ${spendLag > 1 ? `<li>Meta has reported spend only up to ${escapeHtml(spendTo)},
+          ${spendLag} days short of the end of this period, so cost figures here are
+          slightly low until the next data refresh.</li>` : ""}
       </ul>
     </div>`;
 
-  host.querySelectorAll("[data-fnlevel]").forEach(btn => {
+  host.querySelectorAll("[data-fngrain]").forEach(btn => {
     btn.addEventListener("click", () => {
-      if (btn.dataset.fnlevel === fnLevel) return;
-      fnLevel = btn.dataset.fnlevel;
+      if (btn.dataset.fngrain === fnGrain) return;
+      fnGrain = btn.dataset.fngrain;
+      fnIndex = 0;
       renderFunnel();
     });
   });
-  host.querySelectorAll("[data-fnsort]").forEach(h => {
-    h.addEventListener("click", () => {
-      const col = h.dataset.fnsort;
-      if (fnSort.col === col) fnSort.dir = fnSort.dir === "asc" ? "desc" : "asc";
-      else fnSort = { col, dir: "desc" };
+  host.querySelectorAll("[data-fnstep]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      fnIndex += Number(btn.dataset.fnstep);
       renderFunnel();
     });
   });

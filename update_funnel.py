@@ -28,7 +28,7 @@ import json
 import os
 import sys
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -323,18 +323,43 @@ def dedupe_by_contact(opps, stages):
     for o in opps:
         groups[o.get("contactId") or f"_no_contact_{o.get('id')}"].append(o)
 
+    def depth_of(o):
+        return DEPTH_ORDER[classify(stages.get(o.get("pipelineStageId")))]
+
+    def created_of(o):
+        return parse_dt(o.get("createdAt")) or datetime.max.replace(tzinfo=timezone.utc)
+
+    def annotate(one, rows):
+        """
+        Carry the facts that only exist across the group.
+
+        Deal count is the number of records that actually reached a won stage,
+        not the number of records: three records where one is won is one deal
+        that moved pipeline, while three won records is three deals. That is the
+        difference between "2 deals" and "1 deal" on the buyers list.
+        """
+        won = [o for o in rows if depth_of(o) == DEPTH_ORDER["won"]]
+        one["_won_count"] = len(won)
+        one["_won_value"] = round(sum(float(o.get("monetaryValue") or 0) for o in won), 2)
+        # when it was actually signed, not when the record was created
+        one["_won_first"] = min(((o.get("lastStageChangeAt")
+                                  or o.get("lastStatusChangeAt")
+                                  or o.get("createdAt") or "") for o in won),
+                                default="")[:10]
+        one["_sources"] = sorted({(o.get("source") or "").strip()
+                                  for o in rows if (o.get("source") or "").strip()})
+        one["_stages"] = sorted({(stages.get(o.get("pipelineStageId")) or {}).get("stage", "")
+                                 for o in won} - {""})
+        one["_pipelines"] = sorted({(stages.get(o.get("pipelineStageId")) or {}).get("pipeline", "")
+                                    for o in rows} - {""})
+        return one
+
     merged, collapsed = [], 0
     for key, rows in groups.items():
         if len(rows) == 1:
-            merged.append(rows[0])
+            merged.append(annotate(dict(rows[0]), rows))
             continue
         collapsed += len(rows) - 1
-
-        def depth_of(o):
-            return DEPTH_ORDER[classify(stages.get(o.get("pipelineStageId")))]
-
-        def created_of(o):
-            return parse_dt(o.get("createdAt")) or datetime.max.replace(tzinfo=timezone.utc)
 
         deepest = max(rows, key=lambda o: (depth_of(o), created_of(o)))
         earliest = min(rows, key=created_of)
@@ -348,7 +373,7 @@ def dedupe_by_contact(opps, stages):
         one["attributions"] = source.get("attributions") or []
         one["monetaryValue"] = max(float(o.get("monetaryValue") or 0) for o in rows)
         one["_merged_from"] = len(rows)
-        merged.append(one)
+        merged.append(annotate(one, rows))
 
     if collapsed:
         log(f"collapsed {collapsed} duplicate opportunities into their contact, "
@@ -356,22 +381,135 @@ def dedupe_by_contact(opps, stages):
     return merged
 
 
-def build(opps, stages, custom_fields, users, meta):
-    now = datetime.now(timezone.utc)
-    matured_before = now - timedelta(days=MATURITY_DAYS)
+# --------------------------------------------------------------------------
+# What a funnel actually is
+# --------------------------------------------------------------------------
+# An ad set is not a funnel and neither is a campaign. A funnel is the page a
+# lead lands on and the mechanic that page runs. So group ad sets by the landing
+# page their own leads recorded, and read the name off the path. Nothing here is
+# invented: the path comes out of the attribution record.
 
-    levels = {"campaign": defaultdict(lambda: blank()),
-              "adset": defaultdict(lambda: blank()),
-              "ad": defaultdict(lambda: blank())}
+FUNNEL_LOOKUP = {
+    "/melbourne/offer":  ("VSL Funnel", "Direct booking",
+                          "Video sales letter, application, call booking"),
+    "/melbourne/report": ("Apartments Report", "Lead magnet",
+                          "Report download, phone follow-up"),
+    "/melbourne":        ("Melbourne Landing Page", "Mixed",
+                          "Landing page, enquiry form, phone follow-up"),
+    "/":                 ("Site Home", "Mixed", "Home page, enquiry form"),
+    "_form":             ("Form Direct", "Form only",
+                          "Straight into a GoHighLevel form, no landing page"),
+}
+
+
+def landing_path(url):
+    """Normalise an attribution url down to the funnel it represents."""
+    if not url:
+        return None
+    u = url.split("?")[0].rstrip("/")
+    if "leadconnectorhq.com" in u:
+        return "_form"
+    for scheme in ("https://", "http://"):
+        if u.startswith(scheme):
+            u = u[len(scheme):]
+    path = "/" + u.split("/", 1)[1] if "/" in u else "/"
+    # alayaproperty.com/apply-now/melbourne/offer and
+    # lp2.alayaproperty.com/melbourne/offer are the same funnel
+    if path.startswith("/apply-now"):
+        path = path[len("/apply-now"):] or "/"
+    return path or "/"
+
+
+def first_touch_path(opp):
+    attrs = opp.get("attributions") or []
+    if not attrs:
+        return None
+    first = next((a for a in attrs if a.get("isFirst")), attrs[0])
+    return (landing_path(first.get("url"))
+            or next((landing_path(a.get("url")) for a in attrs if a.get("url")), None))
+
+
+def name_funnel(path):
+    if path in FUNNEL_LOOKUP:
+        return FUNNEL_LOOKUP[path]
+    label = (path or "unknown").strip("/").replace("/", " ").replace("-", " ").title()
+    return (label or "Unknown Page", "Mixed", "Landing page, phone follow-up")
+
+
+def assign_funnels(opps):
+    """
+    Decide which funnel each ad set belongs to, by where its own leads landed.
+    An ad set goes wholly to its dominant page so that leads and spend can never
+    disagree, and the split is reported when it was not unanimous.
+    """
+    pages = defaultdict(Counter)
+    for o in opps:
+        _, asid, _, _, _ = read_attribution(o)
+        if not asid:
+            continue
+        p = first_touch_path(o)
+        if p:
+            pages[asid][p] += 1
+        for a in (o.get("attributions") or []):
+            p2 = landing_path(a.get("url"))
+            if p2:
+                pages[asid][p2] += 0.001   # tie-break only
+
+    adset_funnel, funnels = {}, {}
+    for asid, counter in pages.items():
+        if not counter:
+            continue
+        path, _ = counter.most_common(1)[0]
+        total = sum(counter.values())
+        share = counter[path] / total if total else 1.0
+        adset_funnel[asid] = path
+        name, badge, mechanic = name_funnel(path)
+        f = funnels.setdefault(path, {
+            "key": path, "name": name, "badge": badge, "mechanic": mechanic,
+            "adsets": [], "unanimous": True,
+        })
+        f["adsets"].append(asid)
+        if share < 0.9:
+            f["unanimous"] = False
+    return adset_funnel, funnels
+
+
+def contact_name(opp):
+    c = opp.get("contact") or {}
+    n = (c.get("name") or "").strip()
+    if n:
+        return n
+    parts = [(c.get("firstName") or "").strip(), (c.get("lastName") or "").strip()]
+    return " ".join(p for p in parts if p) or "Name not recorded"
+
+
+def build(opps, stages, custom_fields, users, meta, names=None):
+    """
+    Emit one row per lead, not pre-baked totals.
+
+    The page has to be able to re-cut this by week, month or quarter, and a
+    pre-aggregated 120-day total cannot be cut. So the heavy lifting moves to
+    the browser and this file stays a list of facts.
+
+    One thing to be honest about: GoHighLevel keeps no stage history, so a
+    lead's depth here is where it stands TODAY, not where it stood at the end
+    of its own period. That makes every period a cohort read - "of the leads
+    created in this period, this many have since reached X" - and the page
+    says exactly that on screen.
+    """
+    now = datetime.now(timezone.utc)
+    names = names or {}
+    adset_funnel, funnels = assign_funnels(opps)
+
+    leads = []
     coverage = {"total": 0, "with_attr": 0, "with_adset": 0, "with_ad": 0}
-    unattributed = blank()
+    won_buyers = []
 
     for o in opps:
         created = parse_dt(o.get("createdAt"))
         if not created:
             continue
         coverage["total"] += 1
-
         cid, asid, adid, src, page = read_attribution(o)
         if cid:
             coverage["with_attr"] += 1
@@ -381,25 +519,47 @@ def build(opps, stages, custom_fields, users, meta):
             coverage["with_ad"] += 1
 
         depth = classify(stages.get(o.get("pipelineStageId")))
-        matured = created <= matured_before
         value = float(o.get("monetaryValue") or 0)
+        row = {
+            "d": created.date().isoformat(),
+            "f": adset_funnel.get(asid) if asid else None,
+            "a": asid, "c": cid, "ad": adid,
+            "x": DEPTH_ORDER[depth],
+            "v": round(value, 2),
+        }
+        if o.get("_merged_from"):
+            row["m"] = o["_merged_from"]
+        leads.append(row)
 
-        targets = []
-        if cid:
-            targets.append(("campaign", cid))
-        if asid:
-            targets.append(("adset", asid))
-        if adid:
-            targets.append(("ad", adid))
-        if not targets:
-            add(unattributed, depth, matured, value)
-            continue
-        for level, key in targets:
-            add(levels[level][key], depth, matured, value)
+        if depth == "won":
+            signed = o.get("_won_first") or ""
+            days = None
+            sd = parse_dt(signed) if signed else None
+            if sd:
+                days = max((sd.date() - created.date()).days, 0)
+            won_buyers.append({
+                "name": names.get(o.get("contactId")) or contact_name(o),
+                "lead_date": created.date().isoformat(),
+                "signed_date": signed,
+                "days_to_sign": days,
+                "deals": max(o.get("_won_count") or 1, 1),
+                "value": o.get("_won_value") or round(value, 2),
+                "funnel": adset_funnel.get(asid) if asid else None,
+                "adset": asid,
+                "sources": o.get("_sources") or [],
+                "stages": o.get("_stages") or [],
+                "pipelines": o.get("_pipelines") or [],
+                "attributed": bool(asid),
+            })
 
-    out_levels = {}
-    for level, buckets in levels.items():
-        out_levels[level] = {k: finish(v) for k, v in buckets.items()}
+    # ---- buyers: already one entry per person, the dedupe did that ----
+    buyers = sorted(won_buyers, key=lambda b: (-b["deals"], b["signed_date"]))
+
+    out_funnels = {}
+    for k, f in funnels.items():
+        out_funnels[k] = {"key": k, "name": f["name"], "badge": f["badge"],
+                          "mechanic": f["mechanic"], "adsets": sorted(f["adsets"]),
+                          "unanimous": f["unanimous"]}
 
     return {
         "meta": {
@@ -410,18 +570,21 @@ def build(opps, stages, custom_fields, users, meta):
             "join": {"campaign": "utm_campaign", "adset": "utm_term", "ad": "utm_content"},
             "meta_data_generated": (meta or {}).get("last_updated", ""),
             "deduped_by_contact": True,
+            "depth_order": ["lead", "discovery", "consult", "won"],
             "caveats": [
-                "GoHighLevel returns a current stage and no history, so every "
-                "depth figure is leads sitting at or past that stage today, not "
-                "a conversion rate.",
-                f"Progression and cost per outcome use only leads older than "
-                f"{MATURITY_DAYS} days. Younger leads are counted for volume and "
-                f"cost per lead only.",
-                "Deal value is blank on almost every record, so no return figure "
-                "is produced.",
+                "GoHighLevel keeps no stage history, so every figure below is "
+                "where a lead stands today, not a conversion rate measured at "
+                "the time. Read each period as a cohort: of the leads created "
+                "in this period, this many have since got that far.",
+                f"Leads younger than {MATURITY_DAYS} days have not had time to "
+                f"convert, so they are counted for volume and cost per lead but "
+                f"left out of every progression and cost per outcome figure.",
                 "One person counts once. A lead that moved to another pipeline "
                 "has a second opportunity record in GoHighLevel; those are "
                 "collapsed to the deepest stage that person reached.",
+                "A funnel here is the page the leads landed on. Each ad set is "
+                "assigned wholly to the page most of its leads reached, so "
+                "leads and spend always cover the same thing.",
             ],
         },
         "coverage": {
@@ -430,43 +593,12 @@ def build(opps, stages, custom_fields, users, meta):
             "with_adset_pct": pct(coverage["with_adset"], coverage["total"]),
             "with_ad_pct": pct(coverage["with_ad"], coverage["total"]),
         },
-        "levels": out_levels,
-        "unattributed": finish(unattributed),
+        "funnels": out_funnels,
+        "adset_funnel": adset_funnel,
+        "leads": leads,
+        "buyers": buyers,
         "custom_fields": custom_fields,
         "users": users,
-    }
-
-
-def blank():
-    return {"leads": 0, "matured": 0,
-            "depth": defaultdict(int), "matured_depth": defaultdict(int),
-            "value": 0.0, "with_value": 0}
-
-
-def add(b, depth, matured, value):
-    b["leads"] += 1
-    d = DEPTH_ORDER[depth]
-    for name, order in DEPTH_ORDER.items():
-        if order <= d:
-            b["depth"][name] += 1
-    if matured:
-        b["matured"] += 1
-        for name, order in DEPTH_ORDER.items():
-            if order <= d:
-                b["matured_depth"][name] += 1
-    if value > 0:
-        b["value"] += value
-        b["with_value"] += 1
-
-
-def finish(b):
-    return {
-        "leads": b["leads"],
-        "matured": b["matured"],
-        "at_or_past": dict(b["depth"]),
-        "matured_at_or_past": dict(b["matured_depth"]),
-        "deal_value": round(b["value"], 2),
-        "records_with_value": b["with_value"],
     }
 
 
@@ -487,9 +619,17 @@ def append_snapshot(funnel):
 
     today = datetime.now(SYDNEY).strftime("%Y-%m-%d")
     history["snapshots"] = [s for s in history["snapshots"] if s.get("date") != today]
+    per_adset = defaultdict(lambda: defaultdict(int))
+    order = funnel["meta"]["depth_order"]
+    for r in funnel["leads"]:
+        if not r.get("a"):
+            continue
+        for i, nm in enumerate(order):
+            if i <= r["x"]:
+                per_adset[r["a"]][nm] += 1
     history["snapshots"].append({
         "date": today,
-        "adsets": {k: v["at_or_past"] for k, v in funnel["levels"]["adset"].items()},
+        "adsets": {k: dict(v) for k, v in per_adset.items()},
     })
     history["snapshots"] = history["snapshots"][-400:]
     path.write_text(json.dumps(history, separators=(",", ":")))
@@ -567,11 +707,15 @@ def main():
     (HERE / "funnel.json").write_text(json.dumps(funnel, separators=(",", ":")))
 
     c = funnel["coverage"]
-    log(f"wrote funnel.json: {c['records']} records, "
+    log(f"wrote funnel.json: {c['records']} people, {len(funnel['leads'])} lead rows, "
         f"campaign {c['with_campaign_pct']}%, ad set {c['with_adset_pct']}%, "
         f"ad {c['with_ad_pct']}%")
-    for level in ("campaign", "adset", "ad"):
-        log(f"  {level}s with at least one lead: {len(funnel['levels'][level])}")
+    for k, f in funnel["funnels"].items():
+        n = sum(1 for r in funnel["leads"] if r.get("f") == k)
+        log(f"  funnel {f['name']}: {n} leads from {len(f['adsets'])} ad set(s)"
+            + ("" if f["unanimous"] else ", leads split across pages"))
+    log(f"  buyers: {len(funnel['buyers'])}, "
+        f"{sum(1 for b in funnel['buyers'] if b['attributed'])} tied to a funnel")
 
     append_snapshot(funnel)
     log("done.")
