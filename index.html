@@ -6,7 +6,7 @@
 <title>ADS / ALAYA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ===================================================================
    Alaya Ads Dashboard
@@ -41,8 +41,14 @@
   --warn-bg:   #241c0d;
   --crit-bg:   #2a1416;
 
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Figures are Inter with tabular numerals. Mono was the wrong tool: the only
+     reason to reach for it in a table is column alignment, and Inter's own
+     tabular figures give that without swapping typeface, so the numbers finally
+     share their shapes and weight with the labels beside them. Mono is kept for
+     genuine machine strings only, like the raw Meta campaign names. */
+  --fig:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --r:    6px;
   --r-lg: 8px;
@@ -54,8 +60,8 @@ html, body {
   font-family: var(--sans);
   background: var(--bg);
   color: var(--fg);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
 }
@@ -92,8 +98,8 @@ html, body {
 .masthead-meta .accent { color: var(--accent); font-size: 11px; }
 
 .masthead-headline {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: -.01em;
   color: var(--fg);
   white-space: nowrap;
@@ -106,11 +112,11 @@ html, body {
   font-size: 12px; color: var(--fg-3); min-width: 0;
 }
 .masthead-sub span { white-space: nowrap; }
-.masthead-sub strong { font-family: var(--mono); font-weight: 500; color: var(--fg-2); }
+.masthead-sub strong { font-family: var(--fig); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--fg); }
 
 .masthead-stamp { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .stamp-label { font-size: 12px; color: var(--fg-3); }
-.stamp-time { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--fg-2); }
+.stamp-time { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; color: var(--fg-2); }
 .stamp-account { display: none; }
 
 #slack-btn {
@@ -169,7 +175,7 @@ html, body {
 
 .campaign-status-line {
   display: flex; gap: 12px; flex-wrap: wrap;
-  font-family: var(--mono); font-size: 11.5px; color: var(--fg-3);
+  font-size: 13px; color: var(--fg-3);
 }
 .status-dot {
   display: inline-block; width: 6px; height: 6px; border-radius: 50%;
@@ -185,8 +191,8 @@ html, body {
   border-radius: var(--r); padding: 2px;
 }
 .time-pill {
-  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
-  padding: 5px 11px; border: 0; border-radius: 4px;
+  font-family: var(--sans); font-size: 13px; font-weight: 550;
+  padding: 6px 12px; border: 0; border-radius: 4px;
   background: transparent; color: var(--fg-3); cursor: pointer;
 }
 .time-pill:hover { color: var(--fg); background: var(--s3); }
@@ -206,8 +212,8 @@ html, body {
 }
 .view-tab {
   display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--sans); font-size: 13px; font-weight: 500;
-  padding: 7px 14px; border: 0; border-radius: 5px;
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  padding: 8px 15px; border: 0; border-radius: 5px;
   background: transparent; color: var(--fg-3); cursor: pointer;
   white-space: nowrap;
 }
@@ -233,11 +239,11 @@ html, body {
 .section-head .num { display: none; }
 .section-head h2 {
   font-family: var(--sans);
-  font-size: 15px; font-weight: 600; letter-spacing: -.005em;
-  color: var(--fg); text-transform: none; line-height: 1.3;
+  font-size: 22px; font-weight: 700; letter-spacing: -.014em;
+  color: var(--fg); text-transform: none; line-height: 1.25;
 }
 .section-head .meta {
-  font-family: var(--mono); font-size: 11.5px; font-weight: 400;
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500;
   letter-spacing: 0; text-transform: lowercase;
   color: var(--fg-3); white-space: nowrap;
 }
@@ -253,14 +259,15 @@ html, body {
   display: flex; flex-direction: column; gap: 4px;
 }
 .kpi-label {
-  font-size: 11.5px; font-weight: 500; letter-spacing: 0;
-  text-transform: none; color: var(--fg-3);
+  font-size: 13.5px; font-weight: 550; letter-spacing: 0;
+  text-transform: none; color: var(--fg-2);
 }
 .kpi-value {
-  font-family: var(--mono); font-size: clamp(19px, 2vw, 23px);
-  font-weight: 500; letter-spacing: -.02em; line-height: 1.2; color: var(--fg);
+  font-family: var(--fig); font-variant-numeric: tabular-nums;
+  font-size: clamp(26px, 2.5vw, 32px);
+  font-weight: 700; letter-spacing: -.03em; line-height: 1.18; color: var(--fg);
 }
-.kpi-sub { font-family: var(--mono); font-size: 11px; color: var(--fg-3); }
+.kpi-sub { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 450; color: var(--fg-3); }
 
 /* ---------------- chart ---------------- */
 
@@ -288,11 +295,11 @@ html, body {
 .bar-value {
   position: absolute; white-space: nowrap; top: -19px; left: 50%;
   transform: translateX(-50%);
-  font-family: var(--mono); font-size: 10.5px; color: var(--fg-2);
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12.5px; font-weight: 600; color: var(--fg-2);
 }
 .bar-label {
   position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
-  white-space: nowrap; font-family: var(--mono); font-size: 10px; color: var(--fg-3);
+  white-space: nowrap; font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 500; color: var(--fg-3);
 }
 .chart-avg-line {
   position: absolute; left: 12px; right: 12px; height: 0; z-index: 5;
@@ -300,13 +307,13 @@ html, body {
 }
 .chart-avg-label {
   position: absolute; right: 0; top: -18px; white-space: nowrap;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0;
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 500; letter-spacing: 0;
   text-transform: none; color: var(--fg-3);
 }
 .chart-axis {
   display: flex; justify-content: space-between;
   padding-top: 12px; border-top: 1px solid var(--hair);
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0;
+  font-family: var(--fig); font-size: 12px; font-weight: 500; letter-spacing: 0;
   text-transform: none; color: var(--fg-3);
 }
 
@@ -320,15 +327,15 @@ html, body {
 }
 
 table, .ref-table {
-  width: 100%; border-collapse: collapse; min-width: 900px; font-size: 13px;
+  width: 100%; border-collapse: collapse; min-width: 1020px; font-size: 15px;
 }
 .ref-table { min-width: 620px; }
 
 th {
-  white-space: nowrap; text-align: left; padding: 9px 14px;
-  font-family: var(--sans); font-size: 11px; font-weight: 500;
-  letter-spacing: 0; text-transform: none; color: var(--fg-3);
-  background: var(--s2); border-bottom: 1px solid var(--hair);
+  white-space: nowrap; text-align: left; padding: 11px 14px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  letter-spacing: .01em; text-transform: none; color: var(--fg-2);
+  background: var(--s2); border-bottom: 1px solid var(--hair-2);
 }
 th.sortable { cursor: pointer; user-select: none; }
 th.sortable:hover { color: var(--fg); }
@@ -337,27 +344,27 @@ th.sorted .arrow, th.sortable:hover .arrow { opacity: .6; }
 th.sorted { color: var(--accent); }
 
 td {
-  padding: 10px 14px; border-bottom: 1px solid var(--hair);
-  color: var(--fg-2); vertical-align: middle;
+  padding: 12px 14px; border-bottom: 1px solid var(--hair);
+  color: var(--fg-2); font-weight: 500; vertical-align: middle;
 }
-td strong { color: var(--fg); font-weight: 500; }
+td strong { color: var(--fg); font-weight: 600; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: var(--s2); }
 
 td.num, th.num { text-align: right; white-space: nowrap; }
-td.num { font-family: var(--mono); font-weight: 400; color: var(--fg); }
+td.num { font-family: var(--fig); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--fg); }
 td.center, th.center { text-align: center; }
 td.right, th.right { text-align: right; }
 
 tr.row-paused td, tr.is-paused td { color: var(--fg-3); }
 tr.row-paused td.num, tr.is-paused td.num { color: var(--fg-3); }
-tr.row-quiet td { color: #55555f; }
-tr.row-quiet td.num { color: #55555f; }
+tr.row-quiet td { color: #63636f; }
+tr.row-quiet td.num { color: #63636f; }
 tr.row-quiet:hover td { color: var(--fg-3); }
 
 td.empty, .empty {
   text-align: center; padding: 32px 14px;
-  font-family: var(--mono); font-size: 11.5px; font-weight: 400;
+  font-size: 13.5px; font-weight: 500;
   letter-spacing: 0; text-transform: none; color: var(--fg-3);
 }
 
@@ -366,8 +373,8 @@ td.empty, .empty {
 
 .status-pill {
   display: inline-block; white-space: nowrap;
-  padding: 2px 8px; border-radius: 999px;
-  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  padding: 3px 9px; border-radius: 999px;
+  font-family: var(--sans); font-size: 11.5px; font-weight: 600;
   letter-spacing: 0; text-transform: none;
   background: var(--s3); color: var(--fg-3);
   border: 1px solid var(--hair-2);
@@ -380,7 +387,7 @@ td.empty, .empty {
 .rank-badge {
   width: 24px; height: 24px; display: inline-flex;
   align-items: center; justify-content: center; border-radius: var(--r);
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600;
   background: var(--s3); color: var(--fg-3);
 }
 .rank-badge.top-1 { background: var(--accent-bg); color: var(--accent); box-shadow: inset 0 0 0 1px #2b3358; }
@@ -389,7 +396,7 @@ td.empty, .empty {
 .score-cell { display: flex; align-items: center; gap: 9px; min-width: 110px; }
 .score-bar { flex: 1; height: 4px; position: relative; background: var(--s3); border-radius: 999px; overflow: hidden; }
 .score-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
-.score-num { min-width: 24px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--fg); }
+.score-num { min-width: 26px; text-align: right; font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; color: var(--fg); }
 
 .creative-cell { display: flex; align-items: center; gap: 11px; max-width: 340px; }
 .thumb {
@@ -400,17 +407,71 @@ td.empty, .empty {
   width: 34px; height: 34px; display: inline-flex;
   align-items: center; justify-content: center; flex-shrink: 0;
   border-radius: var(--r); background: var(--s3);
-  color: var(--fg-3); font-family: var(--mono); font-size: 11px;
+  color: var(--fg-3); font-size: 12.5px; font-weight: 600;
   border: 1px solid var(--hair);
 }
 .creative-name {
   overflow: hidden; display: -webkit-box;
   -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  font-size: 12.5px; font-weight: 500; color: var(--fg); line-height: 1.35;
+  font-size: 13.5px; font-weight: 600; color: var(--fg); line-height: 1.35;
 }
 
 .ref-display-name { font-weight: 500; color: var(--fg); }
-.ref-original { font-family: var(--mono); font-size: 11.5px; color: var(--fg-3); }
+.ref-original { font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--fg-3); }
+
+/* Thumbnails: a placeholder sits behind every image. If the image fails, and
+   Meta's thumbnail URLs do expire, the image removes itself and the placeholder
+   is already there. No string rebuilding inside an attribute. */
+.thumb-stack { position: relative; display: inline-flex; flex-shrink: 0; }
+.thumb-stack .thumb { position: absolute; inset: 0; }
+
+/* ---------------- expandable hierarchy ---------------- */
+
+/* A campaign owns ad sets, an ad set owns ads. Clicking a parent row opens its
+   children inline so the parentage is visible instead of implied. */
+tr.expandable { cursor: pointer; }
+tr.expandable:hover td { background: var(--s2); }
+tr.expandable.open td { background: var(--s2); }
+
+.twist {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; margin-right: 8px; color: var(--fg-3);
+  font-size: 10px; transition: transform .14s ease;
+}
+tr.expandable.open .twist { transform: rotate(90deg); color: var(--accent); }
+tr.expandable.open td strong { color: var(--accent); }
+
+tr.child-row > td {
+  padding: 0 0 0 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hair-2);
+}
+.child-wrap { padding: 12px 14px 16px 38px; display: flex; flex-direction: column; gap: 9px; }
+.child-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--fg-3);
+}
+.child-head b { color: var(--fg-2); font-weight: 600; }
+.child-head .crumb { font-size: 13px; font-weight: 500; color: var(--fg-3); }
+
+table.child {
+  width: 100%; min-width: 0; border-collapse: collapse;
+  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r);
+  overflow: hidden; font-size: 14.5px;
+}
+table.child th {
+  padding: 8px 12px; font-size: 11.5px; font-weight: 600;
+  background: var(--s2); color: var(--fg-3); border-bottom: 1px solid var(--hair);
+}
+table.child td { padding: 11px 12px; border-bottom: 1px solid var(--hair); font-weight: 500; }
+table.child tbody tr:last-child td { border-bottom: 0; }
+table.child tbody tr:hover td { background: var(--s2); }
+table.child .thumb, table.child .thumb-placeholder { width: 28px; height: 28px; }
+table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
+.child-empty {
+  padding: 14px 12px; font-size: 13.5px; font-weight: 500; color: var(--fg-3);
+  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r);
+}
 
 /* ---------------- creative view ---------------- */
 
@@ -431,8 +492,8 @@ td.empty, .empty {
   border-radius: var(--r); padding: 2px;
 }
 .cv-sort-pill {
-  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
-  padding: 5px 11px; border: 0; border-radius: 4px;
+  font-family: var(--sans); font-size: 13px; font-weight: 550;
+  padding: 6px 12px; border: 0; border-radius: 4px;
   background: transparent; color: var(--fg-3); cursor: pointer;
 }
 .cv-sort-pill:hover { color: var(--fg); background: var(--s3); }
@@ -450,7 +511,7 @@ td.empty, .empty {
   font-size: 13px; font-weight: 600; color: var(--fg);
 }
 .cv-group-count {
-  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12.5px; font-weight: 450;
   letter-spacing: 0; text-transform: none; color: var(--fg-3);
 }
 
@@ -470,13 +531,13 @@ td.empty, .empty {
   background: var(--s3);
 }
 .cv-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.cv-card-thumb-placeholder { color: var(--fg-3); font-family: var(--mono); font-size: 12px; }
+.cv-card-thumb-placeholder { color: var(--fg-3); font-size: 13px; font-weight: 600; }
 
 .cv-card-rank {
   position: absolute; top: 7px; left: 7px;
   width: 22px; height: 22px; display: flex;
   align-items: center; justify-content: center; border-radius: var(--r);
-  font-family: var(--mono); font-size: 10.5px;
+  font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600;
   background: rgba(10,10,12,.82); color: var(--fg); backdrop-filter: blur(6px);
 }
 .cv-card-status { position: absolute; top: 7px; right: 7px; }
@@ -487,11 +548,11 @@ td.empty, .empty {
   -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   font-size: 12.5px; font-weight: 500; color: var(--fg); line-height: 1.3;
 }
-.cv-card-campaign { font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); }
+.cv-card-campaign { font-size: 12px; font-weight: 450; color: var(--fg-3); }
 .cv-card-score { display: flex; align-items: center; gap: 8px; }
 .cv-card-score-bar { flex: 1; height: 4px; position: relative; background: var(--s3); border-radius: 999px; overflow: hidden; }
 .cv-card-score-fill { height: 100%; background: var(--accent); border-radius: 999px; }
-.cv-card-score-num { min-width: 22px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--fg); }
+.cv-card-score-num { min-width: 22px; text-align: right; font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 12.5px; font-weight: 600; color: var(--fg); }
 
 .cv-card-metrics {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -502,7 +563,7 @@ td.empty, .empty {
   font-size: 10px; font-weight: 500; letter-spacing: 0;
   text-transform: none; color: var(--fg-3);
 }
-.cv-card-metric-value { font-family: var(--mono); font-size: 13px; color: var(--fg); }
+.cv-card-metric-value { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 15.5px; font-weight: 600; color: var(--fg); }
 
 /* ---------------- reference + footer ---------------- */
 
@@ -511,7 +572,7 @@ td.empty, .empty {
 .colophon {
   display: flex; flex-wrap: wrap; gap: 6px 20px;
   margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--hair);
-  font-family: var(--mono); font-size: 11px; color: var(--fg-3);
+  font-size: 13px; color: var(--fg-3);
 }
 .colophon .center, .colophon .right { text-align: left; }
 
@@ -519,7 +580,7 @@ td.empty, .empty {
 
 #loader {
   padding: 96px 20px; text-align: center;
-  font-family: var(--mono); font-size: 12px; font-weight: 400;
+  font-size: 14.5px; font-weight: 500;
   letter-spacing: 0; text-transform: none; color: var(--fg-3);
 }
 .loader { color: var(--fg-3); }
@@ -527,7 +588,7 @@ td.empty, .empty {
   border: 1px solid #3d1a1c; background: var(--crit-bg);
   color: var(--crit); border-radius: var(--r-lg);
   padding: 18px 20px; max-width: 600px; margin: 0 auto; text-align: left;
-  font-family: var(--mono); font-size: 12.5px;
+  font-size: 14px;
 }
 
 #toast {
@@ -1246,8 +1307,11 @@ function renderCampaigns(today) {
   tbody.innerHTML = displayRows.map(r => {
     const isPaused = r.status !== "ACTIVE";
     return `
-      <tr class="${isPaused && r.spend === 0 ? "row-paused" : r.spend === 0 ? "row-quiet" : ""}">
-        <td><strong>${campaignWithTag(r.name)}</strong></td>
+      <tr class="expandable ${isPaused && r.spend === 0 ? "row-paused" : r.spend === 0 ? "row-quiet" : ""}"
+          data-campaign-id="${escapeAttr(r.id)}" data-campaign-name="${escapeAttr(r.name)}"
+          role="button" tabindex="0" aria-expanded="false"
+          title="Open the ad sets in this campaign">
+        <td><span class="twist">&#9654;</span><strong>${campaignWithTag(r.name)}</strong></td>
         <td>${statusPill(r.status)}</td>
         <td><span class="result-type">${r.results > 0 ? escapeHtml(r.result_type) : '<span class="muted">—</span>'}</span></td>
         <td class="num">${fmt.aud(r.spend)}</td>
@@ -1319,8 +1383,12 @@ function renderAdsets(today) {
   tbody.innerHTML = rows.map(r => {
     const isPaused = r.status !== "ACTIVE";
     return `
-      <tr class="${isPaused && r.spend === 0 ? "row-paused" : r.spend === 0 ? "row-quiet" : ""}">
-        <td><strong>${escapeHtml(r.name)}</strong></td>
+      <tr class="expandable ${isPaused && r.spend === 0 ? "row-paused" : r.spend === 0 ? "row-quiet" : ""}"
+          data-adset-id="${escapeAttr(r.id)}" data-adset-name="${escapeAttr(r.name)}"
+          data-campaign-name="${escapeAttr(r.campaign_name)}"
+          role="button" tabindex="0" aria-expanded="false"
+          title="Open the creatives in this ad set">
+        <td><span class="twist">&#9654;</span><strong>${escapeHtml(r.name)}</strong></td>
         <td>${escapeHtml(campaignDisplayName(r.campaign_name))}</td>
         <td>${statusPill(r.status)}</td>
         <td class="num">${fmt.aud(r.spend)}</td>
@@ -1333,6 +1401,146 @@ function renderAdsets(today) {
     `;
   }).join("");
   updateSortIcons("adsets-body", currentAdsetSort);
+}
+
+/* ============== HIERARCHY: campaign > ad set > ad ============== */
+
+function adsInAdset(adsetId, today) {
+  const campMap = new Map(DATA.campaigns.map(c => [c.id, c.name]));
+  return (DATA.ads || [])
+    .filter(a => a.adset_id === adsetId)
+    .map(a => {
+      const daily = (DATA.daily_rows.ad[a.id] || []).filter(r => dateInPeriod(r.date, currentPeriod, today));
+      return { id: a.id, name: a.name, thumbnail: a.thumbnail, status: a.status,
+               campaign_name: campMap.get(a.campaign_id) || "Unknown", ...aggregate(daily) };
+    })
+    .sort((a, b) => b.spend - a.spend);
+}
+
+function adsetsInCampaign(campaignId, today) {
+  const rows = (DATA.adsets || [])
+    .filter(s => s.campaign_id === campaignId)
+    .map(s => {
+      const daily = ((DATA.daily_rows.adset || {})[s.id] || [])
+        .filter(r => dateInPeriod(r.date, currentPeriod, today));
+      const adCount = (DATA.ads || []).filter(a => a.adset_id === s.id).length;
+      return { id: s.id, name: s.name, status: s.status, ad_count: adCount, ...aggregate(daily) };
+    });
+  return rows.sort((a, b) => b.spend - a.spend);
+}
+
+function thumbCell(r) {
+  const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
+  return r.thumbnail
+    ? `<span class="thumb-stack"><span class="thumb-placeholder">${initial}</span>` +
+      `<img class="thumb" src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.remove()"></span>`
+    : `<span class="thumb-placeholder">${initial}</span>`;
+}
+
+/* The child table for an ad set: every creative that lives inside it. */
+function adsetChildHtml(adset, today) {
+  const ads = adsInAdset(adset.id, today);
+  const spent = ads.filter(a => a.spend > 0).length;
+  const head = `
+    <div class="child-head">
+      <b>${ads.length} creative${ads.length === 1 ? "" : "s"} in this ad set</b>
+      <span>${spent} spent in this window</span>
+      <span class="crumb">${escapeHtml(campaignDisplayName(adset.campaign_name || ""))} &rsaquo; ${escapeHtml(adset.name)}</span>
+    </div>`;
+  if (!ads.length) {
+    return `<div class="child-wrap">${head}<div class="child-empty">NO CREATIVES IN THIS AD SET</div></div>`;
+  }
+  const body = ads.map(a => `
+    <tr class="${a.spend === 0 ? "row-quiet" : ""}">
+      <td><div class="creative-cell">${thumbCell(a)}<span class="creative-name">${escapeHtml(a.name)}</span></div></td>
+      <td>${statusPill(a.status)}</td>
+      <td class="num">${fmt.aud(a.spend)}</td>
+      <td class="num">${fmt.num(a.results)}</td>
+      <td class="num">${a.cost_per_result > 0 ? fmt.audPrecise(a.cost_per_result) : "—"}</td>
+      <td class="num">${fmt.pct(a.link_ctr)}</td>
+      <td class="num">${fmt.num(a.impressions)}</td>
+    </tr>`).join("");
+  return `<div class="child-wrap">${head}
+    <table class="child">
+      <thead><tr>
+        <th style="width: 34%;">Creative</th><th>Status</th>
+        <th class="num">Spend</th><th class="num">Results</th>
+        <th class="num">CPR</th><th class="num">Link CTR</th><th class="num">Imp</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>`;
+}
+
+/* The child table for a campaign: every ad set that lives inside it. */
+function campaignChildHtml(campaign, today) {
+  const sets = adsetsInCampaign(campaign.id, today);
+  if (!(DATA.adsets || []).length) {
+    return `<div class="child-wrap"><div class="child-empty">AD SET DATA ARRIVES WITH THE NEXT DAILY REFRESH</div></div>`;
+  }
+  const head = `
+    <div class="child-head">
+      <b>${sets.length} ad set${sets.length === 1 ? "" : "s"} in this campaign</b>
+      <span class="crumb">${escapeHtml(campaignDisplayName(campaign.name))}</span>
+    </div>`;
+  if (!sets.length) {
+    return `<div class="child-wrap">${head}<div class="child-empty">NO AD SETS IN THIS CAMPAIGN</div></div>`;
+  }
+  const body = sets.map(x => `
+    <tr class="${x.spend === 0 ? "row-quiet" : ""}">
+      <td><strong>${escapeHtml(x.name)}</strong></td>
+      <td>${statusPill(x.status)}</td>
+      <td class="num">${fmt.aud(x.spend)}</td>
+      <td class="num">${fmt.num(x.results)}</td>
+      <td class="num">${x.cost_per_result > 0 ? fmt.audPrecise(x.cost_per_result) : "—"}</td>
+      <td class="num">${fmt.num(x.ad_count)}</td>
+    </tr>`).join("");
+  return `<div class="child-wrap">${head}
+    <table class="child">
+      <thead><tr>
+        <th style="width: 38%;">Ad set</th><th>Status</th>
+        <th class="num">Spend</th><th class="num">Results</th>
+        <th class="num">CPR</th><th class="num">Ads</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>`;
+}
+
+/* One delegated handler per table. Re-rendering closes everything, which is
+   the honest behaviour: the numbers underneath just changed. */
+function wireExpander(tbodyId, colspan, childHtmlFor) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.addEventListener("click", ev => {
+    const row = ev.target.closest("tr.expandable");
+    if (!row || !tbody.contains(row)) return;
+
+    const existing = row.nextElementSibling;
+    if (existing && existing.classList.contains("child-row")) {
+      existing.remove();
+      row.classList.remove("open");
+      row.setAttribute("aria-expanded", "false");
+      return;
+    }
+    tbody.querySelectorAll("tr.child-row").forEach(r => r.remove());
+    tbody.querySelectorAll("tr.expandable.open").forEach(r => {
+      r.classList.remove("open");
+      r.setAttribute("aria-expanded", "false");
+    });
+
+    let html;
+    try {
+      html = childHtmlFor(row.dataset, getTodayInSydney());
+    } catch (e) {
+      console.error("expand failed:", e);
+      html = `<div class="child-wrap"><div class="child-empty">COULD NOT LOAD: ${escapeHtml(e.message)}</div></div>`;
+    }
+    const detail = document.createElement("tr");
+    detail.className = "child-row";
+    detail.innerHTML = `<td colspan="${colspan}">${html}</td>`;
+    row.after(detail);
+    row.classList.add("open");
+    row.setAttribute("aria-expanded", "true");
+  });
 }
 
 function calculateCreativeScore(row, pool) {
@@ -1395,7 +1603,8 @@ function renderCreatives(today) {
     const rankClass = r.rank === 1 ? "top-1" : r.rank === 2 ? "top-2" : r.rank === 3 ? "top-3" : "";
     const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
     const thumb = r.thumbnail
-      ? `<img class="thumb" src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'thumb-placeholder\\'>${initial}</span>'">`
+      ? `<span class="thumb-stack"><span class="thumb-placeholder">${initial}</span>` +
+        `<img class="thumb" src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.remove()"></span>`
       : `<span class="thumb-placeholder">${initial}</span>`;
     return `
       <tr class="${r.spend === 0 ? "row-quiet" : ""}">
@@ -1571,7 +1780,7 @@ function renderCreativeView(today) {
 function creativeCardHtml(r) {
   const initial = r.name ? r.name.charAt(0).toUpperCase() : "?";
   const thumb = r.thumbnail
-    ? `<img src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'cv-card-thumb-placeholder\\'>${initial}</span>'">`
+    ? `<img src="${escapeAttr(r.thumbnail)}" alt="" loading="lazy" onerror="this.remove()">`
     : `<span class="cv-card-thumb-placeholder">${initial}</span>`;
   const rankClass = r.rank === 1 ? "top-1" : r.rank === 2 ? "top-2" : r.rank === 3 ? "top-3" : "";
   const isPaused = r.status !== "ACTIVE";
@@ -1735,6 +1944,25 @@ function setupEvents() {
     });
   });
   document.getElementById("slack-btn").addEventListener("click", sendToSlack);
+
+  // Drill down: campaign row opens its ad sets, ad set row opens its creatives.
+  wireExpander("adsets-body", 9, (d, today) =>
+    adsetChildHtml({ id: d.adsetId, name: d.adsetName, campaign_name: d.campaignName }, today));
+  wireExpander("campaigns-body", 9, (d, today) =>
+    campaignChildHtml({ id: d.campaignId, name: d.campaignName }, today));
+
+  // Keyboard: a row that behaves like a button should answer Enter and Space.
+  ["adsets-body", "campaigns-body"].forEach(id => {
+    const tb = document.getElementById(id);
+    if (!tb) return;
+    tb.addEventListener("keydown", ev => {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      const row = ev.target.closest("tr.expandable");
+      if (!row) return;
+      ev.preventDefault();
+      row.click();
+    });
+  });
 
   // View tabs (Campaign View / Creative View)
   document.querySelectorAll(".view-tab").forEach(tab => {
