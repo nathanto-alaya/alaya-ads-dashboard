@@ -280,21 +280,59 @@ def parse_dt(s):
 
 def classify(stage_info):
     """
-    Depth reached, from the stage name. Deliberately crude and readable:
-    the stage vocabulary differs per pipeline, so match on words, not ids.
+    Where a lead actually got to, from the stage name.
+
+    Two of these calls were confirmed with Nathan rather than guessed, because
+    both are large enough to move every rate on the page:
+
+      "Called - No Show" (164 of 529 people, 31%) does NOT mean a booked call
+      was missed. It means the setter rang and nobody picked up. So it is not a
+      progression at all, it is an unreached lead. The stage NAME reads like a
+      missed appointment, which is almost certainly why the sales-side review
+      put 28.7% of leads at "discovery scheduled" against the 19% here.
+
+      The "Follow up" family (138 people, 26%) is unresolved. Nobody could say
+      whether a conversation happened before a lead was parked there, so they
+      are held at lead level and reported separately as unplaceable. Every rate
+      on this dashboard is therefore a floor, not an estimate.
     """
     name = (stage_info or {}).get("stage", "").lower()
+
     if any(w in name for w in ("closed won", "won closed", "signed", "engage")):
         return "won"
-    if "consult" in name and "no show" not in name:
+    if "consult" in name:                      # booked, held, or no-showed
         return "consult"
-    if "discovery" in name and "no show" not in name:
-        return "discovery"
-    if "webinar" in name:
-        return "discovery"
+    if "discovery completed" in name:
+        return "held"
+    if "discovery scheduled" in name or "discoeery" in name:
+        return "booked"
+    if "webinar" in name:                      # webinar booked is a booked slot
+        return "booked"
+    if "discovery no show" in name:            # a real appointment, missed
+        return "booked"
     return "lead"
 
-DEPTH_ORDER = {"lead": 0, "discovery": 1, "consult": 2, "won": 3}
+
+def is_unreached(stage_info):
+    """Rang and nobody answered. Not a stage of the funnel, a failure to start it."""
+    name = (stage_info or {}).get("stage", "").lower()
+    return "called" in name and ("no show" in name or "no answer" in name)
+
+
+def is_unplaceable(stage_info):
+    """Parked in a Follow up bucket with no record of whether a call happened."""
+    name = (stage_info or {}).get("stage", "").lower()
+    if is_unreached(stage_info):
+        return False
+    return "follow" in name or "park" in name
+
+
+def is_lost(stage_info):
+    name = (stage_info or {}).get("stage", "").lower()
+    return "lost" in name
+
+
+DEPTH_ORDER = {"lead": 0, "booked": 1, "held": 2, "consult": 3, "won": 4}
 
 
 # --------------------------------------------------------------------------
@@ -537,6 +575,9 @@ def build(opps, stages, custom_fields, users, meta, names=None):
             "p": stage_info.get("pipeline", ""),
             "mv": moved.date().isoformat() if moved else None,
             "st": (o.get("status") or "").lower(),
+            "ur": is_unreached(stage_info),     # rang, nobody answered
+            "up": is_unplaceable(stage_info),   # parked in Follow up, state unknown
+            "lo": is_lost(stage_info),
             "src": (o.get("source") or "").strip() or None,
             "dl": max(o.get("_won_count") or 0, 0),
         }
@@ -583,7 +624,7 @@ def build(opps, stages, custom_fields, users, meta, names=None):
             "join": {"campaign": "utm_campaign", "adset": "utm_term", "ad": "utm_content"},
             "meta_data_generated": (meta or {}).get("last_updated", ""),
             "deduped_by_contact": True,
-            "depth_order": ["lead", "discovery", "consult", "won"],
+            "depth_order": ["lead", "booked", "held", "consult", "won"],
             "caveats": [
                 "GoHighLevel keeps no stage history, so every figure below is "
                 "where a lead stands today, not a conversion rate measured at "
@@ -598,6 +639,14 @@ def build(opps, stages, custom_fields, users, meta, names=None):
                 "A funnel here is the page the leads landed on. Each ad set is "
                 "assigned wholly to the page most of its leads reached, so "
                 "leads and spend always cover the same thing.",
+                "A booked call and a held call are counted separately, because "
+                "getting the call booked is what the advertising is responsible "
+                "for and holding it is not.",
+                "Leads parked in a Follow up stage are held at lead level, "
+                "because GoHighLevel does not record whether a call happened "
+                "before they were parked. Every rate here is a floor, not an "
+                "estimate, and the count of unplaceable leads is shown so the "
+                "size of that doubt is visible.",
             ],
         },
         "coverage": {
@@ -708,13 +757,18 @@ def weekly_review(funnel, data):
                 "name": defn["name"] if defn else "No attribution recorded",
                 "badge": defn["badge"] if defn else "Unknown",
                 "leads": len(mine), "matured": len(mmine),
-                "appointments": at(order.index("discovery")),
+                "booked": at(order.index("booked")),
+                "held": at(order.index("held")),
                 "consultations": at(order.index("consult")),
+                "unreached": sum(1 for r in mmine if r.get("ur")),
+                "unplaceable": sum(1 for r in mmine if r.get("up")),
                 "signed": signed,
                 "spend": spend,
                 "cost_per_lead": round(spend / len(mine), 2) if spend and mine else None,
-                "cost_per_appointment": (round(spend_cost / at(order.index("discovery")), 2)
-                                         if spend_cost and at(order.index("discovery")) else None),
+                "cost_per_booked": (round(spend_cost / at(order.index("booked")), 2)
+                                    if spend_cost and at(order.index("booked")) else None),
+                "cost_per_held": (round(spend_cost / at(order.index("held")), 2)
+                                  if spend_cost and at(order.index("held")) else None),
                 # below this many matured leads a rate is noise, so say so in the file
                 "rate_is_meaningful": len(mmine) >= 10,
             }
@@ -724,7 +778,10 @@ def weekly_review(funnel, data):
             "start": start, "end": end,
             "total_spend": _sum_spend(daily_adset, list(daily_adset.keys()), start, end),
             "total_leads": len(rows),
-            "total_appointments": sum(1 for r in mat if r["x"] >= order.index("discovery")),
+            "total_booked": sum(1 for r in mat if r["x"] >= order.index("booked")),
+            "total_held": sum(1 for r in mat if r["x"] >= order.index("held")),
+            "total_unreached": sum(1 for r in mat if r.get("ur")),
+            "total_unplaceable": sum(1 for r in mat if r.get("up")),
             "deals_signed": sum(b["deals"] for b in funnel["buyers"]
                                 if start <= (b.get("signed_date") or "") <= end),
             "funnels": [one(k) for k in keys],
@@ -753,7 +810,7 @@ def weekly_review(funnel, data):
     # can: dated by when a stage was reached, this account produced a median of
     # 6 real progressions a week and 12 to 20 in recent weeks. So the weekly
     # message is built on movement, and rates come off a matured window instead.
-    DEEP = order.index("discovery")
+    DEEP = order.index("booked")
 
     def movements(start, end):
         out = []
@@ -775,19 +832,19 @@ def weekly_review(funnel, data):
                 "deals": r.get("dl") or 0,
                 "value": r.get("v") or 0,
             })
-        rank = {"won": 0, "consult": 1, "discovery": 2}
+        rank = {"won": 0, "consult": 1, "held": 2, "booked": 3}
         out.sort(key=lambda m: (rank.get(m["reached"], 9), m["moved_on"]))
         return out[:30]
 
     def _by_depth(rows):
-        c = {"discovery": 0, "consult": 0, "won": 0}
+        c = {"booked": 0, "held": 0, "consult": 0, "won": 0}
         for r in rows:
             if r["reached"] in c:
                 c[r["reached"]] += 1
         c["total"] = len(rows)
         return c
 
-    def stalled(as_of, min_days=15, limit=10):
+    def stalled(as_of, min_days=21, limit=10):
         """
         Open, already past a first stage, and not moved in a while. This is the
         other half of a weekly review: the people the funnel already paid for
@@ -797,7 +854,7 @@ def weekly_review(funnel, data):
         for r in funnel["leads"]:
             if r["x"] >= order.index("won"):
                 continue
-            if r.get("st") in ("lost", "abandoned"):
+            if r.get("st") in ("lost", "abandoned") or r.get("lo"):
                 continue
             if r["x"] < DEEP:
                 continue
@@ -812,7 +869,8 @@ def weekly_review(funnel, data):
                 "funnel": (funnel["funnels"].get(r["f"]) or {}).get("name") if r.get("f") else None,
             })
         out.sort(key=lambda x: -x["days_in_stage"])
-        return {"total": len(out), "worst": out[:limit]}
+        return {"total": len(out), "aged_60": sum(1 for x in out if x["days_in_stage"] >= 60),
+                "worst": out[:limit]}
 
     buyers = [{"name": b["name"], "deals": b["deals"], "value": b["value"],
                "days_to_sign": b.get("days_to_sign"),

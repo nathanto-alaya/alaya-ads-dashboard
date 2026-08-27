@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADS / ALAYA</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&family=Lato:wght@300;400;700;900&family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ===================================================================
    Alaya Ads Dashboard
@@ -17,41 +16,53 @@
    =================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --bg:        #0a0a0c;
-  --s1:        #101014;
-  --s2:        #16161b;
-  --s3:        #1c1c23;
-  --hair:      #22222a;
-  --hair-2:    #2e2e38;
+  /* Alaya's palette is a light system. Royal Blue on near-black measures 1.50:1,
+     a hard accessibility fail, which is why it looked wrong in dark mode; on this
+     warm off-white it is 12.41:1. So the brand colour can finally do the work
+     instead of being replaced by a generic dashboard blue. Every value below was
+     contrast-checked against --bg rather than eyeballed. */
 
-  --fg:        #ededf0;
-  --fg-2:      #9a9aa6;
-  --fg-3:      #7c7c8a;
+  --bg:        #faf9f5;   /* warm paper, not white, so the page is not glaring  */
+  --s1:        #ffffff;   /* card                                              */
+  --s2:        #f4f3ed;   /* header fill, inset                                */
+  --s3:        #ebeae2;   /* pressed, track                                    */
+  --hair:      #e0dfd5;
+  --hair-2:    #cfcec2;
 
-  --accent:    #6c8cff;
-  --accent-2:  #4560e8;
-  --accent-bg: #171a2e;
+  --fg:        #1a1a20;   /* 13.7:1 */
+  --fg-2:      #5f5f6b;   /*  5.9:1 */
+  --fg-3:      #7a7a85;   /*  4.0:1, large text and quiet labels only */
 
-  --good:      #3fb950;
-  --warn:      #d29922;
-  --crit:      #f85149;
-  --good-bg:   #10241a;
-  --warn-bg:   #241c0d;
-  --crit-bg:   #2a1416;
+  --royal:     #1A1C8F;   /* 12.4:1  Alaya Royal Blue, the primary  */
+  --navy:      #0D0E5C;   /* 16.2:1  Alaya Deep Navy, headings      */
+  --mid:       #2428B8;   /*  9.6:1  Alaya Mid Blue, secondary      */
+  --tint:      #E8E9F8;   /* Alaya Blue Tint                        */
 
-  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* Figures are Inter with tabular numerals. Mono was the wrong tool: the only
-     reason to reach for it in a table is column alignment, and Inter's own
-     tabular figures give that without swapping typeface, so the numbers finally
-     share their shapes and weight with the labels beside them. Mono is kept for
-     genuine machine strings only, like the raw Meta campaign names. */
-  --fig:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --accent:    var(--royal);
+  --accent-2:  var(--mid);
+  --accent-bg: var(--tint);
 
-  --r:    6px;
-  --r-lg: 8px;
+  /* Alaya has no status colours, so these are added and flagged as an addition.
+     Hues chosen to sit beside Royal Blue without competing, each checked for
+     text contrast and for being tellable apart by a colourblind reader. */
+  --good:      #0E7C6B;   /* 4.9:1 teal  */
+  --warn:      #8A5300;   /* 6.0:1 amber */
+  --crit:      #B4232F;   /* 6.2:1 red   */
+  --good-bg:   #E4F2EF;
+  --warn-bg:   #F8EFDE;
+  --crit-bg:   #FBEAEB;
+
+  /* Figtree for anything that carries weight, Lato for reading, Inter for
+     figures because its tabular numerals align columns without swapping face. */
+  --display: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sans:    'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fig:     'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --r:    3px;   /* square, printed, not a rounded web widget */
+  --r-lg: 3px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,10 +71,9 @@ html, body {
   font-family: var(--sans);
   background: var(--bg);
   color: var(--fg);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "cv11", "ss01";
 }
 
 /* legacy texture hooks held inert */
@@ -238,10 +248,15 @@ html, body {
 }
 .section-head .num { display: none; }
 .section-head h2 {
-  font-family: var(--sans);
-  font-size: 22px; font-weight: 700; letter-spacing: -.014em;
-  color: var(--fg); text-transform: none; line-height: 1.25;
+  /* The single biggest reason the old page read as generated: the section title
+     was 22px and the body was 16px, so nothing led. A display face at 3 times
+     the body size does most of the work of looking designed. */
+  font-family: var(--display);
+  font-size: clamp(34px, 3.6vw, 46px); font-weight: 900;
+  letter-spacing: -.032em; line-height: 1.02;
+  color: var(--navy); text-transform: none;
 }
+.section-head .rule { height: 4px; width: 72px; background: var(--royal); margin-bottom: 18px; }
 .section-head .meta {
   font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500;
   letter-spacing: 0; text-transform: lowercase;
@@ -569,7 +584,7 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 
 /* This view runs on GoHighLevel's own window, not the time pills above, so it
    says so rather than letting the pills silently mean nothing. */
-.fn-wrap { display: flex; flex-direction: column; gap: 20px; }
+.fn-wrap { display: flex; flex-direction: column; gap: 30px; }
 
 /* ---- period control ---- */
 .fn-period { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -612,47 +627,52 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
           background: var(--hair); border: 1px solid var(--hair);
           border-radius: var(--r-lg); overflow: hidden; }
 .fn-top .t { background: var(--s1); padding: 15px 17px; display: flex; flex-direction: column; gap: 4px; }
-.fn-top .tl { font-size: 12.5px; color: var(--fg-2); }
-.fn-top .tv { font-family: var(--fig); font-variant-numeric: tabular-nums;
-              font-size: clamp(24px, 2.3vw, 30px); font-weight: 700;
-              letter-spacing: -.025em; color: var(--fg); line-height: 1.05; }
+.fn-top .tl { font-family: var(--display); font-size: 12px; font-weight: 800;
+              letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.fn-top .tv { font-family: var(--display); font-variant-numeric: tabular-nums;
+              font-size: clamp(30px, 2.9vw, 38px); font-weight: 900;
+              letter-spacing: -.032em; color: var(--royal); line-height: 1.02; }
 .fn-top .td { font-size: 12px; color: var(--fg-3); }
 
 /* ---- funnel cards ---- */
-.fn-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 14px; }
+.fn-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
 .fn-card {
   display: flex; flex-direction: column; gap: 0;
   background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
   overflow: hidden;
 }
-.fn-card.lead { border-color: var(--accent-2); }
-.fn-card-h { padding: 16px 17px 14px; display: flex; flex-direction: column; gap: 9px; }
-.fn-card-h .nm { font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--fg); }
+.fn-card.lead { box-shadow: inset 0 4px 0 0 var(--royal); }
+.fn-card-h { padding: 24px 20px 16px; display: flex; flex-direction: column; gap: 11px; }
+.fn-card-h .nm { font-family: var(--display); font-size: 22px; font-weight: 800;
+                 letter-spacing: -.018em; color: var(--navy); }
 .fn-badge {
-  align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
-  border: 1px solid var(--hair-2); color: var(--fg-2); background: var(--s2);
+  align-self: flex-start; font-family: var(--display);
+  font-size: 11px; font-weight: 800; letter-spacing: .11em;
+  text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
+  background: var(--tint); color: var(--royal); border: 0;
 }
-.fn-badge.book { color: #8fa9ff; border-color: #2d3a6b; background: var(--accent-bg); }
-.fn-badge.magnet { color: #f0879a; border-color: #5a2733; background: #2a1620; }
-.fn-badge.off { color: var(--fg-3); }
+.fn-badge.book { background: var(--tint); color: var(--royal); }
+.fn-badge.magnet { background: var(--crit-bg); color: var(--crit); }
+.fn-badge.off { background: var(--s3); color: var(--fg-3); }
 .fn-card-h .mech { font-size: 13px; color: var(--fg-3); line-height: 1.45; }
 
-.fn-hero { padding: 4px 17px 16px; display: flex; flex-direction: column; gap: 3px; }
-.fn-hero .hv { font-family: var(--fig); font-variant-numeric: tabular-nums;
-               font-size: 46px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
-.fn-hero .hv small { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
-.fn-hero .hl { font-size: 11.5px; font-weight: 700; letter-spacing: .07em;
-               text-transform: uppercase; color: var(--fg-2); line-height: 1.45; }
+.fn-hero { padding: 6px 20px 24px; display: flex; flex-direction: column; gap: 7px; }
+.fn-hero .hv { font-family: var(--display); font-variant-numeric: tabular-nums;
+               font-size: 78px; font-weight: 900; letter-spacing: -.05em; line-height: .88;
+               color: var(--royal); }
+.fn-hero .hv small { font-size: 38px; font-weight: 900; letter-spacing: -.02em; }
+.fn-hero .hl { font-family: var(--display); font-size: 12px; font-weight: 800;
+               letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3);
+               line-height: 1.45; }
 .fn-hero.muted .hv { font-size: 22px; font-weight: 700; color: var(--fg-2); letter-spacing: -.01em; }
 
 .fn-rows { border-top: 1px solid var(--hair); }
 .fn-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-          padding: 11px 17px; border-bottom: 1px solid var(--hair); }
+          padding: 13px 20px; border-bottom: 1px solid var(--hair); }
 .fn-row:last-child { border-bottom: 0; }
-.fn-row .k { font-size: 13.5px; color: var(--fg-2); }
+.fn-row .k { font-size: 15.5px; color: var(--fg-2); }
 .fn-row .v { font-family: var(--fig); font-variant-numeric: tabular-nums;
-             font-size: 15px; font-weight: 600; color: var(--fg); white-space: nowrap; }
+             font-size: 17px; font-weight: 650; color: var(--fg); white-space: nowrap; }
 .fn-row .v .sub { font-weight: 600; font-size: 13.5px; margin-left: 5px; }
 .fn-row.dim .k, .fn-row.dim .v { color: var(--fg-3); }
 .fn-row.hi .v { color: var(--fg); }
@@ -664,7 +684,8 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
             border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
 .fn-panel-h { padding: 14px 17px; background: var(--s2); border-bottom: 1px solid var(--hair);
               display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.fn-panel-h .h { font-size: 15.5px; font-weight: 700; color: var(--fg); }
+.fn-panel-h .h { font-family: var(--display); font-size: 21px; font-weight: 800;
+                 letter-spacing: -.018em; color: var(--navy); }
 .fn-panel-h .sub { font-size: 12.5px; color: var(--fg-3); }
 .fn-item { display: flex; gap: 13px; padding: 15px 17px; background: var(--s1);
            border-bottom: 1px solid var(--hair); }
@@ -701,6 +722,20 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
   .fn-person { grid-template-columns: 1fr 1fr; gap: 5px 12px; }
   .fn-person .age { text-align: left; }
 }
+
+.fn-more { border-top: 1px solid var(--hair); background: var(--s2); }
+.fn-more > summary {
+  cursor: pointer; list-style: none; padding: 13px 20px;
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  letter-spacing: .04em; color: var(--fg-2); user-select: none;
+}
+.fn-more > summary::-webkit-details-marker { display: none; }
+.fn-more > summary::before { content: "+ "; font-weight: 800; color: var(--royal); }
+.fn-more[open] > summary::before { content: "\2212 "; }
+.fn-more > summary:hover { color: var(--navy); }
+.fn-more > summary:focus-visible { outline: 2px solid var(--royal); outline-offset: -2px; }
+.fn-more[open] > summary { border-bottom: 1px solid var(--hair); }
+.fn-more .fn-person { background: var(--bg); }
 
 /* ---- buyers ---- */
 .fn-buyer { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.5fr) auto;
@@ -1143,7 +1178,7 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
     <div id="view-funnel" class="view-pane">
       <section class="section">
         <div class="section-head">
-          <div><h2>Funnel review</h2></div>
+          <div><div class="rule"></div><h2>Funnel review</h2></div>
           <div class="meta" id="fn-count">&mdash;</div>
         </div>
         <div class="fn-wrap" id="fn-body"></div>
@@ -1621,7 +1656,9 @@ const FN_GRAINS = [
   { key: "quarter", label: "Quarter" },
   { key: "all",     label: "All 120 days" },
 ];
-const FN_DEPTH = { lead: 0, discovery: 1, consult: 2, won: 3 };
+// Matches update_funnel.py exactly. "booked" and "held" are separate because
+// getting the call booked is the advertising's job and holding it is not.
+const FN_DEPTH = { lead: 0, booked: 1, held: 2, consult: 3, won: 4 };
 const FN_MIN_QUOTE = 10;   // matured leads before a rate is worth printing
 const FN_MIN_TRUST = 15;   // matured leads before a recommendation is worth acting on
 
@@ -1744,7 +1781,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
   const spend = def ? fnAdsetSpend(adsets, period.start, period.end) : null;
   const spendCost = def ? fnAdsetSpend(adsets, period.start, costEnd) : null;
 
-  const appt = at(FN_DEPTH.discovery), cons = at(FN_DEPTH.consult);
+  const appt = at(FN_DEPTH.booked), held = at(FN_DEPTH.held), cons = at(FN_DEPTH.consult);
   return {
     key: funnelKey, def,
     name: def ? def.name : "No attribution recorded",
@@ -1753,12 +1790,16 @@ function fnMeasure(funnelKey, period, maturedEnd) {
                   : "Created in the CRM by hand, or arrived with no tracking",
     adsets,
     leads: rows.length, matured: matured.length,
-    appt, cons, signed,
+    appt, held, cons, signed,
+    unreached: rows.filter(r => r.ur).length,
+    unplaceable: rows.filter(r => r.up).length,
     apptPct: matured.length ? appt / matured.length * 100 : null,
+    heldPct: matured.length ? held / matured.length * 100 : null,
     consPct: matured.length ? cons / matured.length * 100 : null,
     spend, spendCost,
     cpl: spend && rows.length ? spend / rows.length : null,
     cpa: spendCost !== null && appt ? spendCost / appt : null,
+    cph: spendCost !== null && held ? spendCost / held : null,
     cpc: spendCost !== null && cons ? spendCost / cons : null,
     quotable: matured.length >= FN_MIN_QUOTE,
     trusted: matured.length >= FN_MIN_TRUST,
@@ -1775,7 +1816,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
 
 function fnMovedIn(period) {
   const out = ((FUNNEL && FUNNEL.leads) || []).filter(r =>
-    r.mv && r.mv >= period.start && r.mv <= period.end && r.x >= FN_DEPTH.discovery);
+    r.mv && r.mv >= period.start && r.mv <= period.end && r.x >= FN_DEPTH.booked);
   return out.sort((a, b) => (b.x - a.x) || b.mv.localeCompare(a.mv));
 }
 
@@ -1783,7 +1824,7 @@ function fnStalledNow(minDays) {
   const today = fnISO(new Date());
   const t = fnParse(today);
   return ((FUNNEL && FUNNEL.leads) || []).filter(r => {
-    if (r.x < FN_DEPTH.discovery || r.x >= FN_DEPTH.won) return false;
+    if (r.x < FN_DEPTH.booked || r.x >= FN_DEPTH.won) return false;
     if (r.st === "lost" || r.st === "abandoned") return false;
     const base = r.mv || r.d;
     return Math.round((t - fnParse(base)) / 86400000) >= minDays;
@@ -1865,15 +1906,15 @@ function fnInsights(paid, unatt, period, maturedEnd, prev) {
     if (better) {
       out.push({
         tone: "crit",
-        title: `${cheap.name} buys the cheapest leads and the most expensive appointments`,
+        title: `${cheap.name} buys the cheapest leads and the most expensive booked calls`,
         text: `A lead from ${cheap.name} costs ${fmt.aud(cheap.cpl)}, against `
             + `${fmt.aud(better.cpl)} from ${better.name}. But only `
-            + `${fmt.pct(cheap.apptPct, 0)} of them reach an appointment against `
-            + `${fmt.pct(better.apptPct, 0)}, so an appointment ends up costing `
+            + `${fmt.pct(cheap.apptPct, 0)} of them get a call booked against `
+            + `${fmt.pct(better.apptPct, 0)}, so a booked call ends up costing `
             + `${fmt.aud(cheap.cpa)} instead of ${fmt.aud(better.cpa)}. `
             + `Judging these two on cost per lead alone points the wrong way.`,
         ev: `${cheap.name}: <b>${cheap.appt}</b> of <b>${cheap.matured}</b> matured leads `
-          + `reached an appointment. ${better.name}: <b>${better.appt}</b> of `
+          + `got a call booked. ${better.name}: <b>${better.appt}</b> of `
           + `<b>${better.matured}</b>.`,
       });
     }
@@ -1884,13 +1925,13 @@ function fnInsights(paid, unatt, period, maturedEnd, prev) {
   if (best) {
     out.push({
       tone: "good",
-      title: `${best.name} is the cheapest route to a conversation`,
-      text: `${fmt.aud(best.cpa)} per appointment and ${fmt.aud(best.cpl)} per lead, `
+      title: `${best.name} is the cheapest route to a booked call`,
+      text: `${fmt.aud(best.cpa)} per booked call and ${fmt.aud(best.cpl)} per lead, `
           + `off ${fmt.aud(best.spend)} of spend. `
           + (best.cons ? `${best.cons} of those got as far as a consultation, at `
                        + `${fmt.aud(best.cpc)} each.` : `No consultation yet from this cohort.`),
       ev: `<b>${best.leads}</b> leads, <b>${best.matured}</b> old enough to judge, `
-        + `<b>${best.appt}</b> reached an appointment.`,
+        + `<b>${best.appt}</b> got a call booked.`,
     });
   }
 
@@ -1911,11 +1952,11 @@ function fnInsights(paid, unatt, period, maturedEnd, prev) {
     if (f.spend >= 500 && f.matured >= FN_MIN_QUOTE && f.appt === 0) {
       out.push({
         tone: "crit",
-        title: `${f.name} has spent ${fmt.aud(f.spend)} and produced no appointment`,
+        title: `${f.name} has spent ${fmt.aud(f.spend)} and got no call booked`,
         text: `${f.matured} leads from this funnel are old enough to have booked `
-            + `something and none has. That is long enough to stop guessing: `
+            + `a call and none has. That is long enough to stop guessing: `
             + `either the follow-up is not happening or the leads are not buyers.`,
-        ev: `<b>${f.leads}</b> leads, <b>${f.matured}</b> matured, <b>0</b> appointments.`,
+        ev: `<b>${f.leads}</b> leads, <b>${f.matured}</b> matured, <b>0</b> booked calls.`,
       });
     }
   });
@@ -2008,14 +2049,14 @@ function fnActions(paid, unatt, period) {
     out.push({
       tone: "good",
       title: `Put more behind ${best.name}, in one step, and re-read this page in two weeks`,
-      text: `It is the cheapest appointment in the account at ${fmt.aud(best.cpa)} and it `
+      text: `It is the cheapest booked call in the account at ${fmt.aud(best.cpa)} and it `
           + `has ${best.matured} matured leads behind that number, which is enough to act on. `
           + (step > 0 ? `Raising its budget by about ${fmt.aud(step)} over the period is a `
                       + `move you can still read; doubling it changes the auction and the `
                       + `answer at the same time.`
                       : `Raise the budget in one modest step rather than doubling it.`),
       ev: `Current spend <b>${fmt.aud(best.spend)}</b>, `
-        + `<b>${best.appt}</b> appointments, <b>${best.cons}</b> consultations, `
+        + `<b>${best.appt}</b> booked, <b>${best.held}</b> held, <b>${best.cons}</b> consultations, `
         + `<b>${best.signed}</b> signed.`,
     });
   }
@@ -2024,12 +2065,12 @@ function fnActions(paid, unatt, period) {
     out.push({
       tone: "crit",
       title: `Decide on ${worst.name}: fix the follow-up or move the money`,
-      text: `An appointment from it costs ${fmt.aud(worst.cpa)}, `
+      text: `A booked call from it costs ${fmt.aud(worst.cpa)}, `
           + `${(worst.cpa / best.cpa).toFixed(1)} times ${best.name}. `
           + `Its leads are not cheaper in the end, they are just cheaper at the start. `
           + `Either the calls are not being made fast enough or the offer is attracting the `
           + `wrong people, and both are testable in a fortnight.`,
-      ev: `<b>${fmt.aud(worst.spend)}</b> spent, <b>${worst.appt}</b> appointments from `
+      ev: `<b>${fmt.aud(worst.spend)}</b> spent, <b>${worst.appt}</b> booked calls from `
         + `<b>${worst.matured}</b> matured leads.`,
     });
   }
@@ -2079,7 +2120,7 @@ function fnActions(paid, unatt, period) {
 
 /* ---------- render ---------- */
 
-function fnCard(f, isBest) {
+function fnCard(f, isBest, isWorst) {
   const badgeCls = /book/i.test(f.badge) ? "book"
                  : /magnet/i.test(f.badge) ? "magnet"
                  : f.def ? "" : "off";
@@ -2089,16 +2130,17 @@ function fnCard(f, isBest) {
   const cnt = (n, pct) => `${fmt.num(n)}${pct !== null && pct !== undefined
       ? `<span class="sub" style="color:var(--fg-3)">(${fmt.pct(pct, 0)})</span>` : ""}`;
 
+  const tone = isBest ? "var(--royal)" : isWorst ? "var(--crit)" : "var(--navy)";
   const hero = !f.def
     ? `<div class="fn-hero muted">
-         <span class="hv">${f.quotable ? `${Math.round(f.apptPct)}% reach an appointment` : `${f.leads} leads`}</span>
+         <span class="hv">${f.quotable ? `${Math.round(f.apptPct)}% get a call booked` : `${f.leads} leads`}</span>
          <span class="hl">but no ad can be credited for any of them</span>
        </div>`
     : f.quotable
     ? `<div class="fn-hero">
-         <span class="hv" style="color:${isBest ? "var(--accent)" : "var(--fg)"}">
+         <span class="hv" style="color:${tone}">
            ${Math.round(f.apptPct)}<small>%</small></span>
-         <span class="hl">of leads reach an appointment</span>
+         <span class="hl">of leads get a call booked</span>
        </div>`
     : f.cpl !== null
     // A short period cannot support a conversion rate, but spend, leads and cost
@@ -2138,12 +2180,16 @@ function fnCard(f, isBest) {
       ${row("Spend", f.spend === null ? "&mdash;" : money(f.spend), "hi")}
       ${row("Leads", fmt.num(f.leads), "hi")}
       ${row("Cost per lead", money(f.cpl))}
-      ${row("Reached appointment", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
+      ${row("Call booked", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
             f.quotable ? "" : "dim")}
-      ${row("Cost per appointment", money(f.cpa), f.quotable ? "" : "dim")}
-      ${row("Reached consultation", f.quotable ? cnt(f.cons, f.consPct) : fmt.num(f.cons),
+      ${row("Cost per booked call", money(f.cpa), f.quotable ? "" : "dim")}
+      ${row("Call actually held", f.quotable ? cnt(f.held, f.heldPct) : fmt.num(f.held),
+            f.quotable ? "" : "dim")}
+      ${row("Consultation reached", f.quotable ? cnt(f.cons, f.consPct) : fmt.num(f.cons),
             f.quotable ? "" : "dim")}
       ${row("Cost per consultation", money(f.cpc), f.quotable ? "" : "dim")}
+      ${f.unreached ? row("Rang, nobody answered", fmt.num(f.unreached), "dim") : ""}
+      ${f.unplaceable ? row("Parked, state unknown", fmt.num(f.unplaceable), "dim") : ""}
       ${row("Deals signed this period", fmt.num(f.signed), f.signed ? "hi" : "dim")}
     </div>
     <div class="fn-card-foot">
@@ -2265,20 +2311,37 @@ function renderFunnel() {
   const totalSigned = paid.reduce((s, f) => s + f.signed, 0) + unatt.signed;
   const buyers = fnBuyersIn(period);
 
-  const judged = paid.filter(f => f.quotable && f.cpa !== null);
-  const best = judged.sort((a, b) => a.cpa - b.cpa)[0] || null;
+  const judged = paid.filter(f => f.quotable && f.cpa !== null)
+                     .sort((a, b) => a.cpa - b.cpa);
+  const best = judged[0] || null;
+  const worst = judged.length > 1 ? judged[judged.length - 1] : null;
+
+  // Separate from the economic ranking above: these two only decide which hero
+  // number is painted Royal Blue and which is painted red, so they must rank on
+  // the figure the hero actually shows.
+  const byRate = paid.filter(f => f.quotable && f.apptPct !== null)
+                     .sort((a, b) => b.apptPct - a.apptPct);
+  const bestRate = byRate[0] || null;
+  const worstRate = byRate.length > 1 ? byRate[byRate.length - 1] : null;
 
   if (count) {
     count.textContent = `${fmt.num(totalLeads)} lead${totalLeads === 1 ? "" : "s"} in ${period.label.toLowerCase()}`;
   }
 
-  const moved = fnMovedIn(period);
-  const stuck = fnStalledNow(15);
+  const movedAll = fnMovedIn(period);
+  // This is an ads dashboard, so the leads an ad can be credited for are the
+  // main event and the rest sit behind a disclosure. Grouping them together
+  // would let 62 untraceable movers bury 4 that came from a funnel.
+  const moved = movedAll.filter(r => r.f);
+  const movedOther = movedAll.filter(r => !r.f);
+  const stuckAll = fnStalledNow(21);
+  const stuck = stuckAll.filter(r => r.f);
+  const stuckOther = stuckAll.filter(r => !r.f);
 
   // several people frozen at the same stage is a process problem, not a lead
   // problem, and it is worth saying so rather than listing ten near-identical rows
   const byStage = {};
-  stuck.forEach(r => {
+  stuckAll.forEach(r => {
     const k = (r.s || "").toLowerCase();
     byStage[k] = byStage[k] || { label: r.s, n: 0, lo: Infinity, hi: 0 };
     byStage[k].n++;
@@ -2333,33 +2396,36 @@ function renderFunnel() {
     <div class="fn-top">
       ${top("Spend", fmt.aud(totalSpend), "every ad set, this period")}
       ${top("Leads", fmt.num(totalLeads), `${fmt.num(unatt.leads)} with no ad attached`)}
-      ${top("Reached an appointment", fmt.num(totalAppt), `of the leads old enough to count`)}
+      ${top("Calls booked", fmt.num(totalAppt), `of the leads old enough to count`)}
       ${top("Deals signed", fmt.num(buyers.reduce((s, b) => s + b.deals, 0)),
             `${buyers.length} buyer${buyers.length === 1 ? "" : "s"}`)}
     </div>
 
     <div class="fn-cards">
-      ${paid.map(f => fnCard(f, best && f.key === best.key)).join("")}
-      ${unatt.leads ? fnCard(unatt, false) : ""}
+      ${paid.map(f => fnCard(f, bestRate && f.key === bestRate.key,
+                              worstRate && f.key === worstRate.key)).join("")}
+      ${unatt.leads ? fnCard(unatt, false, false) : ""}
     </div>
 
-    ${fnPanel("What this means", "read from the numbers above, nothing added",
+    ${fnPanel("What this means", "",
               fnInsights(paid, unatt, period, maturedEnd, periods[fnIndex + 1] || null),
               "Nothing in this period stands out either way.")}
 
-    ${fnPanel("What to do next", "each one carries the figure it rests on",
+    ${fnPanel("What to do next", "",
               fnActions(paid, unatt, period),
               "No action worth taking on this period's numbers.")}
 
     <div class="fn-panel">
-      <div class="fn-panel-h"><span class="h">Who moved</span>
+      <div class="fn-panel-h"><span class="h">Who moved, from ads</span>
         <span class="sub">${moved.length
-          ? `${moved.length} ${moved.length === 1 ? "person" : "people"} reached a new stage ${escapeHtml(period.sub.toLowerCase())}`
-          : "nobody progressed past a first stage in this period"}</span></div>
-      ${moved.length ? ["won", "consult", "discovery"].map(k => {
+          ? `${moved.length} ${moved.length === 1 ? "person" : "people"} an ad can be credited for`
+          : "no ad-attributed lead reached a new stage in this period"}</span></div>
+      ${moved.length ? ["won", "consult", "held", "booked"].map(k => {
           const g = moved.filter(r => r.x === FN_DEPTH[k]);
           if (!g.length) return "";
-          const label = k === "won" ? "Signed" : k === "consult" ? "Reached consultation" : "Reached discovery";
+          const label = k === "won" ? "Signed"
+            : k === "consult" ? "Reached consultation"
+            : k === "held" ? "Held their call" : "Got a call booked";
           return `<div class="fn-grp">${label} &middot; ${g.length}</div>`
             + g.map(r => {
                 const days = Math.round((fnParse(r.mv) - fnParse(r.d)) / 86400000);
@@ -2368,18 +2434,42 @@ function renderFunnel() {
               }).join("");
         }).join("")
         : `<div class="fn-item"><span class="mk"></span><div class="bd"><span class="tx">
-             No lead reached a new stage in this period. Where that keeps happening it is
-             a follow-up problem, not an advertising one.</span></div></div>`}
+             No lead that came from an ad reached a new stage in this period.</span></div></div>`}
+      ${movedOther.length ? `<details class="fn-more">
+        <summary>${movedOther.length} more moved that no ad can be credited for</summary>
+        ${["won", "consult", "held", "booked"].map(k => {
+            const g = movedOther.filter(r => r.x === FN_DEPTH[k]);
+            if (!g.length) return "";
+            const label = k === "won" ? "Signed" : k === "consult" ? "Reached consultation"
+              : k === "held" ? "Held their call" : "Got a call booked";
+            return `<div class="fn-grp">${label} &middot; ${g.length}</div>`
+              + g.map(r => {
+                  const days = Math.round((fnParse(r.mv) - fnParse(r.d)) / 86400000);
+                  return fnPersonRow(r, days <= 0 ? "same day"
+                    : `${days} day${days === 1 ? "" : "s"} after first contact`);
+                }).join("");
+          }).join("")}
+      </details>` : ""}
     </div>
 
-    ${stuck.length ? `<div class="fn-panel">
+    ${stuckAll.length ? `<div class="fn-panel">
       <div class="fn-panel-h"><span class="h">Stuck</span>
-        <span class="sub">${stuck.length} past a first stage with no movement in 15+ days, as of today,
-          whichever period is selected above</span></div>
+        <span class="sub">${stuckAll.length} past a first stage with no movement in 21+ days,
+          ${stuckAll.filter(r => r.days >= 60).length} of them 60+ days. As of today,
+          whichever period is selected above.</span></div>
       ${stuckClusters}
-      ${stuck.slice(0, 10).map(r => fnPersonRow(r, `${r.days} days`,
-          r.days >= 60 ? "hot" : r.days >= 30 ? "warm" : "")).join("")}
-      ${stuck.length > 10 ? `<div class="fn-grp">and ${stuck.length - 10} more</div>` : ""}
+      ${stuck.length
+        ? stuck.slice(0, 10).map(r => fnPersonRow(r, `${r.days} days`,
+            r.days >= 60 ? "hot" : r.days >= 30 ? "warm" : "")).join("")
+          + (stuck.length > 10 ? `<div class="fn-grp">and ${stuck.length - 10} more from ads</div>` : "")
+        : `<div class="fn-item"><span class="mk"></span><div class="bd"><span class="tx">
+             None of the stuck leads came from an ad.</span></div></div>`}
+      ${stuckOther.length ? `<details class="fn-more">
+        <summary>${stuckOther.length} more stuck that no ad can be credited for</summary>
+        ${stuckOther.slice(0, 20).map(r => fnPersonRow(r, `${r.days} days`,
+            r.days >= 60 ? "hot" : r.days >= 30 ? "warm" : "")).join("")}
+        ${stuckOther.length > 20 ? `<div class="fn-grp">and ${stuckOther.length - 20} more</div>` : ""}
+      </details>` : ""}
     </div>` : ""}
 
     <div class="fn-panel">
