@@ -1828,6 +1828,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
 
   const appt = at(FN_DEPTH.booked), held = at(FN_DEPTH.held), cons = at(FN_DEPTH.consult);
   const subs = (FUNNEL.submissions && funnelKey) ? fnSubsIn(period, funnelKey) : null;
+  const metaRes = def ? fnMetaResults(def.adsets, period.start, period.end) : null;
   return {
     key: funnelKey, def,
     name: def ? def.name : "No attribution recorded",
@@ -1835,7 +1836,7 @@ function fnMeasure(funnelKey, period, maturedEnd) {
     mechanic: def ? def.mechanic
                   : "Created in the CRM by hand, or arrived with no tracking",
     adsets,
-    leads: rows.length, matured: matured.length, subs,
+    leads: rows.length, matured: matured.length, subs, metaRes,
     appt, held, cons, signed,
     unreached: rows.filter(r => r.ur).length,
     unplaceable: rows.filter(r => r.up).length,
@@ -1898,6 +1899,73 @@ function fnSubsIn(period, funnelKey) {
     (funnelKey === undefined || (r.f || null) === (funnelKey || null))).length;
 }
 
+function fnMetaResults(adsetIds, from, to) {
+  // Meta's own conversion count, already in data.json. Showing it next to the
+  // CRM figure means a tracking break is visible on the page instead of only
+  // turning up when somebody exports a CSV and compares by hand.
+  const daily = (DATA.daily_rows && DATA.daily_rows.adset) || {};
+  let t = 0;
+  (adsetIds || []).forEach(id => (daily[id] || []).forEach(d => {
+    if (d.date >= from && d.date <= to) t += Number(d.results) || 0;
+  }));
+  return t;
+}
+
+function fnTagEvidence(tag, period) {
+  // Only ever used to answer "did leads from this ad set arrive at all". The tag
+  // sits on the contact, not the opportunity, so it can never charge spend: the
+  // calculator tag covers 113 people against 27 paid conversions.
+  const rows = ((FUNNEL && FUNNEL.tag_rows) || []).filter(r =>
+    r.d >= period.start && r.d <= period.end && (r.t || []).includes(tag));
+  return { total: rows.length, noUtm: rows.filter(r => !r.utm).length };
+}
+
+function fnTrackingCheck(period) {
+  // Every ad set that spent in this period, and whether a lead can be joined to
+  // it. This is the standing check: a brand new ad set shows up here the first
+  // time it spends, so it can never quietly vanish from the page.
+  const daily = (DATA.daily_rows && DATA.daily_rows.adset) || {};
+  const names = new Map((DATA.adsets || []).map(a => [a.id, a.name]));
+  const hints = (FUNNEL && FUNNEL.adset_tag_hints) || {};
+  const funnelOf = new Map();
+  Object.entries(((FUNNEL && FUNNEL.funnels) || {})).forEach(([k, f]) =>
+    (f.adsets || []).forEach(a => funnelOf.set(a, f.name)));
+
+  const out = [];
+  Object.keys(daily).forEach(aid => {
+    let spend = 0, results = 0;
+    const types = {};
+    (daily[aid] || []).forEach(d => {
+      if (d.date >= period.start && d.date <= period.end) {
+        spend += Number(d.spend) || 0;
+        results += Number(d.results) || 0;
+        if (d.result_type) types[d.result_type] = (types[d.result_type] || 0) + 1;
+      }
+    });
+    // Meta's Results column means whatever the ad set was optimised for, so the
+    // type has to travel with the number or the two are not comparable.
+    const rtype = Object.keys(types).sort((a, b) => types[b] - types[a])[0] || "";
+    if (spend <= 0) return;
+    const leads = ((FUNNEL && FUNNEL.leads) || []).filter(r =>
+      r.a === aid && r.d >= period.start && r.d <= period.end).length;
+    const hint = hints[aid] || null;
+    const ev = hint ? fnTagEvidence(hint, period) : null;
+    // An ad set optimised for profile visits or video views is not supposed to
+    // produce a lead, so calling its absence a tracking fault would be wrong.
+    // Only the lead objective is held to that standard.
+    const isLeadObjective = /submit application/i.test(rtype);
+    out.push({
+      id: aid, name: names.get(aid) || aid, spend, results, leads, rtype,
+      funnel: funnelOf.get(aid) || null, hint, ev, isLeadObjective,
+      state: !isLeadObjective ? "other-objective"
+           : leads > 0 ? "ok"
+           : (ev && ev.total > 0) ? "tag-only"
+           : hint ? "silent" : "unmapped",
+    });
+  });
+  return out.sort((a, b) => b.spend - a.spend);
+}
+
 function fnAdsetsWithSpendNoFunnel(period) {
   const daily = (DATA.daily_rows && DATA.daily_rows.adset) || {};
   const claimed = new Set();
@@ -1924,7 +1992,7 @@ function fnBuyersIn(period) {
 
 /* ---------- what the numbers mean ---------- */
 
-function fnInsights(paid, unatt, period, maturedEnd, prev) {
+function fnInsights(paid, unatt, period, maturedEnd, prev, orphans, orphanRes, orphanSpend) {
   const out = [];
 
   // Movement against the period before. Volume and cost are trustworthy over any
@@ -2005,6 +2073,27 @@ function fnInsights(paid, unatt, period, maturedEnd, prev) {
                        + `${fmt.aud(best.cpc)} each.` : `No consultation yet from this cohort.`),
       ev: `<b>${best.leads}</b> leads, <b>${best.matured}</b> old enough to judge, `
         + `<b>${best.appt}</b> got a call booked.`,
+    });
+  }
+
+  // 2b. Meta counted conversions that never reached the CRM. Found on the live
+  // account: the calculator ad set, 27 conversions by Meta's count, 0 leads in
+  // GoHighLevel carrying its id, across its whole life.
+  if (orphanRes > 0) {
+    out.push({
+      tone: "crit",
+      title: `Meta counted ${orphanRes} conversion${orphanRes === 1 ? "" : "s"} that never reached the CRM`,
+      text: `${orphans.filter(o => o.results).map(o => o.name).join(", ")} `
+          + `spent ${fmt.aud(orphanSpend)} and Meta recorded ${orphanRes} `
+          + `conversion${orphanRes === 1 ? "" : "s"}, but no lead in GoHighLevel carries `
+          + `${orphans.filter(o => o.results).length === 1 ? "its" : "their"} ad set id. `
+          + `So the money and the result are real and the lead is missing. Either the `
+          + `page does not pass the tracking through to the form, or it posts somewhere `
+          + `other than this GoHighLevel account. Worth 10 minutes of checking, because `
+          + `on cost per conversion this was the cheapest funnel in the account.`,
+      ev: orphans.filter(o => o.results).map(o =>
+            `${o.name}: <b>${fmt.aud(o.spend)}</b>, <b>${o.results}</b> conversions, `
+            + `<b>0</b> leads`).join(" &nbsp;·&nbsp; "),
     });
   }
 
@@ -2251,13 +2340,14 @@ function fnCard(f, isBest, isWorst) {
     ${hero}
     <div class="fn-rows">
       ${row("Spend", f.spend === null ? "&mdash;" : money(f.spend), "hi")}
+      ${f.metaRes ? row("Meta reported", fmt.num(f.metaRes)
+          + `<span class="sub" style="color:var(--fg-3)">conversions</span>`) : ""}
       ${row("Leads, people", fmt.num(f.leads), "hi")}
       ${/* only worth a row when there were MORE fills than people, which is the
              informative case. Fewer means the intake record sits in a pipeline
              this count does not treat as intake, which tells a reader nothing. */
         f.subs !== null && f.subs > f.leads
-        ? row("Form fills reaching the CRM", fmt.num(f.subs)
-            + `<span class="sub" style="color:var(--fg-3)">compare to Meta</span>`)
+        ? row("Form fills reaching the CRM", fmt.num(f.subs))
         : ""}
       ${row("Cost per lead", money(f.cpl))}
       ${row("Call booked", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
@@ -2445,8 +2535,10 @@ function renderFunnel() {
         <b>${escapeHtml(c.label)}</b>, between ${c.lo} and ${c.hi} days`).join(". ")}.
       A group frozen at one stage points at the process, not the leads.</span></div></div>` : "";
 
-  const orphans = fnAdsetsWithSpendNoFunnel(period);
+  const orphans = fnAdsetsWithSpendNoFunnel(period)
+    .map(o => ({ ...o, results: fnMetaResults([o.id], period.start, period.end) }));
   const orphanSpend = orphans.reduce((t, o) => t + o.spend, 0);
+  const orphanRes = orphans.reduce((t, o) => t + o.results, 0);
 
   const spendTo = fnSpendThrough();
   const spendLag = spendTo && period.end > spendTo
@@ -2501,26 +2593,79 @@ function renderFunnel() {
       ${unatt.leads ? fnCard(unatt, false, false) : ""}
       ${orphanSpend > 0 ? `<div class="fn-card">
         <div class="fn-card-h">
-          <span class="nm">Spent, nothing traced back</span>
-          <span class="fn-badge off">No lead</span>
-          <span class="mech">Ad sets that spent in this period with no lead carrying
-            their id, so they belong to no funnel above</span>
+          <span class="nm">Not tracked into the CRM</span>
+          <span class="fn-badge off">${orphanRes > 0 ? "Tracking broken" : "No lead"}</span>
+          <span class="mech">${orphanRes > 0
+            ? `Meta counted conversions on these ad sets, but not one lead in
+               GoHighLevel carries their id, so they cannot be joined to a funnel.
+               This is a tracking problem, not a dead ad set.`
+            : `These ad sets spent in this period and no lead carries their id.`}</span>
         </div>
         <div class="fn-hero">
           <span class="hv" style="color:var(--crit)">${fmt.aud(orphanSpend)}</span>
-          <span class="hl">spent with nothing to show for it</span>
+          <span class="hl">${orphanRes > 0
+            ? `spent, ${orphanRes} conversion${orphanRes === 1 ? "" : "s"} counted by Meta,
+               0 reaching the CRM`
+            : "spent with no lead recorded"}</span>
         </div>
         <div class="fn-rows">
-          ${orphans.map(o => `<div class="fn-row"><span class="k">${escapeHtml(o.name)}</span>
-            <span class="v">${fmt.aud(o.spend)}</span></div>`).join("")}
+          ${orphans.map(o => `<div class="fn-row">
+            <span class="k">${escapeHtml(o.name)}</span>
+            <span class="v">${fmt.aud(o.spend)}${o.results
+              ? `<span class="sub" style="color:var(--crit)">${o.results} conv</span>` : ""}</span>
+          </div>`).join("")}
         </div>
-        <div class="fn-card-foot">This is why the funnel spends above do not add
-          up to the total on their own.</div>
+        <div class="fn-card-foot">The funnel spends above will not add up to the
+          total without this. Worth checking whether these ad sets send their
+          leads somewhere other than this GoHighLevel account.</div>
       </div>` : ""}
     </div>
 
+    ${(() => {
+      const chk = fnTrackingCheck(period);
+      const lead = chk.filter(a => a.isLeadObjective);
+      const bad = lead.filter(a => a.state !== "ok");
+      if (!chk.length) return "";
+      const badge = a => a.state === "ok" ? `<span style="color:var(--good)">joined</span>`
+        : a.state === "other-objective" ? `<span style="color:var(--fg-3)">not a lead ad</span>`
+        : a.state === "tag-only" ? `<span style="color:var(--warn)">tag only, no id</span>`
+        : a.state === "silent" ? `<span style="color:var(--crit)">no lead at all</span>`
+        : `<span style="color:var(--crit)">not mapped yet</span>`;
+      return `<div class="fn-panel">
+        <div class="fn-panel-h"><span class="h">Tracking check</span>
+          <span class="sub">${bad.length
+            ? `${bad.length} of ${lead.length} lead ad sets that spent cannot be joined to a lead`
+            : `all ${lead.length} lead ad sets that spent join to leads`}${
+            chk.length > lead.length
+              ? `, plus ${chk.length - lead.length} on another objective` : ""}</span></div>
+        ${chk.map(a => `<div class="fn-person">
+          <span class="who">${escapeHtml(a.name)}</span>
+          <span class="stg">${a.funnel ? escapeHtml(a.funnel) : "no funnel"}
+            &middot; ${fmt.aud(a.spend)}${a.results
+              ? `, ${fmt.num(a.results)} ${escapeHtml(a.rtype || "results")}` : ""}</span>
+          <span class="fnl">${a.isLeadObjective
+            ? `${a.leads} lead${a.leads === 1 ? "" : "s"} with its id` : "no lead expected"}${
+            a.ev && a.ev.total ? `, ${a.ev.total} tagged "${escapeHtml(a.hint)}"` : ""}</span>
+          <span class="age">${badge(a)}</span>
+        </div>`).join("")}
+        ${bad.some(a => a.state === "unmapped") ? `<div class="fn-item warn">
+          <span class="mk"></span><div class="bd"><span class="tx">
+          An ad set here has no tag mapping yet, so if its tracking breaks there is
+          nothing to fall back on. Add it to <b>ADSET_TAG_HINTS</b> in
+          update_funnel.py and it will be checked from the next refresh.</span></div></div>` : ""}
+        ${bad.some(a => a.state === "tag-only") ? `<div class="fn-item crit">
+          <span class="mk"></span><div class="bd"><span class="tx">
+          An ad set has leads carrying its tag but none carrying its id, which means
+          the landing page is not passing the tracking through to the form. The tag
+          proves the leads arrived; it cannot say which of them were paid, because it
+          sits on the contact and stays there. Fix the page and this funnel becomes
+          measurable.</span></div></div>` : ""}
+      </div>`;
+    })()}
+
     ${fnPanel("What this means", "",
-              fnInsights(paid, unatt, period, maturedEnd, periods[fnIndex + 1] || null),
+              fnInsights(paid, unatt, period, maturedEnd, periods[fnIndex + 1] || null,
+                         orphans, orphanRes, orphanSpend),
               "Nothing in this period stands out either way.")}
 
     ${fnPanel("What to do next", "",
@@ -2609,8 +2754,10 @@ function renderFunnel() {
         leads. Expect that row to sit a little under Meta too: Meta counts a
         pixel event on the site while this counts a record that actually reached
         the CRM, and Meta's 7-day click window can place a conversion in a
-        different month. Measured on August 2026, Meta reported 34 for the VSL
-        ad set, 31 records reached the CRM, and those were 27 distinct people.</li>
+        different month, so the CRM figure can sit either side of Meta's. August
+        2026 on the VSL ad set: Meta 34, CRM 31, 27 distinct people. July 2026 on
+        the same ad set: Meta 29, CRM 35, 28 people. Neither is wrong, they are
+        dated from different events.</li>
         ${spendLag > 1 ? `<li>Meta has reported spend only up to ${escapeHtml(spendTo)},
           ${spendLag} days short of the end of this period, so cost figures here are
           slightly low until the next data refresh.</li>` : ""}

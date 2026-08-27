@@ -242,6 +242,22 @@ def read_attribution(opp):
     )
 
 
+def fetch_tag_map(opps):
+    """Tags come back on the opportunity's contact, so no extra API call."""
+    out = {}
+    for o in opps:
+        t = set()
+        c = o.get("contact") or {}
+        for x in (c.get("tags") or []):
+            t.add(str(x).strip().lower())
+        for rel in (o.get("relations") or []):
+            for x in (rel.get("tags") or []):
+                t.add(str(x).strip().lower())
+        if t:
+            out[o.get("id")] = sorted(t)
+    return out
+
+
 def verify_shape(opps):
     """Fail loudly rather than quietly producing a report built on nothing."""
     if not opps:
@@ -512,6 +528,37 @@ def assign_funnels(opps):
     return adset_funnel, funnels
 
 
+# --------------------------------------------------------------------------
+# Tags: useful evidence, useless for attribution
+# --------------------------------------------------------------------------
+# GoHighLevel tags name the funnel a person touched, and they are the only place
+# some leads are identifiable at all. But they sit on the CONTACT, not the
+# opportunity, so they cannot charge spend:
+#
+#   The calculator ad set produced 27 paid conversions over its life and spent
+#   $1,866. The tag "melb calculator" sits on 113 records, including 15 in
+#   August after the ad set had stopped, and 20 that carry a different ad set's
+#   id because the person came back through another ad. Using the tag to charge
+#   spend would overstate that funnel by about 4x.
+#
+# So tags are carried through for one job only: proving that leads from an ad set
+# DID arrive, when its UTM is broken, so a tracking fault reads as a tracking
+# fault instead of as a dead ad set.
+
+# Manual, and deliberately so. When a new ad set starts, add its tag here. The
+# dashboard flags any spending ad set that has no entry, which is the prompt to
+# come back and do it.
+ADSET_TAG_HINTS = {
+    "120247314089650134": "melb calculator",     # MelbAptsCalc / AU21+ / LM
+    "120246772783090134": "lm_melbaptreport",    # MelbAptsReport / AU21+ / LM
+    "120245876704820134": "lm_melbaptreport",    # MelbAptsLM / AU21+ / CaroReels
+}
+
+FUNNEL_TAGS = {"melb calculator", "lm_melbaptreport", "apartments game",
+               "blocks of units", "webinar", "webinar#2", "google ads lead",
+               "website", "organic"}
+
+
 def contact_name(opp):
     c = opp.get("contact") or {}
     n = (c.get("name") or "").strip()
@@ -521,7 +568,7 @@ def contact_name(opp):
     return " ".join(p for p in parts if p) or "Name not recorded"
 
 
-def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
+def build(opps, stages, custom_fields, users, meta, names=None, raw=None, tag_map=None):
     """
     Emit one row per lead, not pre-baked totals.
 
@@ -537,6 +584,7 @@ def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
     """
     now = datetime.now(timezone.utc)
     names = names or {}
+    tag_map = tag_map or {}
     adset_funnel, funnels = assign_funnels(opps)
 
     # Meta counts form submissions. This dashboard counts people, because one
@@ -564,6 +612,20 @@ def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
         submissions.append({"d": created.date().isoformat(),
                             "a": asid,
                             "f": adset_funnel.get(asid)})
+
+    # Tag evidence, keyed by tag and date, so the page can answer "did leads from
+    # this ad set arrive at all" without pretending the tag attributes spend.
+    tag_rows = []
+    for o in (raw if raw is not None else opps):
+        created = parse_dt(o.get("createdAt"))
+        if not created:
+            continue
+        t = sorted(set((tag_map.get(o.get("id")) or [])) & FUNNEL_TAGS)
+        if not t:
+            continue
+        cid, asid, _, _, _ = read_attribution(o)
+        tag_rows.append({"d": created.date().isoformat(), "t": t,
+                         "utm": bool(cid), "a": asid})
 
     leads = []
     coverage = {"total": 0, "with_attr": 0, "with_adset": 0, "with_ad": 0}
@@ -604,6 +666,7 @@ def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
             "ur": is_unreached(stage_info),     # rang, nobody answered
             "up": is_unplaceable(stage_info),   # parked in Follow up, state unknown
             "lo": is_lost(stage_info),
+            "t": sorted(set((tag_map.get(o.get("id")) or [])) & FUNNEL_TAGS) or None,
             "src": (o.get("source") or "").strip() or None,
             "dl": max(o.get("_won_count") or 0, 0),
         }
@@ -684,6 +747,8 @@ def build(opps, stages, custom_fields, users, meta, names=None, raw=None):
         "funnels": out_funnels,
         "adset_funnel": adset_funnel,
         "submissions": submissions,
+        "tag_rows": tag_rows,
+        "adset_tag_hints": ADSET_TAG_HINTS,
         "unit_note": ("leads counts people; submissions counts intake records, "
                       "which is the closest thing in the CRM to a form fill. "
                       "Compare Meta's Results column to submissions rather than "
@@ -1022,7 +1087,8 @@ def main():
     users = fetch_lookup(api, "/users/", {"locationId": LOCATION_ID}, "users")
     log(f"users: {len(users)}")
 
-    funnel = build(opps, stages, custom_fields, users, meta, raw=raw)
+    funnel = build(opps, stages, custom_fields, users, meta, raw=raw,
+                   tag_map=fetch_tag_map(raw))
     (HERE / "funnel.json").write_text(json.dumps(funnel, separators=(",", ":")))
 
     c = funnel["coverage"]
