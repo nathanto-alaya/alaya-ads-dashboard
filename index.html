@@ -205,7 +205,7 @@ html, body {
 /* ---------------- view tabs, segmented ---------------- */
 
 .view-tabs {
-  display: inline-flex; gap: 2px;
+  display: inline-flex; flex-wrap: wrap; gap: 2px;
   background: var(--s2); border: 1px solid var(--hair);
   border-radius: var(--r-lg); padding: 3px;
   align-self: flex-start;
@@ -565,6 +565,78 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 }
 .cv-card-metric-value { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 15.5px; font-weight: 600; color: var(--fg); }
 
+/* ---------------- funnel view ---------------- */
+
+/* This view runs on GoHighLevel's own window, not the time pills above, so it
+   says so rather than letting the pills silently mean nothing. */
+.fn-wrap { display: flex; flex-direction: column; gap: 18px; }
+
+.fn-banner {
+  display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
+  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
+  padding: 13px 16px; font-size: 13.5px; color: var(--fg-2);
+}
+.fn-banner .fn-b { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.fn-banner .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none; }
+.fn-banner .pip.stale { background: var(--warn); }
+.fn-banner b { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--fg); }
+.fn-banner .fn-note { color: var(--fg-3); font-size: 13px; }
+
+.fn-cov { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
+          background: var(--hair); border: 1px solid var(--hair); border-radius: var(--r-lg); overflow: hidden; }
+.fn-cov .c { background: var(--s1); padding: 13px 16px; display: flex; flex-direction: column; gap: 5px; }
+.fn-cov .cl { font-size: 12.5px; color: var(--fg-2); }
+.fn-cov .cv { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.fn-cov .cd { font-size: 12px; color: var(--fg-3); }
+/* Named fn-bar, not bar: the chart bars above already own .bar and cap it at
+   34px wide, which silently clipped these to a stub. */
+.fn-cov .fn-bar { width: 100%; height: 4px; background: var(--s3);
+                  border-radius: 999px; overflow: hidden; }
+.fn-cov .fn-bar i { display: block; height: 4px; border-radius: 999px; }
+
+.fn-levels { display: inline-flex; gap: 2px; background: var(--s2); border: 1px solid var(--hair);
+             border-radius: var(--r-lg); padding: 3px; align-self: flex-start; }
+.fn-level {
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  padding: 8px 15px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--fg-3); cursor: pointer; white-space: nowrap;
+}
+.fn-level:hover { color: var(--fg); }
+.fn-level:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fn-level.active { background: var(--s3); color: var(--fg); box-shadow: inset 0 0 0 1px var(--hair-2); }
+
+.fn-trust {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 9px; vertical-align: middle; flex: none;
+}
+.fn-trust.ok   { background: var(--good); }
+.fn-trust.thin { background: var(--warn); }
+.fn-trust.bad  { background: var(--crit); }
+
+tr.fn-unattributed td { background: var(--warn-bg); }
+tr.fn-unattributed td strong { color: var(--warn); }
+
+.fn-caveats {
+  background: var(--s1); border: 1px solid var(--hair); border-left: 3px solid var(--warn);
+  border-radius: var(--r-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.fn-caveats .h { font-size: 14.5px; font-weight: 600; color: var(--fg); }
+.fn-caveats ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.fn-caveats li { font-size: 13.5px; color: var(--fg-2); }
+
+.fn-missing {
+  background: var(--s1); border: 1px solid var(--hair); border-radius: var(--r-lg);
+  padding: 30px 24px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+}
+.fn-missing .h { font-size: 17px; font-weight: 700; }
+.fn-missing p { font-size: 14.5px; color: var(--fg-2); max-width: 68ch; }
+.fn-missing ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; }
+.fn-missing li { font-size: 14px; color: var(--fg-2); }
+.fn-missing code {
+  font-family: var(--mono); font-size: 12.5px; background: var(--s3);
+  padding: 2px 6px; border-radius: 4px; color: var(--fg-2);
+}
+
 /* ---------------- reference + footer ---------------- */
 
 .campaign-reference { display: flex; flex-direction: column; gap: 12px; }
@@ -704,6 +776,10 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
       <button class="view-tab" data-view="creatives" role="tab" aria-selected="false">
         <span class="view-tab-num">C.</span>
         <span class="view-tab-label">Creative View</span>
+      </button>
+      <button class="view-tab" data-view="funnel" role="tab" aria-selected="false">
+        <span class="view-tab-num">D.</span>
+        <span class="view-tab-label">Funnel Health</span>
       </button>
     </nav>
 
@@ -957,6 +1033,17 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
   </div>
 
   <!-- ============== CAMPAIGN REFERENCE ============== -->
+    <!-- ============== FUNNEL HEALTH ============== -->
+    <div id="view-funnel" class="view-pane">
+      <section class="section">
+        <div class="section-head">
+          <div><h2>Funnel health</h2></div>
+          <div class="meta" id="fn-count">&mdash;</div>
+        </div>
+        <div class="fn-wrap" id="fn-body"></div>
+      </section>
+    </div><!-- /view-funnel -->
+
   <section class="section campaign-reference">
     <div class="section-head">
       <div>
@@ -999,6 +1086,9 @@ let currentCampaignId = "all";
 let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
 let currentAdsetSort = { col: "spend", dir: "desc" };
+let FUNNEL = null;                       // funnel.json, or null until it exists
+let fnLevel = "adset";                   // the ad set is the funnel, so start there
+let fnSort = { col: "spend", dir: "desc" };
 let currentView = "campaigns";          // "campaigns" or "creatives"
 let cvSort = "score";                    // creative view sort key
 let cvGroup = "flat";                    // creative view grouping: "flat" or "campaign"
@@ -1208,6 +1298,11 @@ function applyFilters() {
     console.error("renderCreatives failed:", e);
     document.getElementById("creatives-body").innerHTML = `<tr><td colspan="11" class="empty">ERROR: ${e.message}</td></tr>`;
   }
+  try { renderFunnel(); } catch (e) {
+    console.error("renderFunnel failed:", e);
+    document.getElementById("fn-body").innerHTML =
+      `<div class="fn-missing"><span class="h">Funnel view failed</span><p>${escapeHtml(e.message)}</p></div>`;
+  }
   try { renderCreativeView(today); } catch (e) {
     console.error("renderCreativeView failed:", e);
     document.getElementById("cv-grid-wrap").innerHTML = `<div class="empty" style="padding:48px;">ERROR: ${e.message}</div>`;
@@ -1401,6 +1496,233 @@ function renderAdsets(today) {
     `;
   }).join("");
   updateSortIcons("adsets-body", currentAdsetSort);
+}
+
+/* ============== FUNNEL HEALTH: Meta spend joined to GHL outcomes ============== */
+
+/* funnel.json is generated over its own window, so the time pills above do not
+   apply here. Spend is summed over the same window rather than the selected
+   period, otherwise the two halves of every ratio would disagree. */
+
+function fnWindow() {
+  const m = FUNNEL.meta || {};
+  const end = new Date(m.generated || Date.now());
+  const days = m.window_days || 120;
+  const mature = m.maturity_days || 14;
+  const start = new Date(end); start.setDate(start.getDate() - days);
+  const maturedEnd = new Date(end); maturedEnd.setDate(maturedEnd.getDate() - mature);
+  const iso = d => d.toISOString().slice(0, 10);
+  return { start: iso(start), end: iso(end), maturedEnd: iso(maturedEnd), days, mature };
+}
+
+function fnSpendThrough() {
+  // Meta insights lag the CRM by a day or two, so the spend side of every ratio
+  // stops before the lead side does. Say so on screen rather than letting a
+  // reader assume both halves end today.
+  let last = "";
+  const src = (DATA.daily_rows && (DATA.daily_rows.adset || DATA.daily_rows.campaign)) || {};
+  Object.keys(src).forEach(k => (src[k] || []).forEach(d => { if (d.date > last) last = d.date; }));
+  return last;
+}
+
+function fnSumSpend(rows, from, to) {
+  let spend = 0;
+  for (const r of rows || []) {
+    if (r.date >= from && r.date <= to) spend += r.spend || 0;
+  }
+  return spend;
+}
+
+function fnLevelSource(level) {
+  if (level === "campaign") return { rows: DATA.daily_rows.campaign || {},
+    names: new Map((DATA.campaigns || []).map(c => [c.id, campaignDisplayName(c.name)])) };
+  if (level === "adset") return { rows: DATA.daily_rows.adset || {},
+    names: new Map((DATA.adsets || []).map(a => [a.id, a.name])) };
+  return { rows: DATA.daily_rows.ad || {},
+    names: new Map((DATA.ads || []).map(a => [a.id, a.name])) };
+}
+
+function fnTrust(matured) {
+  /* Same gate as the suggestion rules: nothing is quotable below 15 matured
+     leads, and below 5 it is noise. The dot says which, the number says why. */
+  if (matured >= 15) return ["ok", "Enough matured leads to quote"];
+  if (matured >= 5) return ["thin", "Thin sample, treat as indicative"];
+  return ["bad", "Too few matured leads to mean anything"];
+}
+
+function fnRows(level) {
+  const w = fnWindow();
+  const src = fnLevelSource(level);
+  const buckets = (FUNNEL.levels || {})[level] || {};
+  const out = [];
+  for (const [id, b] of Object.entries(buckets)) {
+    const daily = src.rows[id] || [];
+    const spend = fnSumSpend(daily, w.start, w.end);
+    const spendMatured = fnSumSpend(daily, w.start, w.maturedEnd);
+    const past = b.at_or_past || {};
+    const mpast = b.matured_at_or_past || {};
+    out.push({
+      id,
+      name: src.names.get(id) || id,
+      known: src.names.has(id),
+      leads: b.leads || 0,
+      matured: b.matured || 0,
+      discovery: mpast.discovery || 0,
+      consult: mpast.consult || 0,
+      won: mpast.won || 0,
+      spend, spendMatured,
+      cpl: b.leads ? spend / b.leads : 0,
+      cpd: mpast.discovery ? spendMatured / mpast.discovery : 0,
+      cpc: mpast.consult ? spendMatured / mpast.consult : 0,
+    });
+  }
+  return out;
+}
+
+function fnCoverageCard(label, pct, detail) {
+  const colour = pct >= 75 ? "var(--good)" : pct >= 40 ? "var(--warn)" : "var(--crit)";
+  return `<div class="c">
+    <span class="cl">${escapeHtml(label)}</span>
+    <span class="cv" style="color:${colour}">${fmt.pct(pct, 0)}</span>
+    <div class="fn-bar"><i style="width:${Math.max(Math.min(pct, 100), 1.5)}%;background:${colour}"></i></div>
+    <span class="cd">${escapeHtml(detail)}</span>
+  </div>`;
+}
+
+function renderFunnel() {
+  const host = document.getElementById("fn-body");
+  const count = document.getElementById("fn-count");
+  if (!host) return;
+
+  if (!FUNNEL) {
+    count.textContent = "not connected";
+    host.innerHTML = `<div class="fn-missing">
+      <span class="h">GoHighLevel is not connected yet</span>
+      <p>This view joins Meta spend to what actually happened to each lead. It needs
+      <code>funnel.json</code>, which the funnel workflow writes. Nothing here is broken,
+      the file just does not exist yet.</p>
+      <ol>
+        <li>Add <code>update_funnel.py</code> and <code>.github/workflows/funnel-refresh.yml</code> to the repo.</li>
+        <li>Run the workflow with <strong>Probe only</strong> ticked. It writes nothing and only checks the token.</li>
+        <li>When the log says the join works, run it again unticked. That writes <code>funnel.json</code> and this view fills in.</li>
+      </ol>
+    </div>`;
+    return;
+  }
+
+  const w = fnWindow();
+  const cov = FUNNEL.coverage || {};
+  const meta = FUNNEL.meta || {};
+
+  /* A stale join is worse than no join, because the numbers look current. */
+  const ageDays = Math.floor((Date.now() - new Date(meta.generated || 0)) / 86400000);
+  const stale = !isFinite(ageDays) || ageDays > 2;
+
+  const rows = fnRows(fnLevel);
+  rows.sort((a, b) => sortFn(a, b, fnSort));
+  const un = FUNNEL.unattributed || {};
+
+  count.textContent = `${rows.length} ${fnLevel === "adset" ? "ad sets" : fnLevel + "s"} with leads`;
+
+  const levelBtn = (key, label) =>
+    `<button class="fn-level ${fnLevel === key ? "active" : ""}" data-fnlevel="${key}" type="button">${label}</button>`;
+
+  const th = (col, label, num) =>
+    `<th class="sortable ${num ? "num" : ""} ${fnSort.col === col ? "sorted" : ""}" data-fnsort="${col}">${label} <span class="arrow">&#9660;</span></th>`;
+
+  const body = rows.map(r => {
+    const [tk, tTitle] = fnTrust(r.matured);
+    return `<tr title="${escapeAttr(tTitle)}">
+      <td><span class="fn-trust ${tk}"></span><strong>${escapeHtml(r.name)}</strong>${
+        r.known ? "" : ` <span class="muted">(not in Meta data)</span>`}</td>
+      <td class="num">${fmt.num(r.leads)}</td>
+      <td class="num">${fmt.num(r.matured)}</td>
+      <td class="num">${fmt.num(r.discovery)}</td>
+      <td class="num">${fmt.num(r.consult)}</td>
+      <td class="num">${fmt.num(r.won)}</td>
+      <td class="num">${fmt.aud(r.spend)}</td>
+      <td class="num">${r.cpl > 0 ? fmt.audPrecise(r.cpl) : "&mdash;"}</td>
+      <td class="num">${r.cpd > 0 ? fmt.aud(r.cpd) : "&mdash;"}</td>
+      <td class="num">${r.cpc > 0 ? fmt.aud(r.cpc) : "&mdash;"}</td>
+    </tr>`;
+  }).join("");
+
+  const unRow = (un.leads || 0) > 0 ? `
+    <tr class="fn-unattributed" title="These leads carry no Meta ids, so no spend can be credited to them">
+      <td><strong>No attribution</strong> <span class="muted">created in the CRM by hand</span></td>
+      <td class="num">${fmt.num(un.leads || 0)}</td>
+      <td class="num">${fmt.num(un.matured || 0)}</td>
+      <td class="num">${fmt.num((un.matured_at_or_past || {}).discovery || 0)}</td>
+      <td class="num">${fmt.num((un.matured_at_or_past || {}).consult || 0)}</td>
+      <td class="num">${fmt.num((un.matured_at_or_past || {}).won || 0)}</td>
+      <td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td>
+    </tr>` : "";
+
+  const spendTo = fnSpendThrough();
+  const spendLag = spendTo
+    ? Math.round((new Date(w.end) - new Date(spendTo)) / 86400000) : 0;
+
+  host.innerHTML = `
+    <div class="fn-banner">
+      <span class="fn-b"><span class="pip ${stale ? "stale" : ""}"></span>GoHighLevel
+        <b>${escapeHtml((meta.generated || "").slice(0, 10))}</b>${stale ? ` <span class="fn-note">${ageDays} days old</span>` : ""}</span>
+      <span class="fn-b">Window <b>${w.days}</b> days, to <b>${escapeHtml(w.end)}</b></span>
+      <span class="fn-b">Matured cohort <b>${w.mature}</b>+ days old</span>
+      ${spendTo ? `<span class="fn-b"><span class="pip ${spendLag > 1 ? "stale" : ""}"></span>Spend to
+        <b>${escapeHtml(spendTo)}</b>${spendLag > 1 ? ` <span class="fn-note">${spendLag} days behind leads</span>` : ""}</span>` : ""}
+      <span class="fn-note">The time filter above does not apply to this view.</span>
+    </div>
+
+    <div class="fn-cov">
+      ${fnCoverageCard("Leads with a campaign id", cov.with_campaign_pct || 0, `of ${fmt.num(cov.records || 0)} records`)}
+      ${fnCoverageCard("Leads with an ad set id", cov.with_adset_pct || 0, "the level a funnel lives at")}
+      ${fnCoverageCard("Leads with an ad id", cov.with_ad_pct || 0, "needed to judge a creative")}
+    </div>
+
+    <div class="fn-levels">
+      ${levelBtn("campaign", "Campaign")}${levelBtn("adset", "Ad set")}${levelBtn("ad", "Ad")}
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          ${th("name", "Name")}${th("leads", "Leads", 1)}${th("matured", "Matured", 1)}
+          ${th("discovery", "Disc+", 1)}${th("consult", "Consult+", 1)}${th("won", "Won", 1)}
+          ${th("spend", "Spend", 1)}${th("cpl", "Cost / lead", 1)}
+          ${th("cpd", "Cost / disc", 1)}${th("cpc", "Cost / consult", 1)}
+        </tr></thead>
+        <tbody>${body || `<tr><td colspan="10" class="empty">NO LEADS AT THIS LEVEL</td></tr>`}${unRow}</tbody>
+      </table>
+    </div>
+
+    <div class="fn-caveats">
+      <span class="h">What these numbers are, and are not</span>
+      <ul>${(meta.caveats || []).map(c => `<li>${escapeHtml(c)}</li>`).join("")}
+        <li>Cost per lead divides the whole window's spend by all leads. Cost per
+        discovery and per consultation divide only the spend up to
+        ${escapeHtml(w.maturedEnd)} by the matured cohort, so both halves of the
+        ratio cover the same period.</li>
+        ${spendLag > 1 ? `<li>Meta has only reported spend up to
+        ${escapeHtml(spendTo)}, ${spendLag} days behind the last lead counted here,
+        so every cost figure is slightly low until the next data refresh.</li>` : ""}
+      </ul>
+    </div>`;
+
+  host.querySelectorAll("[data-fnlevel]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.fnlevel === fnLevel) return;
+      fnLevel = btn.dataset.fnlevel;
+      renderFunnel();
+    });
+  });
+  host.querySelectorAll("[data-fnsort]").forEach(h => {
+    h.addEventListener("click", () => {
+      const col = h.dataset.fnsort;
+      if (fnSort.col === col) fnSort.dir = fnSort.dir === "asc" ? "desc" : "asc";
+      else fnSort = { col, dir: "desc" };
+      renderFunnel();
+    });
+  });
 }
 
 /* ============== HIERARCHY: campaign > ad set > ad ============== */
@@ -2098,6 +2420,16 @@ function populateCampaignSelect() {
     const res = await fetch(`data.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     DATA = await res.json();
+
+    // funnel.json is optional. Until the GoHighLevel workflow has run it does
+    // not exist, and the dashboard must not care.
+    try {
+      const fr = await fetch(`funnel.json?t=${Date.now()}`);
+      if (fr.ok) FUNNEL = await fr.json();
+      else console.info("funnel.json not present yet, funnel view will explain itself");
+    } catch (e) {
+      console.info("funnel.json could not be read:", e.message);
+    }
 
     const updatedDate = new Date(DATA.meta.last_updated);
     document.getElementById("last-updated").textContent = updatedDate.toLocaleString("en-AU", {
