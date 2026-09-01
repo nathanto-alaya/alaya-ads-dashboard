@@ -228,17 +228,32 @@ def read_attribution(opp):
     back to the last. Returns (campaign_id, adset_id, ad_id, source, page).
     """
     attrs = opp.get("attributions") or []
-    if not attrs:
-        return (None, None, None, None, None)
-    first = next((a for a in attrs if a.get("isFirst")), attrs[0])
-    last = next((a for a in attrs if a.get("isLast")), attrs[-1])
-    pick = first if first.get("utmCampaign") else last
+    native = (None, None, None, None, None)
+    if attrs:
+        first = next((a for a in attrs if a.get("isFirst")), attrs[0])
+        last = next((a for a in attrs if a.get("isLast")), attrs[-1])
+        pick = first if first.get("utmCampaign") else last
+        native = (
+            pick.get("utmCampaign") or None,
+            pick.get("utmTerm") or None,
+            pick.get("utmContent") or None,
+            pick.get("utmSource") or None,
+            pick.get("url") or None,
+        )
+    if native[0]:
+        return native
+
+    # No campaign id in GHL's own attribution. Fall back to the custom fields,
+    # which is where webhook leads such as the calculator keep theirs.
+    cf = read_custom_attribution(opp)
+    if not cf:
+        return native
     return (
-        pick.get("utmCampaign") or None,
-        pick.get("utmTerm") or None,
-        pick.get("utmContent") or None,
-        pick.get("utmSource") or None,
-        pick.get("url") or None,
+        cf.get("utm_campaign") or native[0],
+        cf.get("utm_term") or native[1],
+        cf.get("utm_content") or native[2],
+        cf.get("utm_source") or native[3],
+        cf.get("page_url") or native[4],
     )
 
 
@@ -443,6 +458,44 @@ def dedupe_by_contact(opps, stages):
 # page their own leads recorded, and read the name off the path. Nothing here is
 # invented: the path comes out of the attribution record.
 
+# GoHighLevel opportunity custom field ids that carry Meta attribution for
+# leads which arrive through an Inbound Webhook rather than a GHL form. The
+# Melbourne Apartment Calculator is the case that matters: its page posts to a
+# Supabase function which posts to GoHighLevel, so there is no browser session
+# and GHL's own attributions array always reports "CRM Workflows / Manual".
+# These custom fields are therefore the only path for those leads.
+# Ids read off a live tagged test submission on 1 Sep 2026. If someone renames
+# a field in GHL the id survives; if someone DELETES and recreates one, the id
+# changes and the value silently disappears from this join.
+CF_ATTRIBUTION = {
+    "WFPqHKDOAroccyyIj7CB": "utm_source",
+    "Tdj4P851cfOeQlSUQdhZ": "utm_medium",
+    "qa1cEoFv0KGPS7Laa8IR": "utm_campaign",
+    "cmOXkDPiQAAi7KotLTZP": "utm_term",
+    "9vGu3hZZXrRcxv0TLq0g": "utm_content",
+    "KcbvX5oGRycaEY7r9FAP": "page_url",
+    # Referrer has no id yet. It was never populated in either test because
+    # the tester pasted the url directly, so no referring page existed. It is
+    # not needed for the Meta join, which runs on campaign, ad set and ad.
+}
+
+
+def read_custom_attribution(opp):
+    """
+    Pull attribution out of the opportunity custom fields. Returns a dict, or
+    an empty dict when this opportunity carries none.
+    """
+    out = {}
+    for f in (opp.get("customFields") or []):
+        key = CF_ATTRIBUTION.get(f.get("id"))
+        if not key:
+            continue
+        v = f.get("fieldValueString")
+        if isinstance(v, str) and v.strip():
+            out[key] = v.strip()
+    return out
+
+
 FUNNEL_LOOKUP = {
     "/melbourne/offer":  ("VSL Funnel", "Direct booking",
                           "Video sales letter, application, call booking"),
@@ -453,6 +506,9 @@ FUNNEL_LOOKUP = {
     "/":                 ("Site Home", "Mixed", "Home page, enquiry form"),
     "_form":             ("Form Direct", "Form only",
                           "Straight into a GoHighLevel form, no landing page"),
+    "/tools/melbourne-apartment-calculator":
+                         ("Melbourne Apartment Calculator", "Interactive tool",
+                          "Calculator, results gate, report email, phone follow-up"),
 }
 
 
@@ -476,11 +532,15 @@ def landing_path(url):
 
 def first_touch_path(opp):
     attrs = opp.get("attributions") or []
-    if not attrs:
-        return None
-    first = next((a for a in attrs if a.get("isFirst")), attrs[0])
-    return (landing_path(first.get("url"))
-            or next((landing_path(a.get("url")) for a in attrs if a.get("url")), None))
+    if attrs:
+        first = next((a for a in attrs if a.get("isFirst")), attrs[0])
+        p = (landing_path(first.get("url"))
+             or next((landing_path(a.get("url")) for a in attrs if a.get("url")), None))
+        if p:
+            return p
+    # Webhook leads carry no url in the attributions array. Their landing page
+    # lives in the Page URL custom field instead.
+    return landing_path(read_custom_attribution(opp).get("page_url"))
 
 
 def name_funnel(path):
