@@ -2350,6 +2350,10 @@ function fnCard(f, isBest, isWorst) {
         ? row("Form fills reaching the CRM", fmt.num(f.subs))
         : ""}
       ${row("Cost per lead", money(f.cpl))}
+      ${/* Meta's own cost-per-result: spend divided by the conversions Meta
+             counted, for side-by-side comparison with the CRM-based figure. */
+        f.metaRes && f.spend ? row("Cost per lead (Meta Ads Report)",
+          money(f.spend / f.metaRes)) : ""}
       ${row("Call booked", f.quotable ? cnt(f.appt, f.apptPct) : fmt.num(f.appt),
             f.quotable ? "" : "dim")}
       ${row("Cost per booked call", money(f.cpa), f.quotable ? "" : "dim")}
