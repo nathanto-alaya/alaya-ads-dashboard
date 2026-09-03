@@ -35,7 +35,10 @@ from pathlib import Path
 import requests
 
 BASE = "https://services.leadconnectorhq.com"
-LOCATION_ID = os.environ.get("GHL_LOCATION_ID", "1LnVcAPBanJSCVTFZgbG")
+# Use the env var only if it holds a real value. An empty or whitespace-only
+# GHL_LOCATION_ID secret would otherwise override the default with "", which
+# makes the pipelines endpoint fail with HTTP 422 (missing locationId).
+LOCATION_ID = (os.environ.get("GHL_LOCATION_ID") or "").strip() or "1LnVcAPBanJSCVTFZgbG"
 
 # The docs disagree with themselves on the Version header for this endpoint, so
 # try each until one answers, and log which one worked.
