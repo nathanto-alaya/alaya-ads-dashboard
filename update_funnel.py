@@ -1191,13 +1191,13 @@ def main():
         (HERE / "weekly.json").write_text(json.dumps(weekly, separators=(",", ":")))
         tw, lw = weekly["this_week"], weekly["last_week"]
         rl = weekly["matured_28_days"]
-        log(f"wrote weekly.json: week {tw['start']} to {tw['end']}, "
-            f"{tw['total_leads']} leads off ${tw['total_spend']:,.0f} "
-            f"(previous week {lw['total_leads']} off ${lw['total_spend']:,.0f}); "
-            f"matured 28 days {rl['total_leads']} leads, "
-            f"{rl['total_appointments']} appointments; "
-            f"{len(weekly['moved_this_week'])} people moved, "
-            f"{weekly['stalled']['total']} stalled")
+        log(f"wrote weekly.json: week {tw.get('start')} to {tw.get('end')}, "
+            f"{tw.get('total_leads', 0)} leads off ${tw.get('total_spend', 0):,.0f} "
+            f"(previous week {lw.get('total_leads', 0)} off ${lw.get('total_spend', 0):,.0f}); "
+            f"matured 28 days {rl.get('total', 0)} leads, "
+            f"{rl.get('booked', 0)} booked / {rl.get('consult', 0)} consults; "
+            f"{len(weekly.get('moved_this_week', []))} people moved, "
+            f"{weekly.get('stalled', {}).get('total', 0)} stalled")
         if not dash:
             log("::warning::no data.json, so weekly.json carries no spend figures")
     except Exception as e:
