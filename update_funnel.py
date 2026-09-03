@@ -173,15 +173,24 @@ def fetch_pipelines(api):
 
 
 def fetch_opportunities(api, since):
-    """Page through the search endpoint. Returns the raw opportunity dicts."""
+    """Page through the search endpoint. Returns the raw opportunity dicts.
+
+    GHL's search endpoint rejects a plain YYYY-MM-DD 'date' param
+    (SEARCH_INVALID_START_DATE) and its date-filter params are inconsistent
+    across API versions. The reliable path is to pull opportunities newest
+    first with no date filter and stop once we cross the 'since' cutoff,
+    filtering by dateAdded in code.
+    """
     out, page, seen_ids = [], 1, set()
+    since_naive = since.replace(tzinfo=None)
     while True:
         data = api.get("/opportunities/search", {
             "location_id": LOCATION_ID,
-            "date": since.strftime("%Y-%m-%d"),
             "status": "all",
             "limit": 100,
             "page": page,
+            "sort": "date_added",
+            "order": "desc",
         })
         batch = data.get("opportunities") or []
         fresh = [o for o in batch if o.get("id") not in seen_ids]
@@ -189,11 +198,43 @@ def fetch_opportunities(api, since):
             seen_ids.add(o["id"])
         out.extend(fresh)
         log(f"  page {page}: {len(batch)} rows ({len(out)} total)")
-        if len(batch) < 100 or not fresh or page >= 60:
+
+        # Stop once the oldest row on this page is older than the window.
+        oldest_on_page = None
+        for o in batch:
+            da = o.get("dateAdded") or o.get("createdAt") or ""
+            if da:
+                oldest_on_page = da
+        crossed_cutoff = False
+        if oldest_on_page:
+            try:
+                # dateAdded looks like 2026-08-27T15:13:54.044Z
+                da_dt = datetime.fromisoformat(oldest_on_page.replace("Z", "+00:00")).replace(tzinfo=None)
+                if da_dt < since_naive:
+                    crossed_cutoff = True
+            except ValueError:
+                pass
+
+        if len(batch) < 100 or not fresh or page >= 60 or crossed_cutoff:
             break
         page += 1
         time.sleep(0.4)
-    return out
+
+    # Filter to the window in code (the API pull was unfiltered).
+    filtered = []
+    for o in out:
+        da = o.get("dateAdded") or o.get("createdAt") or ""
+        if not da:
+            filtered.append(o)  # keep undated rather than silently drop
+            continue
+        try:
+            da_dt = datetime.fromisoformat(da.replace("Z", "+00:00")).replace(tzinfo=None)
+            if da_dt >= since_naive:
+                filtered.append(o)
+        except ValueError:
+            filtered.append(o)
+    log(f"  kept {len(filtered)} of {len(out)} within {WINDOW_DAYS}-day window")
+    return filtered
 
 
 def fetch_lookup(api, path, params, list_key, id_key="id", name_key="name"):
@@ -1089,10 +1130,11 @@ def probe(api):
     since = datetime.now(timezone.utc) - timedelta(days=14)
     data = api.get("/opportunities/search", {
         "location_id": LOCATION_ID,
-        "date": since.strftime("%Y-%m-%d"), "status": "all", "limit": 20, "page": 1,
+        "status": "all", "limit": 20, "page": 1,
+        "sort": "date_added", "order": "desc",
     })
     opps = data.get("opportunities") or []
-    log(f"opportunities in the last 14 days: {len(opps)}")
+    log(f"most recent opportunities returned: {len(opps)}")
     if not opps:
         log("::warning::none returned, check the location id")
         return
