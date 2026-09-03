@@ -1,7 +1,7 @@
 name: Daily Ads Dashboard Refresh
 
-# Runs every day at 8:00 AM Sydney time (22:00 UTC)
-# Also can be triggered manually from the Actions tab
+# Runs every day at 8:00 AM and 4:00 PM Sydney time.
+# Also can be triggered manually from the Actions tab.
 on:
   schedule:
     - cron: '0 22 * * *'   # 8am AEST (UTC+10)
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:  # Manual trigger button in GitHub UI
 
 permissions:
-  contents: write  # needed to commit the updated data.json
+  contents: write  # needed to commit the updated json files
 
 jobs:
   refresh:
@@ -26,17 +26,31 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      # Step 1 - Pull Meta Ads data. Writes data.json.
       - name: Pull Meta Ads data and update data.json
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
         run: python3 update_dashboard.py
 
-      - name: Commit and push if data.json changed
+      # Step 2 - Join GHL leads onto the Meta data. Reads data.json, writes
+      # funnel.json / weekly.json / snapshots.json. Must run AFTER step 1
+      # because it needs the fresh data.json to join against.
+      - name: Pull GHL funnel data and update funnel.json
+        env:
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+        run: python3 update_funnel.py
+
+      # Step 3 - Commit whatever changed across all output files.
+      - name: Commit and push if any data changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json
+          # Add each output file only if it exists (snapshots.json appears on first run).
+          for f in data.json funnel.json weekly.json snapshots.json; do
+            [ -f "$f" ] && git add "$f"
+          done
           if ! git diff --cached --quiet; then
             git commit -m "Daily refresh - $(date -u +'%Y-%m-%d')"
             git push
