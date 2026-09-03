@@ -178,7 +178,6 @@ def fetch_opportunities(api, since):
     while True:
         data = api.get("/opportunities/search", {
             "location_id": LOCATION_ID,
-            "locationId": LOCATION_ID,   # the API has used both spellings
             "date": since.strftime("%Y-%m-%d"),
             "status": "all",
             "limit": 100,
@@ -1089,7 +1088,7 @@ def probe(api):
     _, stages = fetch_pipelines(api)
     since = datetime.now(timezone.utc) - timedelta(days=14)
     data = api.get("/opportunities/search", {
-        "location_id": LOCATION_ID, "locationId": LOCATION_ID,
+        "location_id": LOCATION_ID,
         "date": since.strftime("%Y-%m-%d"), "status": "all", "limit": 20, "page": 1,
     })
     opps = data.get("opportunities") or []
