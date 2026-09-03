@@ -175,11 +175,11 @@ def fetch_pipelines(api):
 def fetch_opportunities(api, since):
     """Page through the search endpoint. Returns the raw opportunity dicts.
 
-    GHL's search endpoint rejects a plain YYYY-MM-DD 'date' param
-    (SEARCH_INVALID_START_DATE) and its date-filter params are inconsistent
-    across API versions. The reliable path is to pull opportunities newest
-    first with no date filter and stop once we cross the 'since' cutoff,
-    filtering by dateAdded in code.
+    GHL's search endpoint is fussy: it rejects a plain YYYY-MM-DD 'date'
+    (SEARCH_INVALID_START_DATE) AND rejects 'sort'/'order'
+    ('property sort should not exist'). So we send only the minimal params,
+    pull every page, and do the date windowing in code. Order is not
+    guaranteed, so we cannot stop early - we page to the end.
     """
     out, page, seen_ids = [], 1, set()
     since_naive = since.replace(tzinfo=None)
@@ -189,8 +189,6 @@ def fetch_opportunities(api, since):
             "status": "all",
             "limit": 100,
             "page": page,
-            "sort": "date_added",
-            "order": "desc",
         })
         batch = data.get("opportunities") or []
         fresh = [o for o in batch if o.get("id") not in seen_ids]
@@ -198,29 +196,12 @@ def fetch_opportunities(api, since):
             seen_ids.add(o["id"])
         out.extend(fresh)
         log(f"  page {page}: {len(batch)} rows ({len(out)} total)")
-
-        # Stop once the oldest row on this page is older than the window.
-        oldest_on_page = None
-        for o in batch:
-            da = o.get("dateAdded") or o.get("createdAt") or ""
-            if da:
-                oldest_on_page = da
-        crossed_cutoff = False
-        if oldest_on_page:
-            try:
-                # dateAdded looks like 2026-08-27T15:13:54.044Z
-                da_dt = datetime.fromisoformat(oldest_on_page.replace("Z", "+00:00")).replace(tzinfo=None)
-                if da_dt < since_naive:
-                    crossed_cutoff = True
-            except ValueError:
-                pass
-
-        if len(batch) < 100 or not fresh or page >= 60 or crossed_cutoff:
+        if len(batch) < 100 or not fresh or page >= 60:
             break
         page += 1
         time.sleep(0.4)
 
-    # Filter to the window in code (the API pull was unfiltered).
+    # Filter to the window in code (the API pull was unfiltered/unsorted).
     filtered = []
     for o in out:
         da = o.get("dateAdded") or o.get("createdAt") or ""
@@ -1131,7 +1112,6 @@ def probe(api):
     data = api.get("/opportunities/search", {
         "location_id": LOCATION_ID,
         "status": "all", "limit": 20, "page": 1,
-        "sort": "date_added", "order": "desc",
     })
     opps = data.get("opportunities") or []
     log(f"most recent opportunities returned: {len(opps)}")
