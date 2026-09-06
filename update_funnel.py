@@ -26,6 +26,7 @@ Optional:
 
 import json
 import os
+import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -46,6 +47,16 @@ API_VERSIONS = ["2021-07-28", "v3"]
 
 WINDOW_DAYS = 120        # how far back to pull opportunities
 MATURITY_DAYS = 14       # a lead younger than this cannot be judged on outcome
+
+# Test-lead filters. The team clicks their own ads to check tracking; those
+# submissions are not real prospects and must not be counted. We catch them two
+# ways: an internal email domain, or a giveaway word in the name. The team also
+# deletes most test leads by hand - this is the safety net for the ones missed.
+INTERNAL_EMAIL_DOMAINS = ("@alayaproperty.com", "@socialwave.com.au")
+TEST_NAME_PATTERN = re.compile(
+    r"\btest\b|testing|test\s*lead|\basdf\b|\bqwer\b|\bxxx\b|dummy|\bdemo\b",
+    re.IGNORECASE,
+)
 SYDNEY = timezone(timedelta(hours=10))
 
 HERE = Path(__file__).parent
@@ -295,6 +306,49 @@ def fetch_tag_map(opps):
         if t:
             out[o.get("id")] = sorted(t)
     return out
+
+
+def opp_email(o):
+    """Best email on an opportunity, lowercased. GHL puts it on the embedded
+    contact and on each relation; check both."""
+    c = o.get("contact") or {}
+    email = c.get("email")
+    if not email:
+        for rel in (o.get("relations") or []):
+            if rel.get("email"):
+                email = rel.get("email")
+                break
+    return (email or "").strip().lower()
+
+
+def opp_name_raw(o):
+    """Name straight off the opportunity's contact, for test-name matching."""
+    c = o.get("contact") or {}
+    n = (c.get("name") or "").strip()
+    if not n:
+        parts = [(c.get("firstName") or "").strip(), (c.get("lastName") or "").strip()]
+        n = " ".join(p for p in parts if p)
+    return n
+
+
+def drop_test_leads(opps):
+    """Remove team test submissions: internal email domain OR a test word in
+    the name. Real prospects are never dropped by this."""
+    kept, by_email, by_name = [], 0, 0
+    for o in opps:
+        email = opp_email(o)
+        if email and any(email.endswith(d) for d in INTERNAL_EMAIL_DOMAINS):
+            by_email += 1
+            continue
+        name = opp_name_raw(o)
+        if name and TEST_NAME_PATTERN.search(name):
+            by_name += 1
+            continue
+        kept.append(o)
+    if by_email or by_name:
+        log(f"  dropped {by_email + by_name} test lead(s): "
+            f"{by_email} by internal email, {by_name} by test name")
+    return kept
 
 
 def verify_shape(opps):
@@ -1160,6 +1214,7 @@ def main():
     log("fetching opportunities...")
     opps = fetch_opportunities(api, since)
     log(f"opportunities: {len(opps)}")
+    opps = drop_test_leads(opps)
 
     verify_shape(opps)
     raw = opps
