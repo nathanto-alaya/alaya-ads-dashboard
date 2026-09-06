@@ -694,6 +694,8 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 .fn-row .v .sub { font-weight: 600; font-size: 13.5px; margin-left: 5px; }
 .fn-row.dim .k, .fn-row.dim .v { color: var(--fg-3); }
 .fn-row.hi .v { color: var(--fg); }
+.fn-note { padding: 4px 20px 12px; margin-top: -6px; font-size: 12.5px;
+           line-height: 1.45; color: var(--fg-3); border-bottom: 1px solid var(--hair); }
 .fn-card-foot { padding: 11px 17px; font-size: 12.5px; color: var(--fg-3);
                 border-top: 1px solid var(--hair); background: var(--s2); }
 
@@ -2342,6 +2344,9 @@ function fnCard(f, isBest, isWorst) {
       ${row("Spend", f.spend === null ? "&mdash;" : money(f.spend), "hi")}
       ${f.metaRes ? row("Meta reported", fmt.num(f.metaRes)
           + `<span class="sub" style="color:var(--fg-3)">conversions</span>`) : ""}
+      ${f.metaRes ? `<div class="fn-note">Meta's count includes duplicate
+          submissions and internal test clicks, so it runs higher than real
+          people. Trust "Leads, people" below.</div>` : ""}
       ${row("Leads, people", fmt.num(f.leads), "hi")}
       ${/* only worth a row when there were MORE fills than people, which is the
              informative case. Fewer means the intake record sits in a pipeline
