@@ -637,6 +637,14 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 
 /* ---- period control ---- */
 .fn-period { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fn-daterange { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.fn-daterange label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--fg-2); }
+.fn-daterange input[type="date"] {
+  font-family: var(--fig); font-size: 14px; font-weight: 600; color: var(--fg);
+  background: var(--s1); border: 1px solid var(--hair-2); border-radius: var(--r); padding: 6px 9px;
+}
+.fn-daterange input[type="date"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fn-daterange .dr-note { font-size: 13px; color: var(--fg-3); }
 .fn-seg { display: inline-flex; gap: 2px; background: var(--s2); border: 1px solid var(--hair);
           border-radius: var(--r-lg); padding: 3px; }
 .fn-seg button {
@@ -2599,7 +2607,11 @@ function renderFunnel() {
             class="${g.key === fnGrain ? "active" : ""}"
             aria-pressed="${g.key === fnGrain}">${g.label}</button>`).join("")}
       </div>
-      ${(fnGrain === "all" || fnGrain === "custom") ? "" : `<div class="fn-pick">
+      ${fnGrain === "custom" ? `<div class="fn-daterange">
+        <label>From <input type="date" id="fn-date-from" value="${customFrom || ""}"></label>
+        <label>To <input type="date" id="fn-date-to" value="${customTo || ""}"></label>
+        ${(!customFrom || !customTo) ? `<span class="dr-note">Pick two dates</span>` : ""}
+      </div>` : (fnGrain === "all") ? "" : `<div class="fn-pick">
         <button type="button" data-fnstep="1" ${fnIndex >= periods.length - 1 ? "disabled" : ""}
           aria-label="Earlier period">&#8249;</button>
         <span class="lbl">${escapeHtml(period.label)}</span>
@@ -2812,13 +2824,25 @@ function renderFunnel() {
       if (btn.dataset.fngrain === fnGrain) return;
       fnGrain = btn.dataset.fngrain;
       fnIndex = 0;
-      if (fnGrain === "custom") {
-        const el = document.getElementById("date-range");
-        if (el) el.hidden = false;
-      }
       renderFunnel();
     });
   });
+  // Funnel's own custom-date inputs. Editing either updates the shared
+  // customFrom/customTo and re-renders. Kept valid: from must be <= to.
+  const fnFrom = document.getElementById("fn-date-from");
+  const fnTo = document.getElementById("fn-date-to");
+  const onFnDate = () => {
+    const a = fnFrom.value, b = fnTo.value;
+    if (a) customFrom = a;
+    if (b) customTo = b;
+    if (customFrom && customTo && customFrom > customTo) {
+      // swap so the range is always valid
+      [customFrom, customTo] = [customTo, customFrom];
+    }
+    renderFunnel();
+  };
+  if (fnFrom) fnFrom.addEventListener("change", onFnDate);
+  if (fnTo) fnTo.addEventListener("change", onFnDate);
   host.querySelectorAll("[data-fnstep]").forEach(btn => {
     btn.addEventListener("click", () => {
       fnIndex += Number(btn.dataset.fnstep);
