@@ -16,53 +16,75 @@
    =================================================================== */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Alaya's palette is a light system. Royal Blue on near-black measures 1.50:1,
-     a hard accessibility fail, which is why it looked wrong in dark mode; on this
-     warm off-white it is 12.41:1. So the brand colour can finally do the work
-     instead of being replaced by a generic dashboard blue. Every value below was
-     contrast-checked against --bg rather than eyeballed. */
+  /* Dark is the default. Alaya Royal Blue (#1A1C8F) measures only 1.5:1 on a
+     near-black background - a hard fail - so in dark mode the accent steps up to
+     a brighter blue that keeps the brand's character while passing contrast.
+     A [data-theme="light"] override below restores the original light palette. */
 
-  --bg:        #faf9f5;   /* warm paper, not white, so the page is not glaring  */
-  --s1:        #ffffff;   /* card                                              */
-  --s2:        #f4f3ed;   /* header fill, inset                                */
-  --s3:        #ebeae2;   /* pressed, track                                    */
-  --hair:      #e0dfd5;
-  --hair-2:    #cfcec2;
+  --bg:        #0e0f13;   /* deep near-black, slight blue cast                  */
+  --s1:        #16181e;   /* card                                              */
+  --s2:        #1a1c22;   /* header fill, inset                                */
+  --s3:        #23262e;   /* pressed, track                                    */
+  --hair:      #23262e;
+  --hair-2:    #2b2e37;
 
-  --fg:        #1a1a20;   /* 13.7:1 */
-  --fg-2:      #5f5f6b;   /*  5.9:1 */
-  --fg-3:      #7a7a85;   /*  4.0:1, large text and quiet labels only */
+  --fg:        #f2f3f5;   /* near-white body                                   */
+  --fg-2:      #c9cdd6;   /* supporting                                        */
+  --fg-3:      #8a8f9a;   /* quiet labels                                      */
 
-  --royal:     #1A1C8F;   /* 12.4:1  Alaya Royal Blue, the primary  */
-  --navy:      #0D0E5C;   /* 16.2:1  Alaya Deep Navy, headings      */
-  --mid:       #2428B8;   /*  9.6:1  Alaya Mid Blue, secondary      */
-  --tint:      #E8E9F8;   /* Alaya Blue Tint                        */
+  --royal:     #5b8def;   /* brightened Alaya blue, ~7:1 on --bg               */
+  --navy:      #93b4f5;   /* light blue for headings on dark                   */
+  --mid:       #6f9bf0;   /* secondary                                         */
+  --tint:      #1e2536;   /* muted blue fill for chips/badges                  */
 
   --accent:    var(--royal);
   --accent-2:  var(--mid);
   --accent-bg: var(--tint);
 
-  /* Alaya has no status colours, so these are added and flagged as an addition.
-     Hues chosen to sit beside Royal Blue without competing, each checked for
-     text contrast and for being tellable apart by a colourblind reader. */
-  --good:      #0E7C6B;   /* 4.9:1 teal  */
-  --warn:      #8A5300;   /* 6.0:1 amber */
-  --crit:      #B4232F;   /* 6.2:1 red   */
-  --good-bg:   #E4F2EF;
-  --warn-bg:   #F8EFDE;
-  --crit-bg:   #FBEAEB;
+  /* Status colours lifted for dark backgrounds, each still tellable apart. */
+  --good:      #4ec48a;   /* teal-green */
+  --warn:      #e0a94a;   /* amber      */
+  --crit:      #e8705a;   /* red        */
+  --good-bg:   #16271f;
+  --warn-bg:   #2a2214;
+  --crit-bg:   #2a1815;
 
-  /* Figtree for anything that carries weight, Lato for reading, Inter for
-     figures because its tabular numerals align columns without swapping face. */
   --display: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --sans:    'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --fig:     'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --r:    3px;   /* square, printed, not a rounded web widget */
+  --r:    3px;
   --r-lg: 3px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:        #faf9f5;
+  --s1:        #ffffff;
+  --s2:        #f4f3ed;
+  --s3:        #ebeae2;
+  --hair:      #e0dfd5;
+  --hair-2:    #cfcec2;
+
+  --fg:        #1a1a20;
+  --fg-2:      #5f5f6b;
+  --fg-3:      #7a7a85;
+
+  --royal:     #1A1C8F;
+  --navy:      #0D0E5C;
+  --mid:       #2428B8;
+  --tint:      #E8E9F8;
+
+  --good:      #0E7C6B;
+  --warn:      #8A5300;
+  --crit:      #B4232F;
+  --good-bg:   #E4F2EF;
+  --warn-bg:   #F8EFDE;
+  --crit-bg:   #FBEAEB;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -143,6 +165,15 @@ html, body {
 #slack-btn:hover:not([disabled]) { filter: brightness(1.12); }
 #slack-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #slack-btn[disabled] { opacity: .5; cursor: default; }
+
+#theme-toggle {
+  font-family: var(--sans); font-size: 16px; line-height: 1;
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--hair-2); border-radius: var(--r);
+  background: var(--s2); color: var(--fg-2); cursor: pointer;
+}
+#theme-toggle:hover { background: var(--s3); color: var(--fg); }
+#theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #slack-btn.sent  { background: var(--good); border-color: var(--good); color: #06140b; }
 #slack-btn.error { background: var(--crit); border-color: var(--crit); color: #1a0708; }
 #slack-btn .arrow { opacity: .7; font-size: 11px; }
@@ -174,7 +205,7 @@ html, body {
   min-width: 220px;
   cursor: pointer;
 }
-#campaign-select:hover { border-color: #3a3a46; }
+#campaign-select:hover { border-color: var(--hair-2); }
 #campaign-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .campaign-select-wrap::after {
   content: ""; position: absolute; right: 13px; top: 50%;
@@ -391,8 +422,8 @@ td.right, th.right { text-align: right; }
 
 tr.row-paused td, tr.is-paused td { color: var(--fg-3); }
 tr.row-paused td.num, tr.is-paused td.num { color: var(--fg-3); }
-tr.row-quiet td { color: #63636f; }
-tr.row-quiet td.num { color: #63636f; }
+tr.row-quiet td { color: var(--fg-3); }
+tr.row-quiet td.num { color: var(--fg-3); }
 tr.row-quiet:hover td { color: var(--fg-3); }
 
 td.empty, .empty {
@@ -412,9 +443,9 @@ td.empty, .empty {
   background: var(--s3); color: var(--fg-3);
   border: 1px solid var(--hair-2);
 }
-.status-pill.active { background: var(--good-bg); color: var(--good); border-color: #1d3d29; }
+.status-pill.active { background: var(--good-bg); color: var(--good); border-color: var(--good); }
 .status-pill.paused { background: var(--s3); color: var(--fg-3); }
-.status-pill.other  { background: var(--warn-bg); color: var(--warn); border-color: #3d2f10; }
+.status-pill.other  { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
 
 .rank-cell { display: flex; align-items: center; }
 .rank-badge {
@@ -818,7 +849,7 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 }
 .loader { color: var(--fg-3); }
 .error {
-  border: 1px solid #3d1a1c; background: var(--crit-bg);
+  border: 1px solid var(--crit); background: var(--crit-bg);
   color: var(--crit); border-radius: var(--r-lg);
   padding: 18px 20px; max-width: 600px; margin: 0 auto; text-align: left;
   font-size: 14px;
@@ -885,6 +916,9 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
         <span class="stamp-label">Updated</span>
         <span class="stamp-time" id="last-updated">—</span>
       </div>
+      <button id="theme-toggle" aria-label="Toggle light and dark mode" title="Toggle theme">
+        <span id="theme-icon">☾</span>
+      </button>
       <button id="slack-btn">
         <span id="slack-btn-text">Send to Slack</span>
         <span class="arrow">→</span>
@@ -3395,6 +3429,26 @@ function setupEvents() {
     });
   });
   document.getElementById("slack-btn").addEventListener("click", sendToSlack);
+
+  // Theme toggle. Dark is the default; a click flips to light and remembers it.
+  const applyTheme = (mode) => {
+    if (mode === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      document.getElementById("theme-icon").textContent = "☀";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      document.getElementById("theme-icon").textContent = "☾";
+    }
+  };
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem("alaya-theme"); } catch (e) {}
+  if (savedTheme) applyTheme(savedTheme);
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const next = isLight ? "dark" : "light";
+    applyTheme(next);
+    try { localStorage.setItem("alaya-theme", next); } catch (e) {}
+  });
 
   // Drill down: campaign row opens its ad sets, ad set row opens its creatives.
   wireExpander("adsets-body", 9, (d, today) =>
