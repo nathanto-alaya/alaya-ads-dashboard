@@ -244,21 +244,66 @@ html, body {
 .date-range .dr-note { font-size: 13px; color: var(--fg-3); }
 .date-range .dr-note.bad { color: var(--crit); font-weight: 600; }
 
-.time-pills {
-  display: flex; gap: 2px; flex-wrap: wrap;
-  background: var(--s2); border: 1px solid var(--hair);
-  border-radius: var(--r); padding: 2px;
+.dp-wrap { position: relative; display: inline-block; }
+.dp-trigger {
+  font-family: var(--sans); font-size: 14px; font-weight: 550;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 9px 14px; border: 1px solid var(--hair-2); border-radius: var(--r);
+  background: var(--s2); color: var(--fg); cursor: pointer;
 }
-.time-pill {
-  font-family: var(--sans); font-size: 13px; font-weight: 550;
-  padding: 6px 12px; border: 0; border-radius: 4px;
-  background: transparent; color: var(--fg-3); cursor: pointer;
+.dp-trigger:hover { background: var(--s3); }
+.dp-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dp-cal-ico { color: var(--accent); font-size: 13px; }
+.dp-caret { color: var(--fg-3); font-size: 12px; }
+.dp-pop {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 50;
+  display: none; grid-template-columns: 190px 1fr;
+  background: var(--s1); border: 1px solid var(--hair-2); border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px rgba(0,0,0,.4); min-width: 620px;
 }
-.time-pill:hover { color: var(--fg); background: var(--s3); }
-.time-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.time-pill.active {
-  position: relative; z-index: 2;
-  background: var(--s3); color: var(--fg); box-shadow: inset 0 0 0 1px var(--hair-2);
+.dp-pop.open { display: grid; }
+.dp-presets { border-right: 1px solid var(--hair); padding: 9px; max-height: 420px; overflow-y: auto; }
+.dp-preset-group + .dp-preset-group { border-top: 1px solid var(--hair); margin-top: 5px; padding-top: 5px; }
+.dp-preset {
+  display: block; width: 100%; text-align: left; font-family: var(--sans);
+  background: none; border: 0; color: var(--fg-2); font-size: 13.5px;
+  padding: 8px 10px; border-radius: var(--r); cursor: pointer;
+}
+.dp-preset:hover { background: var(--s2); color: var(--fg); }
+.dp-preset.active { background: var(--accent); color: #fff; }
+.dp-right { padding: 15px; }
+.dp-cals { display: flex; gap: 18px; }
+.dp-cal { flex: 1; }
+.dp-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+.dp-cal-title { font-size: 13.5px; font-weight: 600; color: var(--fg); }
+.dp-nav { background: none; border: 0; color: var(--fg-3); cursor: pointer; font-size: 17px; padding: 2px 7px; border-radius: var(--r); }
+.dp-nav:hover { background: var(--s2); color: var(--fg); }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dp-dow { font-size: 11px; color: var(--fg-3); text-align: center; padding: 4px 0; font-weight: 600; }
+.dp-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-family: var(--fig); font-size: 12.5px; color: var(--fg-2);
+  border: 0; background: none; cursor: pointer; border-radius: var(--r);
+}
+.dp-day:hover:not(.empty):not(.disabled) { background: var(--s2); }
+.dp-day.empty { cursor: default; }
+.dp-day.disabled { color: var(--fg-3); opacity: .35; cursor: not-allowed; }
+.dp-day.in-range { background: var(--accent-bg); color: var(--fg); border-radius: 0; }
+.dp-day.range-start { background: var(--accent); color: #fff; border-radius: var(--r) 0 0 var(--r); }
+.dp-day.range-end { background: var(--accent); color: #fff; border-radius: 0 var(--r) var(--r) 0; }
+.dp-day.range-start.range-end { border-radius: var(--r); }
+.dp-hint { font-size: 12px; color: var(--fg-3); margin-top: 12px; }
+.dp-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); }
+.dp-btn {
+  font-family: var(--sans); font-size: 13.5px; padding: 8px 16px; border-radius: var(--r);
+  cursor: pointer; border: 1px solid var(--hair-2); background: var(--s2); color: var(--fg-2);
+}
+.dp-btn:hover { background: var(--s3); color: var(--fg); }
+.dp-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (max-width: 720px) {
+  .dp-pop { min-width: 0; width: 92vw; grid-template-columns: 1fr; }
+  .dp-presets { border-right: 0; border-bottom: 1px solid var(--hair); max-height: 160px; }
+  .dp-cals { flex-direction: column; }
 }
 
 /* ---------------- view tabs, segmented ---------------- */
@@ -950,20 +995,40 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
     </div>
     <div class="slicer-block">
       <div class="slicer-num">Time period</div>
-      <div class="time-pills" id="time-pills">
-        <button class="time-pill" data-period="today">Today</button>
-        <button class="time-pill active" data-period="week">7 days</button>
-        <button class="time-pill" data-period="14d">14 days</button>
-        <button class="time-pill" data-period="30d">30 days</button>
-        <button class="time-pill" data-period="45d">45 days</button>
-        <button class="time-pill" data-period="60d">60 days</button>
-        <button class="time-pill" data-period="lifetime">12 months</button>
-        <button class="time-pill" data-period="custom">Custom</button>
+      <div class="dp-wrap">
+        <button type="button" class="dp-trigger" id="dp-trigger" aria-haspopup="true" aria-expanded="false">
+          <span class="dp-cal-ico">▦</span>
+          <span id="dp-trigger-label">Last 7 days</span>
+          <span class="dp-caret">▾</span>
+        </button>
+        <div class="dp-pop" id="dp-pop" role="dialog" aria-label="Choose date range">
+          <div class="dp-presets" id="dp-presets"></div>
+          <div class="dp-right">
+            <div class="dp-cals">
+              <div class="dp-cal">
+                <div class="dp-cal-head">
+                  <button type="button" class="dp-nav" id="dp-prev" aria-label="Previous month">‹</button>
+                  <span class="dp-cal-title" id="dp-cal1-title"></span>
+                  <span style="width:22px;"></span>
+                </div>
+                <div class="dp-grid" id="dp-cal1"></div>
+              </div>
+              <div class="dp-cal">
+                <div class="dp-cal-head">
+                  <span style="width:22px;"></span>
+                  <span class="dp-cal-title" id="dp-cal2-title"></span>
+                  <button type="button" class="dp-nav" id="dp-next" aria-label="Next month">›</button>
+                </div>
+                <div class="dp-grid" id="dp-cal2"></div>
+              </div>
+            </div>
+            <div class="dp-hint">Dates shown in Sydney time. Data covers the last 365 days.</div>
+            <div class="dp-actions">
+              <button type="button" class="dp-btn" id="dp-cancel">Cancel</button>
+              <button type="button" class="dp-btn primary" id="dp-apply">Update</button>
+            </div>
           </div>
-      <div class="date-range" id="date-range" hidden>
-        <label>From <input type="date" id="date-from"></label>
-        <label>To <input type="date" id="date-to"></label>
-        <span class="dr-note" id="dr-note"></span>
+        </div>
       </div>
     </div>
   </section>
@@ -1328,13 +1393,22 @@ function dateInPeriod(dateStr, period, today) {
   const todayD = new Date(today + "T00:00:00");
   const diffDays = Math.floor((todayD - d) / 86400000);
   switch (period) {
-    case "today":    return diffDays === 1;
-    case "week":     return diffDays >= 1 && diffDays <= 7;
-    case "14d":      return diffDays >= 1 && diffDays <= 14;
-    case "30d":      return diffDays >= 1 && diffDays <= 30;
-    case "45d":      return diffDays >= 1 && diffDays <= 45;
-    case "60d":      return diffDays >= 1 && diffDays <= 60;
-    case "lifetime": return diffDays >= 1 && diffDays <= 365;
+    case "today":     return diffDays === 0;
+    case "yesterday": return diffDays === 1;
+    case "week":      return diffDays >= 1 && diffDays <= 7;
+    case "14d":       return diffDays >= 1 && diffDays <= 14;
+    case "28d":       return diffDays >= 1 && diffDays <= 28;
+    case "30d":       return diffDays >= 1 && diffDays <= 30;
+    case "45d":       return diffDays >= 1 && diffDays <= 45;
+    case "60d":       return diffDays >= 1 && diffDays <= 60;
+    case "lifetime":  return diffDays >= 1 && diffDays <= 365;
+    case "thisweek":
+    case "lastweek":
+    case "thismonth":
+    case "lastmonth": {
+      const [s, e] = calendarRange(period, todayD);
+      return dateStr >= s && dateStr <= e;
+    }
     // A literal range, not an offset from today. No exclusion of today either:
     // if the user asks for a date the data does not cover, the answer is simply
     // that there are no rows, which is honest.
@@ -1344,6 +1418,28 @@ function dateInPeriod(dateStr, period, today) {
   }
 }
 
+// Returns [startISO, endISO] for calendar-relative presets.
+function calendarRange(period, todayD) {
+  const iso = dt => dt.toISOString().slice(0, 10);
+  const y = todayD.getFullYear(), m = todayD.getMonth();
+  if (period === "thismonth") {
+    return [iso(new Date(y, m, 1)), iso(todayD)];
+  }
+  if (period === "lastmonth") {
+    return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+  }
+  // Weeks run Monday to Sunday
+  const dow = (todayD.getDay() + 6) % 7;
+  if (period === "thisweek") {
+    const start = new Date(todayD); start.setDate(todayD.getDate() - dow);
+    return [iso(start), iso(todayD)];
+  }
+  // lastweek
+  const end = new Date(todayD); end.setDate(todayD.getDate() - dow - 1);
+  const start = new Date(end); start.setDate(end.getDate() - 6);
+  return [iso(start), iso(end)];
+}
+
 function periodLabel(period) {
   if (period === "custom") {
     return customFrom && customTo
@@ -1351,14 +1447,19 @@ function periodLabel(period) {
       : "PICK TWO DATES";
   }
   return {
-    today: "YESTERDAY",
+    today: "TODAY",
+    yesterday: "YESTERDAY",
     week: "LAST 7 DAYS",
     "14d": "LAST 14 DAYS",
+    "28d": "LAST 28 DAYS",
     "30d": "LAST 30 DAYS",
     "45d": "LAST 45 DAYS",
-    custom: "CUSTOM RANGE",
     "60d": "LAST 60 DAYS",
     lifetime: "LAST 12 MONTHS",
+    thisweek: "THIS WEEK",
+    lastweek: "LAST WEEK",
+    thismonth: "THIS MONTH",
+    lastmonth: "LAST MONTH",
   }[period] || period.toUpperCase();
 }
 
@@ -3339,76 +3440,172 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
-function setupEvents() {
-  // Bound the pickers to what the data actually covers, so a range can never be
-  // chosen that silently returns nothing.
-  const dataBounds = () => {
-    let lo = "", hi = "";
-    const scan = rows => (rows || []).forEach(r => {
-      if (!lo || r.date < lo) lo = r.date;
-      if (r.date > hi) hi = r.date;
-    });
-    scan(DATA.daily_rows.account);
-    Object.values(DATA.daily_rows.campaign || {}).forEach(scan);
-    return { lo, hi };
+// ============== DATE PICKER (Meta-style) ==============
+// Presets plus a two-month calendar for arbitrary ranges. A preset sets
+// currentPeriod directly; a hand-picked range sets currentPeriod="custom"
+// and fills customFrom/customTo.
+const DP_PRESETS = [
+  [ {k:"today",label:"Today"}, {k:"yesterday",label:"Yesterday"} ],
+  [ {k:"week",label:"Last 7 days"}, {k:"14d",label:"Last 14 days"},
+    {k:"28d",label:"Last 28 days"}, {k:"30d",label:"Last 30 days"},
+    {k:"60d",label:"Last 60 days"}, {k:"lifetime",label:"Last 12 months"} ],
+  [ {k:"thisweek",label:"This week"}, {k:"lastweek",label:"Last week"},
+    {k:"thismonth",label:"This month"}, {k:"lastmonth",label:"Last month"} ],
+];
+
+let dpViewMonth = null;   // first of the two months shown
+let dpDraft = { from: "", to: "" };  // range being picked, not yet applied
+let dpPickStep = 0;       // 0 = pick start next, 1 = pick end next
+
+function setupDatePicker() {
+  const trigger = document.getElementById("dp-trigger");
+  const pop = document.getElementById("dp-pop");
+  if (!trigger || !pop) return;
+
+  const bounds = dataBounds();
+  const todayISO = getTodayInSydney();
+
+  const openPop = () => {
+    // seed the draft + view from current selection
+    if (currentPeriod === "custom" && customFrom && customTo) {
+      dpDraft = { from: customFrom, to: customTo };
+    } else {
+      const rows = DATA.daily_rows.account.filter(r => dateInPeriod(r.date, currentPeriod, todayISO));
+      const ds = rows.map(r => r.date).sort();
+      dpDraft = ds.length ? { from: ds[0], to: ds[ds.length-1] } : { from: todayISO, to: todayISO };
+    }
+    dpPickStep = 0;
+    const seed = new Date((dpDraft.to || todayISO) + "T00:00:00");
+    dpViewMonth = new Date(seed.getFullYear(), seed.getMonth() - 1, 1);
+    pop.classList.add("open");
+    trigger.setAttribute("aria-expanded", "true");
+    renderDpPresets(); renderDpCals();
+  };
+  const closePop = () => {
+    pop.classList.remove("open");
+    trigger.setAttribute("aria-expanded", "false");
   };
 
-  const dr = document.getElementById("date-range");
-  const dFrom = document.getElementById("date-from");
-  const dTo = document.getElementById("date-to");
-  const dNote = document.getElementById("dr-note");
-  let drBounds = { lo: "", hi: "" };
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pop.classList.contains("open") ? closePop() : openPop();
+  });
+  document.addEventListener("click", (e) => {
+    if (pop.classList.contains("open") && !pop.contains(e.target) && e.target !== trigger)
+      closePop();
+  });
+  pop.addEventListener("click", e => e.stopPropagation());
 
-  const syncRange = () => {
-    if (!dFrom || !dTo) return false;
-    let a = dFrom.value, b = dTo.value;
-    if (!a || !b) {
-      dNote.textContent = "Pick both dates.";
-      dNote.className = "dr-note bad";
-      return false;
-    }
-    if (a > b) {                        // swap rather than refuse
-      [a, b] = [b, a];
-      dFrom.value = a; dTo.value = b;
-    }
-    customFrom = a; customTo = b;
-    const days = Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
-    dNote.textContent = `${days} day${days === 1 ? "" : "s"} selected, `
-      + `data runs ${drBounds.lo} to ${drBounds.hi}`;
-    dNote.className = "dr-note";
-    return true;
-  };
-
-  if (dr && dFrom && dTo) {
-    drBounds = dataBounds();
-    [dFrom, dTo].forEach(i => { i.min = drBounds.lo; i.max = drBounds.hi; });
-    // default to the last 30 days of data held, not of the calendar
-    const start = new Date(drBounds.hi + "T00:00:00");
-    start.setDate(start.getDate() - 29);
-    const iso = fnISO(start);
-    dFrom.value = iso < drBounds.lo ? drBounds.lo : iso;
-    dTo.value = drBounds.hi;
-    syncRange();
-    [dFrom, dTo].forEach(i => i.addEventListener("change", () => {
-      if (!syncRange()) return;
-      if (currentPeriod !== "custom") {
-        currentPeriod = "custom";
-        document.querySelectorAll(".time-pill").forEach(x =>
-          x.classList.toggle("active", x.dataset.period === "custom"));
-      }
+  document.getElementById("dp-prev").addEventListener("click", () => {
+    dpViewMonth = new Date(dpViewMonth.getFullYear(), dpViewMonth.getMonth() - 1, 1);
+    renderDpCals();
+  });
+  document.getElementById("dp-next").addEventListener("click", () => {
+    const next = new Date(dpViewMonth.getFullYear(), dpViewMonth.getMonth() + 1, 1);
+    const maxMonth = new Date(todayISO + "T00:00:00");
+    if (new Date(next.getFullYear(), next.getMonth()+1, 0) <=
+        new Date(maxMonth.getFullYear(), maxMonth.getMonth()+2, 0))
+      { dpViewMonth = next; renderDpCals(); }
+  });
+  document.getElementById("dp-cancel").addEventListener("click", closePop);
+  document.getElementById("dp-apply").addEventListener("click", () => {
+    if (dpDraft.from && dpDraft.to) {
+      customFrom = dpDraft.from; customTo = dpDraft.to;
+      currentPeriod = "custom";
+      updateDpTriggerLabel();
       applyFilters();
-    }));
+    }
+    closePop();
+  });
+
+  function renderDpPresets() {
+    const el = document.getElementById("dp-presets");
+    el.innerHTML = DP_PRESETS.map(group =>
+      `<div class="dp-preset-group">` +
+      group.map(p => `<button type="button" class="dp-preset ${p.k===currentPeriod?'active':''}" data-dpk="${p.k}">${p.label}</button>`).join("") +
+      `</div>`
+    ).join("");
+    el.querySelectorAll(".dp-preset").forEach(b => {
+      b.addEventListener("click", () => {
+        currentPeriod = b.dataset.dpk;
+        updateDpTriggerLabel();
+        applyFilters();
+        closePop();
+      });
+    });
   }
 
-  document.querySelectorAll(".time-pill").forEach(pill => {
-    pill.addEventListener("click", () => {
-      document.querySelectorAll(".time-pill").forEach(p => p.classList.remove("active"));
-      if (dr) dr.hidden = pill.dataset.period !== "custom";
-      pill.classList.add("active");
-      currentPeriod = pill.dataset.period;
-      applyFilters();
+  function renderDpCals() {
+    const m2 = new Date(dpViewMonth.getFullYear(), dpViewMonth.getMonth() + 1, 1);
+    drawCal("dp-cal1", "dp-cal1-title", dpViewMonth);
+    drawCal("dp-cal2", "dp-cal2-title", m2);
+  }
+
+  function drawCal(gridId, titleId, base) {
+    document.getElementById(titleId).textContent =
+      base.toLocaleDateString("en-AU", { month: "long", year: "numeric" });
+    const grid = document.getElementById(gridId);
+    const dows = ["Mo","Tu","We","Th","Fr","Sa","Su"];
+    let html = dows.map(d => `<div class="dp-dow">${d}</div>`).join("");
+    const first = new Date(base.getFullYear(), base.getMonth(), 1);
+    const startDow = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < startDow; i++) html += `<div class="dp-day empty"></div>`;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dISO = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const disabled = dISO > bounds.hi || dISO < bounds.lo;
+      let cls = "dp-day";
+      if (disabled) cls += " disabled";
+      if (dISO === dpDraft.from) cls += " range-start";
+      if (dISO === dpDraft.to) cls += " range-end";
+      if (dpDraft.from && dpDraft.to && dISO > dpDraft.from && dISO < dpDraft.to) cls += " in-range";
+      html += `<button type="button" class="${cls}" ${disabled?"disabled":""} data-dpiso="${dISO}">${day}</button>`;
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll(".dp-day:not(.empty):not(.disabled)").forEach(b => {
+      b.addEventListener("click", () => {
+        const iso = b.dataset.dpiso;
+        if (dpPickStep === 0) { dpDraft = { from: iso, to: iso }; dpPickStep = 1; }
+        else {
+          if (iso < dpDraft.from) dpDraft = { from: iso, to: dpDraft.from };
+          else dpDraft.to = iso;
+          dpPickStep = 0;
+        }
+        renderDpCals();
+      });
     });
+  }
+
+  updateDpTriggerLabel();
+}
+
+function updateDpTriggerLabel() {
+  const el = document.getElementById("dp-trigger-label");
+  if (!el) return;
+  if (currentPeriod === "custom" && customFrom && customTo) {
+    el.textContent = `${fnShort(customFrom)} – ${fnShort(customTo)}`;
+  } else {
+    const label = periodLabel(currentPeriod);
+    el.textContent = label.charAt(0) + label.slice(1).toLowerCase();
+  }
+}
+
+// Bound the pickers to what the data actually covers, so a range can never be
+// chosen that silently returns nothing.
+function dataBounds() {
+  let lo = "", hi = "";
+  const scan = rows => (rows || []).forEach(r => {
+    if (!lo || r.date < lo) lo = r.date;
+    if (r.date > hi) hi = r.date;
   });
+  scan(DATA.daily_rows.account);
+  Object.values(DATA.daily_rows.campaign || {}).forEach(scan);
+  return { lo, hi };
+}
+
+function setupEvents() {
+
+  setupDatePicker();
   document.getElementById("campaign-select").addEventListener("change", e => {
     currentCampaignId = e.target.value;
     applyFilters();
