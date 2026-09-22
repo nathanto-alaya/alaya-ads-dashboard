@@ -245,6 +245,7 @@ html, body {
 .date-range .dr-note.bad { color: var(--crit); font-weight: 600; }
 
 .dp-wrap { position: relative; display: inline-block; }
+.dp-actual-dates { margin-top: 7px; font-size: 12.5px; color: var(--fg-3); font-family: var(--fig); }
 .dp-trigger {
   font-family: var(--sans); font-size: 14px; font-weight: 550;
   display: inline-flex; align-items: center; gap: 9px;
@@ -293,6 +294,8 @@ html, body {
 .dp-day.range-end { background: var(--accent); color: #fff; border-radius: 0 var(--r) var(--r) 0; }
 .dp-day.range-start.range-end { border-radius: var(--r); }
 .dp-hint { font-size: 12px; color: var(--fg-3); margin-top: 12px; }
+.dp-compare { display: flex; align-items: center; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); font-size: 13.5px; color: var(--fg-2); cursor: pointer; }
+.dp-compare input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 .dp-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); }
 .dp-btn {
   font-family: var(--sans); font-size: 13.5px; padding: 8px 16px; border-radius: var(--r);
@@ -377,6 +380,9 @@ html, body {
   font-weight: 700; letter-spacing: -.03em; line-height: 1.18; color: var(--fg);
 }
 .kpi-sub { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 450; color: var(--fg-3); }
+.kpi-delta { display: block; font-family: var(--fig); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.kpi-delta.good { color: var(--good); }
+.kpi-delta.bad { color: var(--crit); }
 
 /* ---------------- chart ---------------- */
 
@@ -1023,6 +1029,10 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
               </div>
             </div>
             <div class="dp-hint">Dates shown in Sydney time. Data covers the last 365 days.</div>
+            <label class="dp-compare">
+              <input type="checkbox" id="dp-compare-check">
+              <span>Compare to previous period</span>
+            </label>
             <div class="dp-actions">
               <button type="button" class="dp-btn" id="dp-cancel">Cancel</button>
               <button type="button" class="dp-btn primary" id="dp-apply">Update</button>
@@ -1030,6 +1040,7 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
           </div>
         </div>
       </div>
+      <div class="dp-actual-dates" id="dp-actual-dates"></div>
     </div>
   </section>
 
@@ -1359,6 +1370,7 @@ let currentPeriod = "week";
 let customFrom = "";     // shared by the Meta tabs and the funnel review
 let customTo = "";
 let currentCampaignId = "all";
+let compareOn = false;   // when true, KPIs show change vs the previous period
 let currentCampaignSort = { col: "spend", dir: "desc" };
 let currentCreativeSort = { col: "score", dir: "desc" };
 let currentAdsetSort = { col: "spend", dir: "desc" };
@@ -1608,6 +1620,14 @@ function applyFilters() {
   document.getElementById("kpi-ctr").textContent = fmt.pct(overallLinkCtr);
   document.getElementById("kpi-cpm-sub").textContent = `All CTR ${fmt.pct(overallCtr)}`;
 
+  // ===== COMPARE MODE =====
+  // When on, compute the immediately-preceding period of the same length and
+  // append a change badge + previous value to each KPI card.
+  applyCompareToKpis({
+    spend: sumSpend, leads: leadCount, cpl: cpl,
+    impressions: sumImpressions, clicks: sumLinkClicks, ctr: overallLinkCtr,
+  });
+
   try { renderChart(accountRows); } catch (e) { console.error("renderChart failed:", e); }
   try { renderCampaigns(today); } catch (e) {
     console.error("renderCampaigns failed:", e);
@@ -1630,6 +1650,94 @@ function applyFilters() {
     console.error("renderCreativeView failed:", e);
     document.getElementById("cv-grid-wrap").innerHTML = `<div class="empty" style="padding:48px;">ERROR: ${e.message}</div>`;
   }
+}
+
+// ============== COMPARE MODE ==============
+// Compute the previous period (same length, immediately before the current
+// range) and annotate each KPI card with the change and the prior value.
+function applyCompareToKpis(now) {
+  const cards = [
+    { id: "kpi-spend-sub",  key: "spend",       fmt: fmt.aud,        lowerBetter: false },
+    { id: "kpi-results-sub", key: "leads",      fmt: fmt.num,        lowerBetter: false },
+    { id: "kpi-cpr-sub",    key: "cpl",         fmt: fmt.audPrecise, lowerBetter: true  },
+    { id: "kpi-reach-sub",  key: "impressions", fmt: fmt.num,        lowerBetter: false },
+    { id: "kpi-cpc-sub",    key: "clicks",      fmt: fmt.num,        lowerBetter: false },
+    { id: "kpi-cpm-sub",    key: "ctr",         fmt: v => fmt.pct(v), lowerBetter: false },
+  ];
+
+  if (!compareOn) {
+    // Clear any compare badges left on the KPI values
+    ["kpi-spend","kpi-results","kpi-cpr","kpi-impressions","kpi-clicks","kpi-ctr"]
+      .forEach(id => { const b = document.querySelector(`#${id} + .kpi-delta`); if (b) b.remove(); });
+    return;
+  }
+
+  const prev = prevPeriodTotals();
+  const prevMap = {
+    spend: prev.spend, leads: prev.leads, cpl: prev.cpl,
+    impressions: prev.impressions, clicks: prev.clicks, ctr: prev.ctr,
+  };
+  const valueIds = {
+    spend:"kpi-spend", leads:"kpi-results", cpl:"kpi-cpr",
+    impressions:"kpi-impressions", clicks:"kpi-clicks", ctr:"kpi-ctr",
+  };
+
+  for (const c of cards) {
+    const nowV = now[c.key], prevV = prevMap[c.key];
+    const valueEl = document.getElementById(valueIds[c.key]);
+    if (!valueEl) continue;
+    // remove old badge
+    const old = valueEl.parentElement.querySelector(".kpi-delta");
+    if (old) old.remove();
+    if (prevV == null || prevV === 0) continue;
+    const pct = Math.round((nowV - prevV) / prevV * 100);
+    const good = c.lowerBetter ? pct <= 0 : pct >= 0;
+    const arrow = pct >= 0 ? "▲" : "▼";
+    const badge = document.createElement("span");
+    badge.className = "kpi-delta " + (good ? "good" : "bad");
+    badge.textContent = ` ${arrow} ${Math.abs(pct)}%`;
+    valueEl.insertAdjacentElement("afterend", badge);
+    // previous value shown in the sub line
+    const subEl = document.getElementById(c.id);
+    if (subEl) subEl.textContent = `Prev: ${c.fmt(prevV)}`;
+  }
+}
+
+// Totals for the period immediately before the current selection, same length.
+function prevPeriodTotals() {
+  const [curFrom, curTo] = resolvePeriodDates(currentPeriod);
+  if (!curFrom || !curTo) return {};
+  const len = Math.round((new Date(curTo) - new Date(curFrom)) / 86400000) + 1;
+  const pTo = new Date(new Date(curFrom).getTime() - 86400000);
+  const pFrom = new Date(pTo.getTime() - (len - 1) * 86400000);
+  const iso = d => d.toISOString().slice(0, 10);
+  const from = iso(pFrom), to = iso(pTo);
+
+  // Sum account rows in [from, to], respecting the campaign slicer.
+  const rows = (currentCampaignId === "all"
+    ? DATA.daily_rows.account
+    : (DATA.daily_rows.campaign[currentCampaignId] || [])
+  ).filter(r => r.date >= from && r.date <= to);
+
+  let spend=0, impressions=0, clicks=0, results=0;
+  for (const r of rows) {
+    spend += r.spend||0; impressions += r.impressions||0;
+    clicks += r.link_clicks||0; results += r.results||0;
+  }
+  // leads = lead-type results; reuse the same isLead test as the main path
+  let leads=0, leadSpend=0;
+  for (const r of rows) {
+    const rt = (r.result_type||"").toLowerCase();
+    if (rt.includes("submit")||rt.includes("lead")||rt.includes("application")) {
+      leads += r.results||0; leadSpend += r.spend||0;
+    }
+  }
+  return {
+    spend, impressions, clicks, leads,
+    cpl: leads>0 ? leadSpend/leads : 0,
+    ctr: impressions>0 ? clicks/impressions*100 : 0,
+    from, to,
+  };
 }
 
 // Compact AUD format for chart bar values: $1.2k, $850, $12.4k
@@ -3508,6 +3616,14 @@ function setupDatePicker() {
       { dpViewMonth = next; renderDpCals(); }
   });
   document.getElementById("dp-cancel").addEventListener("click", closePop);
+  const cmpCheck = document.getElementById("dp-compare-check");
+  if (cmpCheck) {
+    cmpCheck.checked = compareOn;
+    cmpCheck.addEventListener("change", () => {
+      compareOn = cmpCheck.checked;
+      applyFilters();
+    });
+  }
   document.getElementById("dp-apply").addEventListener("click", () => {
     if (dpDraft.from && dpDraft.to) {
       customFrom = dpDraft.from; customTo = dpDraft.to;
@@ -3588,6 +3704,51 @@ function updateDpTriggerLabel() {
     const label = periodLabel(currentPeriod);
     el.textContent = label.charAt(0) + label.slice(1).toLowerCase();
   }
+  // Show the actual calendar dates the current selection resolves to, so
+  // "Today" or "Yesterday" reads as a real date, not just a word.
+  const dateEl = document.getElementById("dp-actual-dates");
+  if (dateEl && typeof DATA !== "undefined" && DATA.meta) {
+    const [from, to] = resolvePeriodDates(currentPeriod);
+    if (from && to) {
+      dateEl.textContent = from === to ? fnLong(from) : `${fnLong(from)} – ${fnLong(to)}`;
+    } else {
+      dateEl.textContent = "";
+    }
+  }
+}
+
+// Resolve any period key (or custom) to its actual [fromISO, toISO].
+function resolvePeriodDates(period) {
+  if (period === "custom") return [customFrom, customTo];
+  const today = getTodayInSydney();
+  const todayD = new Date(today + "T00:00:00");
+  const iso = dt => dt.toISOString().slice(0, 10);
+  const back = n => { const d = new Date(todayD); d.setDate(d.getDate() - n); return iso(d); };
+  // Fixed offsets from today - computed directly so the note is right even on
+  // days the data has not landed yet.
+  switch (period) {
+    case "today":     return [today, today];
+    case "yesterday": return [back(1), back(1)];
+    case "week":      return [back(7), back(1)];
+    case "14d":       return [back(14), back(1)];
+    case "28d":       return [back(28), back(1)];
+    case "30d":       return [back(30), back(1)];
+    case "45d":       return [back(45), back(1)];
+    case "60d":       return [back(60), back(1)];
+    case "lifetime":  return [back(365), back(1)];
+    case "thisweek":
+    case "lastweek":
+    case "thismonth":
+    case "lastmonth": return calendarRange(period, todayD);
+  }
+  return ["", ""];
+}
+
+// Long date like "5 Sep 2026" for the actual-date note.
+function fnLong(iso) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 }
 
 // Bound the pickers to what the data actually covers, so a range can never be
