@@ -3146,7 +3146,11 @@ function funnelTotalsForRange(startISO, endISO, maturedEnd) {
     booked += m.appt || 0;              // "booked" = reached consultation-booked stage
     if (m.spend != null) spend += m.spend;
   }
-  return { leads, booked, spend, cpl: leads > 0 ? spend / leads : 0 };
+  // Leads from ads: any opportunity that sits in the Meta Ads Pipeline and was
+  // created inside the window, whether or not its UTM survived to join an ad.
+  const leadsFromAds = (FUNNEL.leads || []).filter(l =>
+    l.p === "Meta Ads Pipeline" && l.d && l.d >= startISO && l.d <= endISO).length;
+  return { leads, leadsFromAds, booked, spend, cpl: leads > 0 ? spend / leads : 0 };
 }
 
 // Three fixed windows, each vs the period immediately before it.
@@ -3170,10 +3174,11 @@ function buildFunnelComparisons(maturedEnd) {
   });
 
   const metricRows = [
-    { key: "leads",  label: "Leads",        fmt: v => fmt.num(v),         lowerBetter: false },
-    { key: "booked", label: "Booked",       fmt: v => fmt.num(v),         lowerBetter: false },
-    { key: "spend",  label: "Spend",        fmt: v => fmt.aud(v),         lowerBetter: false },
-    { key: "cpl",    label: "Cost / lead",  fmt: v => v > 0 ? fmt.audPrecise(v) : "—", lowerBetter: true },
+    { key: "leads",        label: "Leads",          fmt: v => fmt.num(v),         lowerBetter: false },
+    { key: "leadsFromAds", label: "Leads from ads", fmt: v => fmt.num(v),         lowerBetter: false },
+    { key: "booked",       label: "Booked",         fmt: v => fmt.num(v),         lowerBetter: false },
+    { key: "spend",        label: "Spend",          fmt: v => fmt.aud(v),         lowerBetter: false },
+    { key: "cpl",          label: "Cost / lead",    fmt: v => v > 0 ? fmt.audPrecise(v) : "—", lowerBetter: true },
   ];
 
   const delta = (now, prev, lowerBetter) => {
