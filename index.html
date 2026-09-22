@@ -376,9 +376,13 @@ html, body {
 }
 .kpi-value {
   font-family: var(--fig); font-variant-numeric: tabular-nums;
-  font-size: clamp(26px, 2.5vw, 32px);
-  font-weight: 700; letter-spacing: -.03em; line-height: 1.18; color: var(--fg);
+  font-size: clamp(30px, 2.9vw, 38px);
+  font-weight: 700; letter-spacing: -.03em; line-height: 1.12; color: var(--fg);
+  margin-top: 6px;
 }
+.kpi-spark { display: block; width: 100%; height: 26px; margin: 8px 0 4px; overflow: visible; }
+.kpi-spark polyline { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.kpi-spark .spark-area { opacity: 0.12; stroke: none; }
 .kpi-sub { font-family: var(--fig); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 450; color: var(--fg-3); }
 .kpi-delta { display: block; font-family: var(--fig); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
 .kpi-delta.good { color: var(--good); }
@@ -1083,31 +1087,37 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
         <div class="kpi">
           <div class="kpi-label">Spend</div>
           <div class="kpi-value" id="kpi-spend">—</div>
+          <svg class="kpi-spark" id="kpi-spend-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-spend-sub">—</div>
         </div>
         <div class="kpi">
           <div class="kpi-label" id="kpi-results-label">Results</div>
           <div class="kpi-value" id="kpi-results">—</div>
+          <svg class="kpi-spark" id="kpi-results-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-results-sub">—</div>
         </div>
         <div class="kpi">
           <div class="kpi-label" id="kpi-cpr-label">Cost / Lead</div>
           <div class="kpi-value" id="kpi-cpr">—</div>
+          <svg class="kpi-spark" id="kpi-cpr-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-cpr-sub">Lower is better</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Impressions</div>
           <div class="kpi-value" id="kpi-impressions">—</div>
+          <svg class="kpi-spark" id="kpi-impressions-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-reach-sub">—</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Link Clicks</div>
           <div class="kpi-value" id="kpi-clicks">—</div>
+          <svg class="kpi-spark" id="kpi-clicks-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-cpc-sub">—</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Link CTR</div>
           <div class="kpi-value" id="kpi-ctr">—</div>
+          <svg class="kpi-spark" id="kpi-ctr-spark" viewBox="0 0 120 26" preserveAspectRatio="none"></svg>
           <div class="kpi-sub" id="kpi-cpm-sub">—</div>
         </div>
       </div>
@@ -1628,6 +1638,8 @@ function applyFilters() {
     impressions: sumImpressions, clicks: sumLinkClicks, ctr: overallLinkCtr,
   });
 
+  try { renderKpiSparklines(accountRows); } catch (e) { console.error("sparklines failed:", e); }
+
   try { renderChart(accountRows); } catch (e) { console.error("renderChart failed:", e); }
   try { renderCampaigns(today); } catch (e) {
     console.error("renderCampaigns failed:", e);
@@ -1655,6 +1667,43 @@ function applyFilters() {
 // ============== COMPARE MODE ==============
 // Compute the previous period (same length, immediately before the current
 // range) and annotate each KPI card with the change and the prior value.
+// Draw a small trend line on each KPI card from the daily rows in the current
+// period. Each metric gets its own series and colour.
+function renderKpiSparklines(rows) {
+  const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const series = {
+    "kpi-spend-spark":       { data: sorted.map(r => r.spend || 0),        color: "var(--royal)" },
+    "kpi-results-spark":     { data: sorted.map(r => r.results || 0),      color: "var(--good)" },
+    "kpi-cpr-spark":         { data: sorted.map(r => (r.results > 0 ? (r.spend||0)/r.results : 0)), color: "var(--accent-2)" },
+    "kpi-impressions-spark": { data: sorted.map(r => r.impressions || 0),  color: "var(--mid)" },
+    "kpi-clicks-spark":      { data: sorted.map(r => r.link_clicks || 0),  color: "var(--royal)" },
+    "kpi-ctr-spark":         { data: sorted.map(r => (r.impressions > 0 ? (r.link_clicks||0)/r.impressions*100 : 0)), color: "var(--good)" },
+  };
+  for (const [id, s] of Object.entries(series)) {
+    const svg = document.getElementById(id);
+    if (!svg) continue;
+    svg.innerHTML = sparkPath(s.data, s.color);
+  }
+}
+
+// Build the polyline (+ soft area fill) markup for one sparkline.
+function sparkPath(data, color) {
+  const W = 120, H = 26, pad = 2;
+  if (!data || data.length < 2) return "";
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const stepX = W / (data.length - 1);
+  const pts = data.map((v, i) => {
+    const x = i * stepX;
+    const y = pad + (H - pad * 2) * (1 - (v - min) / range);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const line = pts.join(" ");
+  const area = `${line} ${W},${H} 0,${H}`;
+  return `<polyline class="spark-area" points="${area}" style="fill:${color}"></polyline>`
+       + `<polyline points="${line}" style="stroke:${color}"></polyline>`;
+}
+
 function applyCompareToKpis(now) {
   const cards = [
     { id: "kpi-spend-sub",  key: "spend",       fmt: fmt.aud,        lowerBetter: false },
