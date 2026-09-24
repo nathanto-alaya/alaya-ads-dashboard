@@ -720,6 +720,7 @@ table.child .creative-name { font-size: 12.5px; -webkit-line-clamp: 1; }
 .fn-cmp-table col.c-chg { width: 22%; }
 .fn-cmp-table th { text-align: right; font-size: 11px; font-weight: 500; color: var(--fg-3); padding: 6px 10px; border-bottom: 1px solid var(--hair); text-transform: none; white-space: nowrap; }
 .fn-cmp-table th:first-child { text-align: left; }
+.fn-cmp-table th .th-dates { display: block; font-size: 10px; font-weight: 400; color: var(--fg-3); margin-top: 2px; font-variant-numeric: tabular-nums; }
 .fn-cmp-table td { padding: 10px 10px; font-size: 13.5px; text-align: right; border-bottom: 1px solid var(--hair); white-space: nowrap; }
 .fn-cmp-table tr:last-child td { border-bottom: 0; }
 .fn-cmp-table .mlabel { text-align: left; color: var(--fg-2); font-family: var(--sans); }
@@ -3136,21 +3137,26 @@ function renderFunnel() {
 
 // Sum lead/booking/spend/cost-per-lead across all funnels for a date range.
 function funnelTotalsForRange(startISO, endISO, maturedEnd) {
-  const period = { start: startISO, end: endISO };
+  // Count everything on ONE consistent set: opportunities in the Meta Ads
+  // Pipeline, by creation date. This keeps the table coherent - booked can
+  // never exceed leads, because both are drawn from the same people.
+  const inWindow = (FUNNEL.leads || []).filter(l =>
+    l.p === "Meta Ads Pipeline" && l.d && l.d >= startISO && l.d <= endISO);
+
+  const leadsFromAds = inWindow.length;
+  // Booked = reached the "consultation booked" stage or deeper (x >= 1).
+  const booked = inWindow.filter(l => (l.x || 0) >= FN_DEPTH.booked).length;
+
+  // Spend across all ad-set funnels for the window (ads cost is account-wide).
   const keys = Object.keys(FUNNEL.funnels || {});
-  let leads = 0, booked = 0, spend = 0;
-  // include the "no attribution" bucket (null key) too
-  for (const k of [...keys, null]) {
+  const period = { start: startISO, end: endISO };
+  let spend = 0;
+  for (const k of keys) {
     const m = fnMeasure(k, period, maturedEnd);
-    leads += m.leads || 0;
-    booked += m.appt || 0;              // "booked" = reached consultation-booked stage
     if (m.spend != null) spend += m.spend;
   }
-  // Leads from ads: any opportunity that sits in the Meta Ads Pipeline and was
-  // created inside the window, whether or not its UTM survived to join an ad.
-  const leadsFromAds = (FUNNEL.leads || []).filter(l =>
-    l.p === "Meta Ads Pipeline" && l.d && l.d >= startISO && l.d <= endISO).length;
-  return { leads, leadsFromAds, booked, spend,
+
+  return { leadsFromAds, booked, spend,
            cpl: leadsFromAds > 0 ? spend / leadsFromAds : 0 };
 }
 
@@ -3192,10 +3198,15 @@ function buildFunnelComparisons(maturedEnd) {
   const oneTable = (r) => `
     <div class="fn-cmp-card">
       <div class="fn-cmp-head">${r.w.label}
-        <span class="fn-cmp-sub">vs previous ${r.w.days} days</span></div>
+        <span class="fn-cmp-sub">${fnShort(r.curFrom)} – ${fnShort(r.curTo)} &nbsp;vs&nbsp; ${fnShort(r.prevFrom)} – ${fnShort(r.prevTo)}</span></div>
       <table class="fn-cmp-table">
         <colgroup><col class="c-metric"><col class="c-now"><col class="c-prev"><col class="c-chg"></colgroup>
-        <thead><tr><th>Metric</th><th>This period</th><th>Previous</th><th>Change</th></tr></thead>
+        <thead><tr>
+          <th>Metric</th>
+          <th>This period<span class="th-dates">${fnShort(r.curFrom)} – ${fnShort(r.curTo)}</span></th>
+          <th>Previous<span class="th-dates">${fnShort(r.prevFrom)} – ${fnShort(r.prevTo)}</span></th>
+          <th>Change</th>
+        </tr></thead>
         <tbody>
           ${metricRows.map(m => `<tr>
             <td class="mlabel">${m.label}</td>
